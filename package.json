@@ -36,6 +36,9 @@
     "socket-hub",
     "ascoltatore"
   ],
+  "dependencies": {
+    "async": "~0.2.9"
+  },
   "devDependencies": {
     "grunt": "~0.4.1",
     "grunt-cli": "~0.1.9",
