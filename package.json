@@ -1,0 +1,45 @@
+{
+  "name": "qlobber",
+  "description": "Node.js globbing for amqp-like topics",
+  "version": "0.0.1",
+  "homepage": "https://github.com/davedoesdev/qlobber",
+  "author": {
+    "name": "David Halls",
+    "email": "dave@davedoesdev.com",
+    "url": "http://www.davedoesdev.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davedoesdev/qlobber.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davedoesdev/qlobber/issues"
+  },
+  "licenses": [{
+    "type": "MIT",
+    "url": "https://github.com/davedoesdev/qlobber/blob/master/LICENCE"
+  }],
+  "main": "index.js",
+  "scripts": {
+    "test": "grunt lint test"
+  },
+  "directories": {
+    "test": "test",
+    "lib": "lib"
+  },
+  "keywords": [
+    "amqp",
+    "mqtt",
+    "rabbitmq",
+    "socket-hub",
+    "ascoltatore"
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-cli": "~0.1.9",
+    "grunt-jslint": "~0.2.6",
+    "grunt-cafe-mocha": "~0.1.5",
+    "grunt-apidox": "~0.0.1",
+    "chai": "~1.6.1"
+  }
+}
