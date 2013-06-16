@@ -1,7 +1,7 @@
 {
   "name": "qlobber",
   "description": "Node.js globbing for amqp-like topics",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "homepage": "https://github.com/davedoesdev/qlobber",
   "author": {
     "name": "David Halls",
@@ -15,10 +15,12 @@
   "bugs": {
     "url": "https://github.com/davedoesdev/qlobber/issues"
   },
-  "licenses": [{
-    "type": "MIT",
-    "url": "https://github.com/davedoesdev/qlobber/blob/master/LICENCE"
-  }],
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/davedoesdev/qlobber/blob/master/LICENCE"
+    }
+  ],
   "main": "index.js",
   "scripts": {
     "test": "grunt lint test"
