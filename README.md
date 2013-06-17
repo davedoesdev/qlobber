@@ -91,6 +91,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobberobjectaddtopic-val-cb"></a><a name="toc_qlobberobject"></a>[QlobberObject.add](#qlobberobjectaddtopic-val-cb)
 - <a name="toc_qlobberobjectremovetopic-val-cb"></a>[QlobberObject.remove](#qlobberobjectremovetopic-val-cb)
 - <a name="toc_qlobberobjectmatchtopic-cb"></a>[QlobberObject.match](#qlobberobjectmatchtopic-cb)
+- <a name="toc_qlobberobjectclearcb"></a>[QlobberObject.clear](#qlobberobjectclearcb)
 
 # Qlobber([options])
 
@@ -122,19 +123,19 @@ Note you can match more than one value against a topic by calling `add` multiple
 **Parameters:**
 
 - `{String} topic` The topic to match against.
-- `{Any} val` The value to return if the topic is matched.
+- `{Any} val` The value to return if the topic is matched. `undefined` is not supported.
 - `{Function} cb` Called when the matcher has been added.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
-# QlobberObject.remove(topic, val, cb)
+# QlobberObject.remove(topic, [val], cb)
 
 > Remove a topic matcher from the qlobber.
 
 **Parameters:**
 
 - `{String} topic` The topic that's being matched against.
-- `{Any} val` The value that's being matched.
+- `{Any} [val]` The value that's being matched. If you don't specify `val` then all matchers for `topic` are removed.
 - `{Function} cb` Called when the matcher has been removed.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
@@ -151,6 +152,18 @@ Note you can match more than one value against a topic by calling `add` multiple
 
   - `{Any} err` `null` or an error, if one occurred.
   - `{Array} vals` List of values that matched the topic. `vals` will be sorted and have duplicates removed unless you configured [Qlobber](#qlobberoptions) otherwise.
+
+<sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
+
+# QlobberObject.clear(cb)
+
+> Reset the qlobber.
+
+Removes all topic matchers from the qlobber.
+
+**Parameters:**
+
+- `{Function} cb` Called when the qlobber has been reset.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
