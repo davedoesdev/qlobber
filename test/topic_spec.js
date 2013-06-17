@@ -2,6 +2,7 @@
           rabbitmq_bindings_to_remove : false,
           rabbitmq_expected_results_before_remove: false,
           rabbitmq_expected_results_after_remove : false,
+          rabbitmq_expected_results_after_remove_all : false,
           rabbitmq_expected_results_after_clear : false,
           describe: false,
           beforeEach: false,
@@ -148,6 +149,7 @@ describe('qlobber', function ()
 
                 async.each(rabbitmq_expected_results_after_remove_all, function (test, cb)
                 {
+                    /*jslint unparam: true */
                     matcher.match(test[0], function (err, vals)
                     {
                         expect(vals, test[0]).to.eql(test[1].sort());
