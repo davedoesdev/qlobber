@@ -7,13 +7,8 @@ Example:
 ```javascript
 Qlobber = require('qlobber').Qlobber;
 matcher = new Qlobber();
-matcher.add('foo.*', 'it matched!', function ()
-{
-    matcher.match('foo.bar', function (err, vals)
-    {
-        assert.deepEqual(vals, ['it matched!']);
-    });
-});
+matcher.add('foo.*', 'it matched!');
+assert.deepEqual(matcher.match('foo.bar'), ['it matched!']);
 ```
 
 The API is described [here](#tableofcontents).
@@ -31,34 +26,27 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 
 ```javascript
-async.parallel(
-    [matcher.add.bind(matcher, '*.orange.*', 'Q1'),
-     matcher.add.bind(matcher, '*.*.rabbit', 'Q2'),
-     matcher.add.bind(matcher, 'lazy.#', 'Q2')],
-    async.mapSeries.bind(async,
-        ['quick.orange.rabbit',
-         'lazy.orange.elephant',
-         'quick.orange.fox',
-         'lazy.brown.fox',
-         'lazy.pink.rabbit',
-         'quick.brown.fox',
-         'orange',
-         'quick.orange.male.rabbit',
-         'lazy.orange.male.rabbit'],
-        matcher.match,
-        function (err, vals)
-        {
-            assert.deepEqual(vals,
-                [['Q1', 'Q2'],
-                 ['Q1', 'Q2'],
-                 ['Q1'],
-                 ['Q2'],
-                 ['Q2'],
-                 [],
-                 [],
-                 [],
-                 ['Q2']]);
-        }));
+matcher.add('*.orange.*', 'Q1');
+matcher.add('*.*.rabbit', 'Q2');
+matcher.add('lazy.#', 'Q2');
+assert.deepEqual(['quick.orange.rabbit',
+                  'lazy.orange.elephant',
+                  'quick.orange.fox',
+                  'lazy.brown.fox',
+                  'lazy.pink.rabbit',
+                  'quick.brown.fox',
+                  'orange',
+                  'quick.orange.male.rabbit',
+                  'lazy.orange.male.rabbit'].map(matcher.match),
+                 [['Q1', 'Q2'],
+                  ['Q1', 'Q2'],
+                  ['Q1'],
+                  ['Q2'],
+                  ['Q2'],
+                  [],
+                  [],
+                  [],
+                  ['Q2']]);
 ```
 
 ## Licence
@@ -88,10 +76,10 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 <a name="tableofcontents"></a>
 
 - <a name="toc_qlobberoptions"></a>[Qlobber](#qlobberoptions)
-- <a name="toc_qlobberobjectaddtopic-val-cb"></a><a name="toc_qlobberobject"></a>[QlobberObject.add](#qlobberobjectaddtopic-val-cb)
-- <a name="toc_qlobberobjectremovetopic-val-cb"></a>[QlobberObject.remove](#qlobberobjectremovetopic-val-cb)
-- <a name="toc_qlobberobjectmatchtopic-cb"></a>[QlobberObject.match](#qlobberobjectmatchtopic-cb)
-- <a name="toc_qlobberobjectclearcb"></a>[QlobberObject.clear](#qlobberobjectclearcb)
+- <a name="toc_qlobberobjectaddtopic-val"></a><a name="toc_qlobberobject"></a>[QlobberObject.add](#qlobberobjectaddtopic-val)
+- <a name="toc_qlobberobjectremovetopic-val"></a>[QlobberObject.remove](#qlobberobjectremovetopic-val)
+- <a name="toc_qlobberobjectmatchtopic"></a>[QlobberObject.match](#qlobberobjectmatchtopic)
+- <a name="toc_qlobberobjectclear"></a>[QlobberObject.clear](#qlobberobjectclear)
 
 # Qlobber([options])
 
@@ -114,7 +102,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
 <a name="qlobberobject"></a>
 
-# QlobberObject.add(topic, val, cb)
+# QlobberObject.add(topic, val)
 
 > Add a topic matcher to the qlobber.
 
@@ -124,11 +112,10 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 - `{String} topic` The topic to match against.
 - `{Any} val` The value to return if the topic is matched. `undefined` is not supported.
-- `{Function} cb` Called when the matcher has been added.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
-# QlobberObject.remove(topic, [val], cb)
+# QlobberObject.remove(topic, [val])
 
 > Remove a topic matcher from the qlobber.
 
@@ -136,34 +123,28 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 - `{String} topic` The topic that's being matched against.
 - `{Any} [val]` The value that's being matched. If you don't specify `val` then all matchers for `topic` are removed.
-- `{Function} cb` Called when the matcher has been removed.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
-# QlobberObject.match(topic, cb)
+# QlobberObject.match(topic)
 
 > Match a topic.
 
 **Parameters:**
 
 - `{String} topic` The topic to match against.
-- `{Function} cb` Called with two arguments when the match has completed:
 
+**Return:**
 
-  - `{Any} err` `null` or an error, if one occurred.
-  - `{Array} vals` List of values that matched the topic. `vals` will be sorted and have duplicates removed unless you configured [Qlobber](#qlobberoptions) otherwise.
+`{Array}` List of values that matched the topic. This will be sorted and have duplicates removed unless you configured [Qlobber](#qlobberoptions) otherwise.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
-# QlobberObject.clear(cb)
+# QlobberObject.clear()
 
 > Reset the qlobber.
 
 Removes all topic matchers from the qlobber.
-
-**Parameters:**
-
-- `{Function} cb` Called when the qlobber has been reset.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
 
