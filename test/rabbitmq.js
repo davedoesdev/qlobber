@@ -74,6 +74,24 @@ global.rabbitmq_expected_results_after_remove = [
     ["oneword",             ["t6", "t22", "t23", "t24", "t25"]]
 ];
 
+global.rabbitmq_expected_results_after_remove_all = [
+    ["a.b.c",               ["t2", "t6", "t10", "t12", "t18", "t22",
+                             "t23", "t24", "t26"]],
+    ["a.b",                 ["t3", "t6", "t7", "t8", "t9", "t12", "t15",
+                             "t22", "t23", "t24", "t26"]],
+    ["a.b.b",               ["t3", "t6", "t7", "t12", "t14", "t18", "t22",
+                             "t23", "t24", "t26"]],
+    ["",                    ["t6", "t17", "t24"]],
+    ["b.c.c",               ["t6", "t18", "t22", "t23", "t24", "t26"]],
+    ["a.a.a.a.a",           ["t6", "t12", "t22", "t23", "t24"]],
+    ["vodka.gin",           ["t6", "t8", "t22", "t23", "t24"]],
+    ["vodka.martini",       ["t6", "t8", "t22", "t23", "t24"]],
+    ["b.b.c",               ["t6", "t10", "t13", "t18", "t22", "t23",
+                             "t24", "t26"]],
+    ["nothing.here.at.all", ["t6", "t22", "t23", "t24"]],
+    ["oneword",             ["t6", "t22", "t23", "t24", "t25"]]
+];
+
 global.rabbitmq_expected_results_after_clear = [
     ["a.b.c", []],
     ["b.b.c", []],

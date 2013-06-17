@@ -135,6 +135,29 @@ describe('qlobber', function ()
         });
     });
 
+    it('should support removing all values for a topic', function (done)
+    {
+        add_bindings(rabbitmq_test_bindings, false, null, function ()
+        {
+            async.each(rabbitmq_bindings_to_remove, function (i, cb)
+            {
+                matcher.remove(rabbitmq_test_bindings[i-1][0], cb);
+            }, function ()
+            {
+                expect(matcher.get_trie()).to.eql({"a":{"b":{"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+
+                async.each(rabbitmq_expected_results_after_remove_all, function (test, cb)
+                {
+                    matcher.match(test[0], function (err, vals)
+                    {
+                        expect(vals, test[0]).to.eql(test[1].sort());
+                        cb();
+                    });
+                }, done);
+            });
+        });
+    });
+
     it('should support functions as values', function (done)
     {
         matcher = new qlobber.Qlobber(
