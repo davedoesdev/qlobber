@@ -19,7 +19,7 @@ describe('qlobber', function ()
 
     beforeEach(function (done)
     {
-        matcher = new qlobber.Qlobber();
+        matcher = new qlobber.Qlobber({ remove_duplicates: true });
         done();
     });
 
@@ -46,7 +46,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_before_remove.forEach(function (test)
         {
-            expect(matcher.match(test[0]), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -64,7 +64,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_remove.forEach(function (test)
         {
-            expect(matcher.match(test[0]), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
         });
         
         /*jslint unparam: true */
@@ -83,7 +83,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
-            expect(matcher.match(test[0]), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -95,7 +95,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
-            expect(matcher.match(test[0]), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -112,30 +112,18 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_remove_all.forEach(function (test)
         {
-            expect(matcher.match(test[0]), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
         });
     });
 
     it('should support functions as values', function ()
     {
-        matcher = new qlobber.Qlobber(
-        {
-            compare: function (f1, f2)
-            {
-                return f1.topic < f2.topic ? -1 : f1.topic > f2.topic ? 1 : 0;
-            }
-        });
-
         add_bindings(rabbitmq_test_bindings, function (topic)
         {
-            var f = function ()
+            return function ()
             {
                 return topic;
             };
-
-            f.topic = topic;
-
-            return f;
         });
 
         rabbitmq_expected_results_before_remove.forEach(function (test)
@@ -143,7 +131,7 @@ describe('qlobber', function ()
             expect(matcher.match(test[0], test[0]).map(function (f)
             {
                 return f();
-            })).to.eql(test[1].sort());
+            }).sort()).to.eql(test[1].sort());
         });
     });
 
@@ -166,7 +154,10 @@ describe('qlobber', function ()
                 'quick.brown.fox',
                 'orange',
                 'quick.orange.male.rabbit',
-                'lazy.orange.male.rabbit'].map(matcher.match)).to.eql(
+                'lazy.orange.male.rabbit'].map(function (topic)
+                {
+                    return matcher.match(topic).sort();
+                })).to.eql(
                [['Q1', 'Q2'],
                 ['Q1', 'Q2'],
                 ['Q1'],

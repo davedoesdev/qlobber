@@ -26,6 +26,7 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 
 ```javascript
+matcher = new Qlobber({ remove_duplicates: true });
 matcher.add('*.orange.*', 'Q1');
 matcher.add('*.*.rabbit', 'Q2');
 matcher.add('lazy.#', 'Q2');
@@ -37,7 +38,10 @@ assert.deepEqual(['quick.orange.rabbit',
                   'quick.brown.fox',
                   'orange',
                   'quick.orange.male.rabbit',
-                  'lazy.orange.male.rabbit'].map(matcher.match),
+                  'lazy.orange.male.rabbit'].map(function (topic)
+                  {
+                      return matcher.match(topic).sort();
+                  }),
                  [['Q1', 'Q2'],
                   ['Q1', 'Q2'],
                   ['Q1'],
@@ -76,10 +80,10 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 <a name="tableofcontents"></a>
 
 - <a name="toc_qlobberoptions"></a>[Qlobber](#qlobberoptions)
-- <a name="toc_qlobberobjectaddtopic-val"></a><a name="toc_qlobberobject"></a>[QlobberObject.add](#qlobberobjectaddtopic-val)
-- <a name="toc_qlobberobjectremovetopic-val"></a>[QlobberObject.remove](#qlobberobjectremovetopic-val)
-- <a name="toc_qlobberobjectmatchtopic"></a>[QlobberObject.match](#qlobberobjectmatchtopic)
-- <a name="toc_qlobberobjectclear"></a>[QlobberObject.clear](#qlobberobjectclear)
+- <a name="toc_qlobberprototypeaddtopic-val"></a><a name="toc_qlobberprototype"></a>[Qlobber.prototype.add](#qlobberprototypeaddtopic-val)
+- <a name="toc_qlobberprototyperemovetopic-val"></a>[Qlobber.prototype.remove](#qlobberprototyperemovetopic-val)
+- <a name="toc_qlobberprototypematchtopic"></a>[Qlobber.prototype.match](#qlobberprototypematchtopic)
+- <a name="toc_qlobberprototypeclear"></a>[Qlobber.prototype.clear](#qlobberprototypeclear)
 
 # Qlobber([options])
 
@@ -87,7 +91,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
 **Parameters:**
 
-- `{Object} [options]` Configures the globber. Use the following properties:
+- `{Object} [options]` Configures the qlobber. Use the following properties:
 
 
   - `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
@@ -96,13 +100,13 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
   - `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
 
-  - `{String | false} compare` The function to use for sorting matches in order to remove duplicates. Defaults to lexicographical string compare. Specify `false` to turn off duplicate removal. If you store values other than strings in qlobber, pass in your own compare function.
+  - `{Boolean} remove_duplicates` qlobber's matching algorithm means values may be returned twice. Specify `true` to have qlobber remove duplicates from its results. Note this will incur a performance penalty. Defaults to `false`.
 
 <sub>Go: [TOC](#tableofcontents)</sub>
 
-<a name="qlobberobject"></a>
+<a name="qlobberprototype"></a>
 
-# QlobberObject.add(topic, val)
+# Qlobber.prototype.add(topic, val)
 
 > Add a topic matcher to the qlobber.
 
@@ -113,9 +117,9 @@ Note you can match more than one value against a topic by calling `add` multiple
 - `{String} topic` The topic to match against.
 - `{Any} val` The value to return if the topic is matched. `undefined` is not supported.
 
-<sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# QlobberObject.remove(topic, [val])
+# Qlobber.prototype.remove(topic, [val])
 
 > Remove a topic matcher from the qlobber.
 
@@ -124,9 +128,9 @@ Note you can match more than one value against a topic by calling `add` multiple
 - `{String} topic` The topic that's being matched against.
 - `{Any} [val]` The value that's being matched. If you don't specify `val` then all matchers for `topic` are removed.
 
-<sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# QlobberObject.match(topic)
+# Qlobber.prototype.match(topic)
 
 > Match a topic.
 
@@ -136,16 +140,16 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 **Return:**
 
-`{Array}` List of values that matched the topic. This will be sorted and have duplicates removed unless you configured [Qlobber](#qlobberoptions) otherwise.
+`{Array}` List of values that matched the topic. This may contain duplicates unless you configured [Qlobber](#qlobberoptions) otherwise.
 
-<sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# QlobberObject.clear()
+# Qlobber.prototype.clear()
 
 > Reset the qlobber.
 
 Removes all topic matchers from the qlobber.
 
-<sub>Go: [TOC](#tableofcontents) | [QlobberObject](#toc_qlobberobject)</sub>
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
 _&mdash;generated by [apidox](https://github.com/codeactual/apidox)&mdash;_
