@@ -33,6 +33,16 @@ describe('qlobber', function ()
         });
     }
 
+    function remove_duplicates_filter(item, index, arr)
+    {
+        return item !== arr[index - 1];
+    }
+
+    Array.prototype.remove_duplicates = function ()
+    {
+        return this.sort().filter(remove_duplicates_filter);
+    };
+
     it('should support adding bindings', function ()
     {
         add_bindings(rabbitmq_test_bindings);
@@ -46,7 +56,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_before_remove.forEach(function (test)
         {
-            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -64,7 +74,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_remove.forEach(function (test)
         {
-            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
         });
         
         /*jslint unparam: true */
@@ -83,7 +93,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
-            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -95,7 +105,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
-            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -112,7 +122,7 @@ describe('qlobber', function ()
 
         rabbitmq_expected_results_after_remove_all.forEach(function (test)
         {
-            expect(matcher.match(test[0]).sort(), test[0]).to.eql(test[1].sort());
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
         });
     });
 
@@ -131,7 +141,7 @@ describe('qlobber', function ()
             expect(matcher.match(test[0], test[0]).map(function (f)
             {
                 return f();
-            }).sort()).to.eql(test[1].sort());
+            }).remove_duplicates()).to.eql(test[1].sort());
         });
     });
 
@@ -162,7 +172,7 @@ describe('qlobber', function ()
                 ['Q1', 'Q2'],
                 ['Q1'],
                 ['Q2'],
-                ['Q2'],
+                ['Q2', 'Q2'],
                 [],
                 [],
                 [],

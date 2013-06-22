@@ -5,8 +5,8 @@ Node.js globbing for amqp-like topics.
 Example:
 
 ```javascript
-Qlobber = require('qlobber').Qlobber;
-matcher = new Qlobber();
+var Qlobber = require('qlobber').Qlobber;
+var matcher = new Qlobber();
 matcher.add('foo.*', 'it matched!');
 assert.deepEqual(matcher.match('foo.bar'), ['it matched!']);
 ```
@@ -26,7 +26,7 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 
 ```javascript
-matcher = new Qlobber({ remove_duplicates: true });
+var matcher = new Qlobber({ remove_duplicates: true });
 matcher.add('*.orange.*', 'Q1');
 matcher.add('*.*.rabbit', 'Q2');
 matcher.add('lazy.#', 'Q2');
@@ -46,7 +46,7 @@ assert.deepEqual(['quick.orange.rabbit',
                   ['Q1', 'Q2'],
                   ['Q1'],
                   ['Q2'],
-                  ['Q2'],
+                  ['Q2', 'Q2'],
                   [],
                   [],
                   [],
@@ -100,8 +100,6 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
   - `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
 
-  - `{Boolean} remove_duplicates` qlobber's matching algorithm means values may be returned twice. Specify `true` to have qlobber remove duplicates from its results. Note this will incur a performance penalty. Defaults to `false`.
-
 <sub>Go: [TOC](#tableofcontents)</sub>
 
 <a name="qlobberprototype"></a>
@@ -140,7 +138,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 **Return:**
 
-`{Array}` List of values that matched the topic. This may contain duplicates unless you configured [Qlobber](#qlobberoptions) otherwise.
+`{Array}` List of values that matched the topic. This may contain duplicates if more than one matcher matches the topic with the same value.
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
