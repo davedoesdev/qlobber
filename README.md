@@ -73,6 +73,14 @@ grunt test
 grunt lint
 ```
 
+## Code Coverage
+
+```javascript
+grunt coverage
+```
+
+Current results are available [here](http://htmlpreview.github.io/?https://github.com/davedoesdev/qlobber/blob/master/coverage/lcov-report/index.html).
+
 # API
 
 _Source: [lib/qlobber.js](lib/qlobber.js)_
