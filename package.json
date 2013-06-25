@@ -1,7 +1,7 @@
 {
   "name": "qlobber",
   "description": "Node.js globbing for amqp-like topics",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "https://github.com/davedoesdev/qlobber",
   "author": {
     "name": "David Halls",
@@ -42,6 +42,8 @@
     "grunt-jslint": "~0.2.6",
     "grunt-cafe-mocha": "~0.1.5",
     "grunt-apidox": "~0.0.1",
-    "chai": "~1.6.1"
+    "chai": "~1.6.1",
+    "istanbul": "~0.1.37",
+    "grunt-exec": "~0.4.2"
   }
 }

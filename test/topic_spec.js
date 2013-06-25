@@ -19,7 +19,7 @@ describe('qlobber', function ()
 
     beforeEach(function (done)
     {
-        matcher = new qlobber.Qlobber({ remove_duplicates: true });
+        matcher = new qlobber.Qlobber();
         done();
     });
 
@@ -177,6 +177,38 @@ describe('qlobber', function ()
                 [],
                 [],
                 ['Q2']]);
+    });
+
+    it('should not remove anything if not previously added', function ()
+    {
+        matcher.add('foo.*', 'it matched!');
+        matcher.remove('foo');
+        matcher.remove('foo.*', 'something');
+        matcher.remove('bar.*');
+        expect(matcher.match('foo.bar')).to.eql(['it matched!']);
+    });
+
+    it('should accept wildcards in match topics', function ()
+    {
+        matcher.add('foo.*', 'it matched!');
+        matcher.add('foo.#', 'it matched too!');
+        expect(matcher.match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
+        expect(matcher.match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
+    });
+
+    it('should be configurable', function ()
+    {
+        matcher = new qlobber.Qlobber({
+            separator: '/',
+            wildcard_one: '+',
+            wildcard_some: 'M'
+        });
+
+        matcher.add('foo/+', 'it matched!');
+        matcher.add('foo/M', 'it matched too!');
+        expect(matcher.match('foo/bar').sort()).to.eql(['it matched too!', 'it matched!']);
+        expect(matcher.match('foo/bar/end').sort()).to.eql(['it matched too!']);
+
     });
 });
 
