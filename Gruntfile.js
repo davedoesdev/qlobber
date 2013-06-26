@@ -29,6 +29,10 @@ module.exports = function (grunt)
 
             check_cover: {
                 cmd: './node_modules/.bin/istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100'
+            },
+
+            coveralls: {
+                cmd: 'cat coverage/lcov.info | coveralls'
             }
         }
     });
@@ -42,5 +46,6 @@ module.exports = function (grunt)
     grunt.registerTask('test', 'cafemocha');
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover', 'exec:check_cover']);
+    grunt.registerTask('coveralls', 'exec:coveralls');
     grunt.registerTask('default', ['jslint', 'cafemocha']);
 };
