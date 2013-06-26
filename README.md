@@ -79,7 +79,9 @@ grunt lint
 grunt coverage
 ```
 
-Current results are available [here](http://htmlpreview.github.io/?https://github.com/davedoesdev/qlobber/blob/master/coverage/lcov-report/index.html).
+[Instanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://htmlpreview.github.io/?https://github.com/davedoesdev/qlobber/blob/master/coverage/lcov-report/index.html).
+
+Coveralls page is [here](https://coveralls.io/r/davedoesdev/qlobber).
 
 # API
 
