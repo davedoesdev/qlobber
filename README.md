@@ -26,7 +26,7 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 
 ```javascript
-var matcher = new Qlobber({ remove_duplicates: true });
+var matcher = new Qlobber();
 matcher.add('*.orange.*', 'Q1');
 matcher.add('*.*.rabbit', 'Q2');
 matcher.add('lazy.#', 'Q2');
@@ -125,6 +125,10 @@ Note you can match more than one value against a topic by calling `add` multiple
 - `{String} topic` The topic to match against.
 - `{Any} val` The value to return if the topic is matched. `undefined` is not supported.
 
+**Return:**
+
+`{Qlobber}` The qlobber (for chaining).
+
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
 # Qlobber.prototype.remove(topic, [val])
@@ -135,6 +139,10 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 - `{String} topic` The topic that's being matched against.
 - `{Any} [val]` The value that's being matched. If you don't specify `val` then all matchers for `topic` are removed.
+
+**Return:**
+
+`{Qlobber}` The qlobber (for chaining).
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
@@ -148,7 +156,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 **Return:**
 
-`{Array}` List of values that matched the topic. This may contain duplicates if more than one matcher matches the topic with the same value.
+`{Array}` List of values that matched the topic. This may contain duplicates.
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
@@ -157,6 +165,10 @@ Note you can match more than one value against a topic by calling `add` multiple
 > Reset the qlobber.
 
 Removes all topic matchers from the qlobber.
+
+**Return:**
+
+`{Qlobber}` The qlobber (for chaining).
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
