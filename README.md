@@ -83,6 +83,14 @@ grunt coverage
 
 Coveralls page is [here](https://coveralls.io/r/davedoesdev/qlobber).
 
+## Benchmarks
+
+```javascript
+grunt bench
+```
+
+qlobber is also benchmarked in [ascoltatori](https://github.com/mcollina/ascoltatori).
+
 # API
 
 _Source: [lib/qlobber.js](lib/qlobber.js)_

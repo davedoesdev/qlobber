@@ -6,7 +6,7 @@ module.exports = function (grunt)
     grunt.initConfig(
     {
         jslint: {
-            files: [ 'Gruntfile.js', 'index.js', 'test/*.js' ],
+            files: [ 'Gruntfile.js', 'index.js', 'test/*.js', 'bench/**/*.js' ],
             directives: {
                 white: true
             }
@@ -33,8 +33,16 @@ module.exports = function (grunt)
 
             coveralls: {
                 cmd: 'cat coverage/lcov.info | coveralls'
+            },
+
+            bench: {
+                cmd: './node_modules/.bin/bench -c 10000 -i bench/options/default.js -k options'
+            },
+
+            'bench-check': {
+                cmd: './node_modules/.bin/bench -c 10000 -i bench/options/check.js -k options'
             }
-        }
+        },
     });
     
     grunt.loadNpmTasks('grunt-jslint');
@@ -47,5 +55,7 @@ module.exports = function (grunt)
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover', 'exec:check_cover']);
     grunt.registerTask('coveralls', 'exec:coveralls');
+    grunt.registerTask('bench', 'exec:bench');
+    grunt.registerTask('bench-check', 'exec:bench-check');
     grunt.registerTask('default', ['jslint', 'cafemocha']);
 };

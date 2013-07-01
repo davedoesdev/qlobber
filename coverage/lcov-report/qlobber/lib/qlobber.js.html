@@ -183,7 +183,7 @@
     <h1>Code coverage report for <span class="entity">qlobber/lib/qlobber.js</span></h1>
     <h2>
         
-        Statements: <span class="metric">100% <small>(78 / 78)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Statements: <span class="metric">100% <small>(81 / 81)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
         
         
         Branches: <span class="metric">100% <small>(46 / 46)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
@@ -192,7 +192,7 @@
         Functions: <span class="metric">100% <small>(9 / 9)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
         
         
-        Lines: <span class="metric">100% <small>(78 / 78)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
+        Lines: <span class="metric">100% <small>(81 / 81)</small></span> &nbsp;&nbsp;&nbsp;&nbsp;
         
     </h2>
     <div class="path"><a href="../../index.html">All files</a> &#187; <a href="index.html">qlobber/lib/</a> &#187; qlobber.js</div>
@@ -516,7 +516,34 @@
 315
 316
 317
-318</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335</td><td class="line-coverage"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -783,9 +810,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">165</span>
+<span class="cline-any cline-yes">165</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -801,6 +831,7 @@
 <span class="cline-any cline-yes">7</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">34</span>
 <span class="cline-any cline-yes">34</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -820,8 +851,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -834,7 +868,7 @@
 <span class="cline-any cline-yes">1</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
-# qlobber&amp;nbsp;&amp;nbsp;&amp;nbsp;[![Build Status](https://travis-ci.org/davedoesdev/qlobber.png)](https://travis-ci.org/davedoesdev/qlobber)
+# qlobber&amp;nbsp;&amp;nbsp;&amp;nbsp;[![Build Status](https://travis-ci.org/davedoesdev/qlobber.png)](https://travis-ci.org/davedoesdev/qlobber) [![Coverage Status](https://coveralls.io/repos/davedoesdev/qlobber/badge.png?branch=master)](https://coveralls.io/r/davedoesdev/qlobber?branch=master)
 &nbsp;
 Node.js globbing for amqp-like topics.
 &nbsp;
@@ -862,7 +896,7 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 &nbsp;
 ```javascript
-var matcher = new Qlobber({ remove_duplicates: true });
+var matcher = new Qlobber();
 matcher.add('*.orange.*', 'Q1');
 matcher.add('*.*.rabbit', 'Q2');
 matcher.add('lazy.#', 'Q2');
@@ -915,7 +949,17 @@ grunt lint
 grunt coverage
 ```
 &nbsp;
-Current results are available [here](http://htmlpreview.github.io/?https://github.com/davedoesdev/qlobber/blob/master/coverage/lcov-report/index.html).
+[Instanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://htmlpreview.github.io/?https://github.com/davedoesdev/qlobber/blob/master/coverage/lcov-report/index.html).
+&nbsp;
+Coveralls page is [here](https://coveralls.io/r/davedoesdev/qlobber).
+&nbsp;
+## Benchmarks
+&nbsp;
+```javascript
+grunt bench
+```
+&nbsp;
+qlobber is also benchmarked in [ascoltatori](https://github.com/mcollina/ascoltatori).
 &nbsp;
 # API
 */
@@ -1099,10 +1143,12 @@ Note you can match more than one value against a topic by calling `add` multiple
 &nbsp;
 @param {String} topic The topic to match against.
 @param {Any} val The value to return if the topic is matched. `undefined` is not supported.
+@return {Qlobber} The qlobber (for chaining).
 */
 Qlobber.prototype.add = function (topic, val)
 {
     this._add(val, 0, topic.split(this._separator), this._trie);
+    return this;
 };
 &nbsp;
 /**
@@ -1110,6 +1156,7 @@ Remove a topic matcher from the qlobber.
 &nbsp;
 @param {String} topic The topic that's being matched against.
 @param {Any} [val] The value that's being matched. If you don't specify `val` then all matchers for `topic` are removed.
+@return {Qlobber} The qlobber (for chaining).
 */
 Qlobber.prototype.remove = function (topic, val)
 {
@@ -1119,13 +1166,14 @@ Qlobber.prototype.remove = function (topic, val)
     }
 &nbsp;
     this._remove(val, 0, topic.split(this._separator), this._trie);
+    return this;
 };
 &nbsp;
 /**
 Match a topic.
 &nbsp;
 @param {String} topic The topic to match against.
-@return {Array} List of values that matched the topic. This may contain duplicates if more than one matcher matches the topic with the same value.
+@return {Array} List of values that matched the topic. This may contain duplicates.
 */
 Qlobber.prototype.match = function (topic)
 {
@@ -1136,10 +1184,13 @@ Qlobber.prototype.match = function (topic)
 Reset the qlobber.
 &nbsp;
 Removes all topic matchers from the qlobber.
+&nbsp;
+@return {Qlobber} The qlobber (for chaining).
 */
 Qlobber.prototype.clear = function ()
 {
     this._trie = {};
+    return this;
 };
 &nbsp;
 // for debugging
@@ -1155,7 +1206,7 @@ exports.Qlobber = Qlobber;
 
 </div>
 <div class="footer">
-    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Jun 25 2013 09:23:59 GMT+0100 (BST)</div>
+    <div class="meta">Generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Mon Jul 01 2013 23:08:09 GMT+0100 (BST)</div>
 </div>
 
 <script src="../../prettify.js"></script>
