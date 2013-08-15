@@ -103,7 +103,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobberprototypematchtopic"></a>[Qlobber.prototype.match](#qlobberprototypematchtopic)
 - <a name="toc_qlobberprototypeclear"></a>[Qlobber.prototype.clear](#qlobberprototypeclear)
 
-# Qlobber([options])
+## Qlobber([options])
 
 > Creates a new qlobber.
 
@@ -122,7 +122,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
 <a name="qlobberprototype"></a>
 
-# Qlobber.prototype.add(topic, val)
+## Qlobber.prototype.add(topic, val)
 
 > Add a topic matcher to the qlobber.
 
@@ -139,7 +139,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# Qlobber.prototype.remove(topic, [val])
+## Qlobber.prototype.remove(topic, [val])
 
 > Remove a topic matcher from the qlobber.
 
@@ -154,7 +154,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# Qlobber.prototype.match(topic)
+## Qlobber.prototype.match(topic)
 
 > Match a topic.
 
@@ -168,7 +168,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-# Qlobber.prototype.clear()
+## Qlobber.prototype.clear()
 
 > Reset the qlobber.
 

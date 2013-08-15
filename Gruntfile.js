@@ -54,7 +54,8 @@ module.exports = function (grunt)
         apidox: {
             input: 'lib/qlobber.js',
             output: 'README.md',
-            fullSourceDescription: true
+            fullSourceDescription: true,
+            extraHeadingLevels: 1
         },
 
         exec: {
