@@ -1,7 +1,7 @@
 {
   "name": "qlobber",
   "description": "Node.js globbing for amqp-like topics",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "homepage": "https://github.com/davedoesdev/qlobber",
   "author": {
     "name": "David Halls",
@@ -34,7 +34,7 @@
     "amqp",
     "mqtt",
     "rabbitmq",
-    "socket-hub",
+    "cybertron",
     "ascoltatore"
   ],
   "devDependencies": {
