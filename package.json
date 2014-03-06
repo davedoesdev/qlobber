@@ -1,7 +1,7 @@
 {
   "name": "qlobber",
   "description": "Node.js globbing for amqp-like topics",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "homepage": "https://github.com/davedoesdev/qlobber",
   "author": {
     "name": "David Halls",
@@ -47,6 +47,6 @@
     "istanbul": "~0.1.37",
     "grunt-exec": "~0.4.2",
     "coveralls": "~2.0.16",
-    "b": "git://github.com/vesln/b.git"
+    "b": "git://github.com/davedoesdev/b.git"
   }
 }
