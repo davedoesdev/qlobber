@@ -5,10 +5,10 @@
 // for empty object using iteration _should_ be quicker than getting all the
 // keys, at least when V8 implements iteration properly).
 
-var reports = require('./node_modules/grunt-jslint/lib/reports'),
-    orig_standard = reports.standard;
+var reporters = require('./node_modules/grunt-jslint/lib/reporters'),
+    orig_standard = reporters.standard;
 
-reports.standard = function (report)
+reporters.standard = function (report)
 {
     var errors = report.files['lib/qlobber.js'], i;
 
@@ -33,17 +33,19 @@ reports.standard = function (report)
 };
 
 // HACK! Bump code coverage for the hack above!
-reports.standard({ files: { 'lib/qlobber.js': [{ code: 'strange_loop'}] }});
-reports.standard({ files: { 'lib/qlobber.js': [{ code: 'foo' }, { code: 'strange_loop' }] }});
+reporters.standard({ files: { 'lib/qlobber.js': [{ code: 'strange_loop'}] }});
+reporters.standard({ files: { 'lib/qlobber.js': [{ code: 'foo' }, { code: 'strange_loop' }] }});
 
 module.exports = function (grunt)
 {
     grunt.initConfig(
     {
         jslint: {
-            files: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'test/*.js', 'bench/**/*.js' ],
-            directives: {
-                white: true
+            all: {
+                src: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'test/*.js', 'bench/**/*.js' ],
+                directives: {
+                    white: true
+                }
             }
         },
 
@@ -86,7 +88,7 @@ module.exports = function (grunt)
     grunt.loadNpmTasks('grunt-apidox');
     grunt.loadNpmTasks('grunt-exec');
 
-    grunt.registerTask('lint', 'jslint');
+    grunt.registerTask('lint', 'jslint:all');
     grunt.registerTask('test', 'cafemocha');
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover', 'exec:check_cover']);
