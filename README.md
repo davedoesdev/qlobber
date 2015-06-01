@@ -79,7 +79,7 @@ grunt lint
 grunt coverage
 ```
 
-[Instanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://githubraw.herokuapp.com/davedoesdev/qlobber/master/coverage/lcov-report/index.html).
+[Instanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://rawgit.davedoesdev.com/davedoesdev/qlobber/master/coverage/lcov-report/index.html).
 
 Coveralls page is [here](https://coveralls.io/r/davedoesdev/qlobber).
 
@@ -109,9 +109,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
 **Parameters:**
 
-- `{Object} [options]` Configures the qlobber. Use the following properties:
-
-
+- `{Object} [options]` Configures the qlobber. Use the following properties: 
   - `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
 
   - `{String} wildcard_one` The character to use for matching exactly one word in a topic. Defaults to '*'. MQTT uses '+', for example.
