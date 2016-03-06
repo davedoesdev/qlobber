@@ -37,11 +37,11 @@
     "grunt-cli": "~0.1.13",
     "grunt-jslint": "~1.1.14",
     "grunt-cafe-mocha": "~0.1.13",
-    "grunt-apidox": "~0.1.6",
-    "chai": "~2.3.0",
-    "istanbul": "~0.3.14",
+    "grunt-apidox": "~0.1.8",
+    "chai": "~3.5.0",
+    "istanbul": "~0.4.2",
     "grunt-exec": "~0.4.6",
-    "coveralls": "~2.11.2",
+    "coveralls": "~2.11.8",
     "b": "git://github.com/davedoesdev/b.git"
   }
 }

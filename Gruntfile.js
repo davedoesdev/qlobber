@@ -74,11 +74,15 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 10000 -i bench/options/default.js -k options'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js -k options bench/add_match_remove bench/match'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 10000 -i bench/options/check.js -k options'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js -k options bench/add_match_remove bench/match'
+            },
+
+            'bench-add-many': {
+                cmd: './node_modules/.bin/bench -c 1 bench/add_many.js'
             }
         }
     });
@@ -95,5 +99,6 @@ module.exports = function (grunt)
     grunt.registerTask('coveralls', 'exec:coveralls');
     grunt.registerTask('bench', 'exec:bench');
     grunt.registerTask('bench-check', 'exec:bench-check');
+    grunt.registerTask('bench-add-many', 'exec:bench-add-many');
     grunt.registerTask('default', ['jslint', 'cafemocha']);
 };
