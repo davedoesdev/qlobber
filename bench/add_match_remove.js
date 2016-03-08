@@ -1,12 +1,12 @@
+/*globals options: false */
 /*jslint node: true */
 "use strict";
 
-var Qlobber = require('..').Qlobber,
-    common = require('./common');
+var common = require('./common');
 
 module.exports = function ()
 {
-    var matcher = new Qlobber();
+    var matcher = new options.Matcher();
 
     common.add_bindings(matcher);
     common.match(matcher);

@@ -3,6 +3,6 @@
 var qlobber = require('../..');
 
 module.exports = {
-    Matcher: qlobber.Qlobber,
+    Matcher: qlobber.QlobberDedup,
     check: false
 };

@@ -74,15 +74,19 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js -k options bench/add_match_remove bench/match'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_match_remove bench/match'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js -k options bench/add_match_remove bench/match'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js -k options bench/add_match_remove bench/match'
             },
 
             'bench-add-many': {
-                cmd: './node_modules/.bin/bench -c 1 bench/add_many.js'
+                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_many.js'
+            },
+
+            'bench-match-many': {
+                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/match_many.js'
             }
         }
     });
@@ -97,8 +101,11 @@ module.exports = function (grunt)
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover', 'exec:check_cover']);
     grunt.registerTask('coveralls', 'exec:coveralls');
-    grunt.registerTask('bench', 'exec:bench');
+    grunt.registerTask('bench', ['exec:bench',
+                                 'exec:bench-add-many',
+                                 'exec:bench-match-many']);
     grunt.registerTask('bench-check', 'exec:bench-check');
     grunt.registerTask('bench-add-many', 'exec:bench-add-many');
+    grunt.registerTask('bench-match-many', 'exec:bench-match-many');
     grunt.registerTask('default', ['jslint', 'cafemocha']);
 };

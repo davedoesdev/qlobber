@@ -3,7 +3,8 @@
 "use strict";
 
 var qlobber = require('..'),
-    util = require("util");
+    util = require("util"),
+    common = require('./common');
 
 module.exports = function ()
 {
@@ -11,18 +12,21 @@ module.exports = function ()
     {
         separator: "/",
         wildcard_one: "+"
-    }), i, j;
+    }), i, j, vals;
 
     for (i = 0; i < 60000; i += 1)
     {
-        for (j = 0; j < 5; j += 1)
+        for (j = 0; j < 100; j += 1)
         {
-            if (options.Matcher === qlobber.Qlobber)
-            {
-                // mosca pre-dedup checks whether already added
-                matcher.match('app/test/user/behrad/testTopic-' + j).indexOf(i);
-            }
             matcher.add('app/test/user/behrad/testTopic-' + j, i);
         }
+        matcher.add('app/test/user/behrad/+', i);
+    }
+    
+    vals = matcher.match('app/test/user/behrad/testTopic-0');
+
+    if (options.Matcher === qlobber.Qlobber)
+    {
+        common.remove_duplicates(vals);
     }
 };
