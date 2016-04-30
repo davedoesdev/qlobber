@@ -1,55 +1,18 @@
 /*jslint node: true */
 "use strict";
 
-// HACK! Allow one strange_loop in qlobber for performance reasons (checking
-// for empty object using iteration _should_ be quicker than getting all the
-// keys, at least when V8 implements iteration properly).
-
-var reporters = require('./node_modules/grunt-jslint/lib/reporters'),
-    orig_standard = reporters.standard;
-
-reporters.standard = function (report)
-{
-    var errors = report.files['lib/qlobber.js'], i;
-
-    for (i = 0; i < errors.length; i += 1)
-    {
-        if (errors[i].code === 'strange_loop')
-        {
-            errors.splice(i, 1);
-
-            report.failures -= 1;
-
-            if (errors.length === 0)
-            {
-                report.files_in_violation -= 1;
-            }
-
-            break;
-        }
-    }
-
-    return orig_standard.apply(this, arguments);
-};
-
-// HACK! Bump code coverage for the hack above!
-reporters.standard({ files: { 'lib/qlobber.js': [{ code: 'strange_loop'}] }});
-reporters.standard({ files: { 'lib/qlobber.js': [{ code: 'foo' }, { code: 'strange_loop' }] }});
-
 module.exports = function (grunt)
 {
     grunt.initConfig(
     {
-        jslint: {
-            all: {
-                src: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'test/*.js', 'bench/**/*.js' ],
-                directives: {
-                    white: true
-                }
+        jshint: {
+            all: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'test/*.js', 'bench/**/*.js' ],
+            options: {
+                esversion: 6
             }
         },
 
-        cafemocha: {
+        mochaTest: {
             src: 'test/*.js'
         },
 
@@ -60,52 +23,52 @@ module.exports = function (grunt)
             extraHeadingLevels: 1
         },
 
-        exec: {
+        shell: {
             cover: {
-                cmd: './node_modules/.bin/istanbul cover ./node_modules/.bin/grunt -- test'
+                command: './node_modules/.bin/istanbul cover ./node_modules/.bin/grunt -- test'
             },
 
             check_cover: {
-                cmd: './node_modules/.bin/istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100'
+                command: './node_modules/.bin/istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100'
             },
 
             coveralls: {
-                cmd: 'cat coverage/lcov.info | coveralls'
+                command: 'cat coverage/lcov.info | coveralls'
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_match_remove bench/match'
+                command: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_match_remove bench/match'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js -k options bench/add_match_remove bench/match'
+                command: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js -k options bench/add_match_remove bench/match'
             },
 
             'bench-add-many': {
-                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_many.js'
+                command: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/add_many.js'
             },
 
             'bench-match-many': {
-                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/match_many.js'
+                command: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js -k options bench/match_many.js'
             }
         }
     });
     
-    grunt.loadNpmTasks('grunt-jslint');
-    grunt.loadNpmTasks('grunt-cafe-mocha');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
+    grunt.loadNpmTasks('grunt-mocha-test');
     grunt.loadNpmTasks('grunt-apidox');
-    grunt.loadNpmTasks('grunt-exec');
+    grunt.loadNpmTasks('grunt-shell');
 
-    grunt.registerTask('lint', 'jslint:all');
-    grunt.registerTask('test', 'cafemocha');
+    grunt.registerTask('lint', 'jshint');
+    grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
-    grunt.registerTask('coverage', ['exec:cover', 'exec:check_cover']);
-    grunt.registerTask('coveralls', 'exec:coveralls');
-    grunt.registerTask('bench', ['exec:bench',
-                                 'exec:bench-add-many',
-                                 'exec:bench-match-many']);
-    grunt.registerTask('bench-check', 'exec:bench-check');
-    grunt.registerTask('bench-add-many', 'exec:bench-add-many');
-    grunt.registerTask('bench-match-many', 'exec:bench-match-many');
-    grunt.registerTask('default', ['jslint', 'cafemocha']);
+    grunt.registerTask('coverage', ['shell:cover', 'shell:check_cover']);
+    grunt.registerTask('coveralls', 'shell:coveralls');
+    grunt.registerTask('bench', ['shell:bench',
+                                 'shell:bench-add-many',
+                                 'shell:bench-match-many']);
+    grunt.registerTask('bench-check', 'shell:bench-check');
+    grunt.registerTask('bench-add-many', 'shell:bench-add-many');
+    grunt.registerTask('bench-match-many', 'shell:bench-match-many');
+    grunt.registerTask('default', ['jshint', 'mochaTest']);
 };

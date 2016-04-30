@@ -22,12 +22,12 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>117/117</span>
+        <span class='fraction'>116/116</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>49/49</span>
+        <span class='fraction'>51/51</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -37,7 +37,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>117/117</span>
+        <span class='fraction'>116/116</span>
       </div>
     </div>
   </div>
@@ -470,11 +470,7 @@
 425
 426
 427
-428
-429
-430
-431
-432</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+428</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -656,6 +652,7 @@
 <span class="cline-any cline-yes">3600814×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">429×</span>
+<span class="cline-any cline-yes">429×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3600814×</span>
@@ -689,14 +686,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">154×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">154×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">86×</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">68×</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1×</span>
@@ -705,7 +698,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1944×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2348×</span>
 <span class="cline-any cline-yes">2348×</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">520×</span>
@@ -1026,7 +1018,7 @@ function Qlobber (options)
     this._separator = options.separator || '.';
     this._wildcard_one = options.wildcard_one || '*';
     this._wildcard_some = options.wildcard_some || '#';
-    this._trie = {};
+    this._trie = new Map();
 }
 &nbsp;
 Qlobber.prototype._initial_value = function (val)
@@ -1067,7 +1059,7 @@ Qlobber.prototype._add = function (val, i, words, sub_trie)
 &nbsp;
     if (i === words.length)
     {
-        st = sub_trie[this._separator];
+        st = sub_trie.get(this._separator);
         
         if (st)
         {
@@ -1075,18 +1067,19 @@ Qlobber.prototype._add = function (val, i, words, sub_trie)
         }
         else
         {
-            sub_trie[this._separator] = this._initial_value(val);
+            sub_trie.set(this._separator, this._initial_value(val));
         }
         
         return;
     }
 &nbsp;
     word = words[i];
-    st = sub_trie[word];
+    st = sub_trie.get(word);
     
     if (!st)
     {
-        st = sub_trie[word] = {};
+        st = new Map();
+        sub_trie.set(word, st);
     }
     
     this._add(val, i + 1, words, st);
@@ -1098,20 +1091,20 @@ Qlobber.prototype._remove = function (val, i, words, sub_trie)
 &nbsp;
     if (i === words.length)
     {
-        st = sub_trie[this._separator];
+        st = sub_trie.get(this._separator);
 &nbsp;
         if (st &amp;&amp;
             ((val === undefined) ||
              this._remove_value(st, val)))
         {
-            delete sub_trie[this._separator];
+            sub_trie.delete(this._separator);
         }
 &nbsp;
         return;
     }
     
     word = words[i];
-    st = sub_trie[word];
+    st = sub_trie.get(word);
 &nbsp;
     if (!st)
     {
@@ -1120,23 +1113,18 @@ Qlobber.prototype._remove = function (val, i, words, sub_trie)
 &nbsp;
     this._remove(val, i + 1, words, st);
 &nbsp;
-    /*jslint forin: true */
-    for (word in st)
+    if (st.size === 0)
     {
-        return;
+        sub_trie.delete(word);
     }
-    /*jslint forin: false */
-&nbsp;
-    delete sub_trie[word];
 };
 &nbsp;
 Qlobber.prototype._some = function (v, i, words, st)
 {
-    var keys = Object.keys(st), j, w;
+    var j, w;
 &nbsp;
-    for (j = 0; j &lt; keys.length; j += 1)
+    for (w of st.keys())
     {
-        w = keys[j];
         if (w !== this._separator)
         {
             for (j = i; j &lt; words.length; j += 1)
@@ -1154,7 +1142,7 @@ Qlobber.prototype._match = function (v, i, words, sub_trie)
 {
     var word, st;
 &nbsp;
-    st = sub_trie[this._wildcard_some];
+    st = sub_trie.get(this._wildcard_some);
 &nbsp;
     if (st)
     {
@@ -1166,7 +1154,7 @@ Qlobber.prototype._match = function (v, i, words, sub_trie)
 &nbsp;
     if (i === words.length)
     {
-        st = sub_trie[this._separator];
+        st = sub_trie.get(this._separator);
 &nbsp;
         if (st)
         {
@@ -1193,7 +1181,7 @@ Qlobber.prototype._match = function (v, i, words, sub_trie)
 &nbsp;
         if ((word !== this._wildcard_one) &amp;&amp; (word !== this._wildcard_some))
         {
-            st = sub_trie[word];
+            st = sub_trie.get(word);
 &nbsp;
             if (st)
             {
@@ -1203,7 +1191,7 @@ Qlobber.prototype._match = function (v, i, words, sub_trie)
 &nbsp;
         if (word)
         {
-            st = sub_trie[this._wildcard_one];
+            st = sub_trie.get(this._wildcard_one);
 &nbsp;
             if (st)
             {
@@ -1273,7 +1261,7 @@ Removes all topic matchers from the qlobber.
 */
 Qlobber.prototype.clear = function ()
 {
-    this._trie = {};
+    this._trie = new Map();
     return this;
 };
 &nbsp;
@@ -1342,7 +1330,7 @@ exports.QlobberDedup = QlobberDedup;
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Tue Mar 08 2016 09:02:41 GMT+0000 (GMT)
+  generated by <a href="http://istanbul-js.org/" target="_blank">istanbul</a> at Sat Apr 30 2016 22:44:05 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../prettify.js"></script>
