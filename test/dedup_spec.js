@@ -50,19 +50,17 @@ describe('qlobber-dedup', function ()
     {
         t = t || matcher.get_trie();
         var k, r = {};
-        /*jslint forin: true */
-        for (k in t)
+        for (k of t.keys())
         {
             if (k === '.')
             {
-                r[k] = Array.from(t[k]);
+                r[k] = Array.from(t.get(k));
             }
             else
             {
-                r[k] = get_trie(matcher, t[k]);
+                r[k] = get_trie(matcher, t.get(k));
             }
         }
-        /*jslint forin: false */
         return r;
     }
 
