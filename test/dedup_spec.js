@@ -112,7 +112,7 @@ describe('qlobber-dedup', function ()
             matcher.remove(topic_val[0], topic_val[1]);
         });
             
-        expect(matcher.get_trie()).to.eql({});
+        expect(matcher.get_trie().size).to.equal(0);
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {

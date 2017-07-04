@@ -25,11 +25,15 @@ module.exports = function (grunt)
 
         shell: {
             cover: {
-                command: './node_modules/.bin/istanbul cover ./node_modules/.bin/grunt -- test'
+                command: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt test"
             },
 
-            check_cover: {
-                command: './node_modules/.bin/istanbul check-coverage --statement 100 --branch 100 --function 100 --line 100'
+            cover_report: {
+                command: './node_modules/.bin/nyc report -r lcov'
+            },
+
+            cover_check: {
+                command: './node_modules/.bin/nyc check-coverage --statements 100 --branches 100 --functions 100 --lines 100'
             },
 
             coveralls: {
@@ -62,7 +66,9 @@ module.exports = function (grunt)
     grunt.registerTask('lint', 'jshint');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
-    grunt.registerTask('coverage', ['shell:cover', 'shell:check_cover']);
+    grunt.registerTask('coverage', ['shell:cover',
+                                    'shell:cover_report',
+                                    'shell:cover_check']);
     grunt.registerTask('coveralls', 'shell:coveralls');
     grunt.registerTask('bench', ['shell:bench',
                                  'shell:bench-add-many',
