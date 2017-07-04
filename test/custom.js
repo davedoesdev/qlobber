@@ -54,7 +54,7 @@ describe('qlobber-custom', function ()
             ]));
         });
 
-        it('should dedup multiple values with same key', function ()
+        it('should dedup multiple values with same topic and same key', function ()
         {
             var matcher = new QosQlobber();
             matcher.add('foo.bar', { clientId: 'test1', qos: 10 });
@@ -64,7 +64,7 @@ describe('qlobber-custom', function ()
             ]));
         });
 
-        it('should keep not dedup multiple values with different keys', function ()
+        it('should not dedup multiple values with same topic and different keys', function ()
         {
             var matcher = new QosQlobber();
             matcher.add('foo.bar', { clientId: 'test1', qos: 10 });
@@ -72,6 +72,16 @@ describe('qlobber-custom', function ()
             expect(matcher.match('foo.bar')).to.eql(new Map([
                 [ 'test1', { clientId: 'test1', qos: 10 } ],
                 [ 'test2', { clientId: 'test2', qos: 20 } ]
+            ]));
+        });
+
+        it('should dedup multiple values with different topics and same key', function ()
+        {
+            var matcher = new QosQlobber();
+            matcher.add('foo.bar', { clientId: 'test1', qos: 10 });
+            matcher.add('foo.*', { clientId: 'test1', qos: 20 });
+            expect(matcher.match('foo.bar')).to.eql(new Map([
+                [ 'test1', { clientId: 'test1', qos: 20 } ]
             ]));
         });
     });
