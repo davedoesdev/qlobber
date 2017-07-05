@@ -7,6 +7,7 @@
 "use strict";
 
 var qlobber = require('../..');
+var MapValQlobber = require('../options/_mapval').MapValQlobber;
 var expect = require('chai').expect;
 require('../../test/rabbitmq.js');
 
@@ -53,6 +54,10 @@ exports.match = function(matcher)
             {
                 vals = Array.from(vals).sort();
             }
+            else if (options.Matcher === MapValQlobber)
+            {
+                vals = Array.from(vals.keys()).sort();
+            }
 
             expect(vals).to.eql(test[1].sort());
         }
@@ -76,13 +81,17 @@ exports.remove_bindings = function(matcher)
             test = rabbitmq_expected_results_after_remove[i];
             vals = matcher.match(test[0]);
             
-            if (options.Matcher === qlobber.Qlobber)
+            if (options.Matcher === qlobber.QlobberDedup)
             {
-                vals = remove_duplicates(vals);
+                vals = Array.from(vals).sort();
+            }
+            else if (options.Matcher === MapValQlobber)
+            {
+                vals = Array.from(vals.keys()).sort();
             }
             else
             {
-                vals = Array.from(vals).sort();
+                vals = remove_duplicates(vals);
             }
 
             expect(vals).to.eql(test[1].sort());
