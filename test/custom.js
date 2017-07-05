@@ -1,4 +1,4 @@
-/*jshint mocha: true */
+/*jshint node: true, mocha: true */
 "use strict";
 
 var util = require('util'),
