@@ -5,4 +5,5 @@ node_js:
   - 4
   - 6
   - 8
-script: npm run travis-test
+script:
+  - if [ $TRAVIS_NODE_VERSION = 6 ]; then npm run coverage; else npm run test; fi

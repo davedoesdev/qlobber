@@ -76,5 +76,5 @@ module.exports = function (grunt)
     grunt.registerTask('bench-check', 'exec:bench-check');
     grunt.registerTask('bench-add-many', 'exec:bench-add-many');
     grunt.registerTask('bench-match-many', 'exec:bench-match-many');
-    grunt.registerTask('default', ['jshint', 'mochaTest']);
+    grunt.registerTask('default', ['lint', 'test']);
 };
