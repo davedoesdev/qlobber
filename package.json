@@ -40,7 +40,7 @@
     "grunt-contrib-jshint": "~1.1.0",
     "grunt-mocha-test": "~0.13.2",
     "grunt-apidox": "~0.1.10",
-    "grunt-shell": "~2.1.0",
+    "grunt-exec": "~2.0.0",
     "mocha": "~3.4.2",
     "chai": "~4.0.2",
     "nyc": "~11.0.3",
