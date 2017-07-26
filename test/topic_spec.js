@@ -47,15 +47,15 @@ describe('qlobber', function ()
     {
         t = t || matcher.get_trie();
         var k, r = {};
-        for (k in t)
+        for (k of t.keys())
         {
             if (k === '.')
             {
-                r[k] = t[k];
+                r[k] = t.get(k);
             }
             else
             {
-                r[k] = get_trie(matcher, t[k]);
+                r[k] = get_trie(matcher, t.get(k));
             }
         }
         return r;
@@ -107,7 +107,7 @@ describe('qlobber', function ()
             matcher.remove(topic_val[0], topic_val[1]);
         });
             
-        expect(matcher.get_trie()).to.eql({});
+        expect(matcher.get_trie().size).to.equal(0);
 
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
