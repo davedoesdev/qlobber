@@ -41,11 +41,11 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_match_remove bench/match'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_match_remove bench/match bench/add'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add_match_remove bench/match'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add_match_remove bench/match bench/add'
             },
 
             'bench-add-many': {
