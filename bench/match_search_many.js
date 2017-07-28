@@ -58,7 +58,7 @@ module.exports = function ()
 
                 default:
                     vals = matcher_default.match('app/test/user/behrad/testTopic-' + j);
-                    assert(vals.indexOf(i) >= 0)
+                    assert(vals.indexOf(i) >= 0);
                     break;
             }
         }
