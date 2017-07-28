@@ -9,6 +9,7 @@ var Qlobber = require('qlobber').Qlobber;
 var matcher = new Qlobber();
 matcher.add('foo.*', 'it matched!');
 assert.deepEqual(matcher.match('foo.bar'), ['it matched!']);
+assert(matcher.test('foo.bar', 'it matched!'));
 ```
 
 The API is described [here](#tableofcontents).
@@ -101,9 +102,12 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobberprototypeaddtopic-val"></a><a name="toc_qlobberprototype"></a>[Qlobber.prototype.add](#qlobberprototypeaddtopic-val)
 - <a name="toc_qlobberprototyperemovetopic-val"></a>[Qlobber.prototype.remove](#qlobberprototyperemovetopic-val)
 - <a name="toc_qlobberprototypematchtopic"></a>[Qlobber.prototype.match](#qlobberprototypematchtopic)
+- <a name="toc_qlobberprototypetesttopic-val"></a>[Qlobber.prototype.test](#qlobberprototypetesttopic-val)
+- <a name="toc_qlobberprototypetest_valuesvals-val"></a>[Qlobber.prototype.test_values](#qlobberprototypetest_valuesvals-val)
 - <a name="toc_qlobberprototypeclear"></a>[Qlobber.prototype.clear](#qlobberprototypeclear)
 - <a name="toc_qlobberdedupoptions"></a>[QlobberDedup](#qlobberdedupoptions)
-- <a name="toc_qlobberdedupprototypematchtopic"></a><a name="toc_qlobberdedupprototype"></a>[QlobberDedup.prototype.match](#qlobberdedupprototypematchtopic)
+- <a name="toc_qlobberdedupprototypetest_valuesvals-val"></a><a name="toc_qlobberdedupprototype"></a>[QlobberDedup.prototype.test_values](#qlobberdedupprototypetest_valuesvals-val)
+- <a name="toc_qlobberdedupprototypematchtopic"></a>[QlobberDedup.prototype.match](#qlobberdedupprototypematchtopic)
 
 ## Qlobber([options])
 
@@ -170,6 +174,36 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
+## Qlobber.prototype.test(topic, [val])
+
+> Test whether a topic match contains a value. Faster than calling [`match`](#qlobberprototypematchtopic) and searching the result for the value. Values are tested using [`test_values`](#qlobberprototypetest_valuesvals_val).
+
+**Parameters:**
+
+- `{String} topic` The topic to match against.
+- `{Any} [val]` The value being tested for.
+
+**Return:**
+
+`{Boolean}` Whether matching against `topic` contains `val`.
+
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
+
+## Qlobber.prototype.test_values(vals, val)
+
+> Test whether values found in a match contain a value passed to [`test`](#qlobberprototypetesttopic_val). You can override this to provide a custom implementation. Defaults to using `indexOf`.
+
+**Parameters:**
+
+- `{Array} vals` The values found while matching.
+- `{Any} val` The value being tested for.
+
+**Return:**
+
+`{Boolean}` Whether `vals` contains `val`.
+
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
+
 ## Qlobber.prototype.clear()
 
 > Reset the qlobber.
@@ -195,6 +229,21 @@ Inherits from [Qlobber](#qlobberoptions).
 <sub>Go: [TOC](#tableofcontents)</sub>
 
 <a name="qlobberdedupprototype"></a>
+
+## QlobberDedup.prototype.test_values(vals, val)
+
+> Test whether values found in a match contain a value passed to [`test`](#qlobberprototypetesttopic_val). You can override this to provide a custom implementation. Defaults to using `has`.
+
+**Parameters:**
+
+- `{Set} vals` The values found while matching ([ES6 Set](http://www.ecma-international.org/ecma-262/6.0/#sec-set-objects)).
+- `{Any} val` The value being tested for.
+
+**Return:**
+
+`{Boolean}` Whether `vals` contains `val`.
+
+<sub>Go: [TOC](#tableofcontents) | [QlobberDedup.prototype](#toc_qlobberdedupprototype)</sub>
 
 ## QlobberDedup.prototype.match(topic)
 

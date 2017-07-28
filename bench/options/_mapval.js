@@ -34,6 +34,11 @@ MapValQlobber.prototype._remove_value = function (vals, val)
     vals.delete(val);
 };
 
+MapValQlobber.prototype.test_values = function (vals, val)
+{
+    return vals.has(val);
+};
+
 MapValQlobber.prototype.match = function (topic)
 {
     return this._match2(new Map(), topic);

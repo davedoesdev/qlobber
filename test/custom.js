@@ -33,7 +33,12 @@ QosQlobber.prototype._add_values = function (dest, origin)
 
 QosQlobber.prototype._remove_value = function (vals, val)
 {
-    vals.delete(val.clientId);
+    vals.delete(val);
+};
+
+QosQlobber.prototype.test_values = function (vals, val)
+{
+    return vals.has(val);
 };
 
 QosQlobber.prototype.match = function (topic)
@@ -52,6 +57,8 @@ describe('qlobber-custom', function ()
             expect(matcher.match('foo.bar')).to.eql(new Map([
                 [ 'test1', { clientId: 'test1', qos: 10 } ]
             ]));
+            expect(matcher.test('foo.bar', 'test1')).to.equal(true);
+            expect(matcher.test('foo.bar', 'test2')).to.equal(false);
         });
 
         it('should dedup multiple values with same topic and same key', function ()
@@ -62,6 +69,8 @@ describe('qlobber-custom', function ()
             expect(matcher.match('foo.bar')).to.eql(new Map([
                 [ 'test1', { clientId: 'test1', qos: 20 } ]
             ]));
+            expect(matcher.test('foo.bar', 'test1')).to.equal(true);
+            expect(matcher.test('foo.bar', 'test2')).to.equal(false);
         });
 
         it('should not dedup multiple values with same topic and different keys', function ()
@@ -73,6 +82,8 @@ describe('qlobber-custom', function ()
                 [ 'test1', { clientId: 'test1', qos: 10 } ],
                 [ 'test2', { clientId: 'test2', qos: 20 } ]
             ]));
+            expect(matcher.test('foo.bar', 'test1')).to.equal(true);
+            expect(matcher.test('foo.bar', 'test2')).to.equal(true);
         });
 
         it('should dedup multiple values with different topics and same key', function ()
@@ -83,6 +94,21 @@ describe('qlobber-custom', function ()
             expect(matcher.match('foo.bar')).to.eql(new Map([
                 [ 'test1', { clientId: 'test1', qos: 20 } ]
             ]));
+            expect(matcher.test('foo.bar', 'test1')).to.equal(true);
+            expect(matcher.test('foo.bar', 'test2')).to.equal(false);
+        });
+
+        it('should remove value', function ()
+        {
+            var matcher = new QosQlobber();
+            matcher.add('foo.bar', { clientId: 'test1', qos: 10 });
+            matcher.add('foo.bar', { clientId: 'test2', qos: 20 });
+            matcher.remove('foo.bar', 'test1');
+            expect(matcher.match('foo.bar')).to.eql(new Map([
+                [ 'test2', { clientId: 'test2', qos: 20 } ]
+            ]));
+            expect(matcher.test('foo.bar', 'test1')).to.equal(false);
+            expect(matcher.test('foo.bar', 'test2')).to.equal(true);
         });
     });
 });

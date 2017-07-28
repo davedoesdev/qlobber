@@ -15,6 +15,7 @@ describe('shortcut', function ()
         expect(matcher._shortcuts.size).to.equal(1);
         expect(matcher._shortcuts.get('a.b.c.d').size).to.equal(1);
         expect(Array.from(matcher.match('a.b.c.d'))).to.eql([90]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(true);
     });
 
     it('should use shortcut when adding again', function ()
@@ -26,6 +27,8 @@ describe('shortcut', function ()
         expect(matcher._shortcuts.size).to.equal(1);
         expect(matcher._shortcuts.get('a.b.c.d').size).to.equal(2);
         expect(Array.from(matcher.match('a.b.c.d')).sort()).to.eql([90, 91]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(true);
+        expect(matcher.test('a.b.c.d', 91)).to.equal(true);
     });
 
     it('should remove shortcut when removing', function ()
@@ -36,6 +39,18 @@ describe('shortcut', function ()
         matcher.remove('a.b.c.d', 90);
         expect(matcher._shortcuts.size).to.equal(0);
         expect(Array.from(matcher.match('a.b.c.d'))).to.eql([]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(false);
+    });
+
+    it('should remove shortcut when removing all', function ()
+    {
+        var matcher = new QlobberDedup({ cache_adds: true });
+        expect(matcher._shortcuts.size).to.equal(0);
+        matcher.add('a.b.c.d', 90);
+        matcher.remove('a.b.c.d');
+        expect(matcher._shortcuts.size).to.equal(0);
+        expect(Array.from(matcher.match('a.b.c.d'))).to.eql([]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(false);
     });
 
     it('should clear shortcuts when matcher is cleared', function ()
@@ -46,5 +61,6 @@ describe('shortcut', function ()
         matcher.clear();
         expect(matcher._shortcuts.size).to.equal(0);
         expect(Array.from(matcher.match('a.b.c.d'))).to.eql([]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(false);
     });
 });

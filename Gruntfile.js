@@ -41,19 +41,15 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_match_remove bench/match bench/add'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add_match_remove bench/match bench/add'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
             },
 
-            'bench-add-many': {
-                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_many.js'
-            },
-
-            'bench-match-many': {
-                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/match_many.js'
+            'bench-many': {
+                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_many bench/add_shortcut_many bench/match_many bench/match_search_many bench/test_many'
             }
         }
     });
@@ -71,10 +67,7 @@ module.exports = function (grunt)
                                     'exec:cover_check']);
     grunt.registerTask('coveralls', 'exec:coveralls');
     grunt.registerTask('bench', ['exec:bench',
-                                 'exec:bench-add-many',
-                                 'exec:bench-match-many']);
+                                 'exec:bench-many']);
     grunt.registerTask('bench-check', 'exec:bench-check');
-    grunt.registerTask('bench-add-many', 'exec:bench-add-many');
-    grunt.registerTask('bench-match-many', 'exec:bench-match-many');
     grunt.registerTask('default', ['lint', 'test']);
 };

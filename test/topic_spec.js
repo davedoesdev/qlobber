@@ -75,6 +75,11 @@ describe('qlobber', function ()
         rabbitmq_expected_results_before_remove.forEach(function (test)
         {
             expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
 
@@ -93,6 +98,11 @@ describe('qlobber', function ()
         rabbitmq_expected_results_after_remove.forEach(function (test)
         {
             expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
         
         /*jslint unparam: true */
@@ -112,6 +122,11 @@ describe('qlobber', function ()
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
             expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
 
@@ -124,6 +139,11 @@ describe('qlobber', function ()
         rabbitmq_expected_results_after_clear.forEach(function (test)
         {
             expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
 
@@ -141,6 +161,11 @@ describe('qlobber', function ()
         rabbitmq_expected_results_after_remove_all.forEach(function (test)
         {
             expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
 
@@ -154,12 +179,35 @@ describe('qlobber', function ()
             };
         });
 
+        matcher.test_values = function (vals, val)
+        {
+            for (var v of vals)
+            {
+                if (v() === val)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        matcher.equals_value = function (matched_value, test_value)
+        {
+            return matched_value() === test_value;
+        };
+
         rabbitmq_expected_results_before_remove.forEach(function (test)
         {
             expect(matcher.match(test[0], test[0]).map(function (f)
             {
                 return f();
             }).remove_duplicates()).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
 
@@ -167,6 +215,7 @@ describe('qlobber', function ()
     {
         matcher.add('foo.*', 'it matched!');
         expect(matcher.match('foo.bar')).to.eql(['it matched!']);
+		expect(matcher.test('foo.bar', 'it matched!')).to.equal(true);
     });
 
     it('should pass example in rabbitmq topic tutorial', function ()
@@ -184,17 +233,19 @@ describe('qlobber', function ()
                 'quick.orange.male.rabbit',
                 'lazy.orange.male.rabbit'].map(function (topic)
                 {
-                    return matcher.match(topic).sort();
+                    return [matcher.match(topic).sort(),
+							matcher.test(topic, 'Q1'),
+							matcher.test(topic, 'Q2')];
                 })).to.eql(
-               [['Q1', 'Q2'],
-                ['Q1', 'Q2'],
-                ['Q1'],
-                ['Q2'],
-                ['Q2', 'Q2'],
-                [],
-                [],
-                [],
-                ['Q2']]);
+               [[['Q1', 'Q2'], true, true],
+                [['Q1', 'Q2'], true, true],
+                [['Q1'], true, false],
+                [['Q2'], false, true],
+                [['Q2', 'Q2'], false, true],
+                [[], false, false],
+                [[], false, false],
+                [[], false, false],
+                [['Q2'], false, true]]);
     });
 
     it('should not remove anything if not previously added', function ()
@@ -204,6 +255,7 @@ describe('qlobber', function ()
         matcher.remove('foo.*', 'something');
         matcher.remove('bar.*');
         expect(matcher.match('foo.bar')).to.eql(['it matched!']);
+        expect(matcher.test('foo.bar', 'it matched!')).to.equal(true);
     });
 
     it('should accept wildcards in match topics', function ()
@@ -212,6 +264,10 @@ describe('qlobber', function ()
         matcher.add('foo.#', 'it matched too!');
         expect(matcher.match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
         expect(matcher.match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
+        expect(matcher.test('foo.*', 'it matched!')).to.equal(true);
+        expect(matcher.test('foo.*', 'it matched too!')).to.equal(true);
+        expect(matcher.test('foo.#', 'it matched!')).to.equal(true);
+        expect(matcher.test('foo.#', 'it matched too!')).to.equal(true);
     });
 
     it('should be configurable', function ()
@@ -226,7 +282,9 @@ describe('qlobber', function ()
         matcher.add('foo/M', 'it matched too!');
         expect(matcher.match('foo/bar').sort()).to.eql(['it matched too!', 'it matched!']);
         expect(matcher.match('foo/bar/end').sort()).to.eql(['it matched too!']);
-
+        expect(matcher.test('foo/bar', 'it matched!')).to.equal(true);
+        expect(matcher.test('foo/bar', 'it matched too!')).to.equal(true);
+        expect(matcher.test('foo/bar/end', 'it matched too!')).to.equal(true);
     });
 
     it('should match expected number of topics', function ()
@@ -246,9 +304,12 @@ describe('qlobber', function ()
         }
 
         vals = matcher.match('app.test.user.behrad.testTopic-0');
-
         expect(vals.length).to.equal(120000);
         expect(vals.remove_duplicates().length).to.equal(60000);
+
+        expect(matcher.test('app.test.user.behrad.testTopic-0', 0)).to.equal(true);
+        expect(matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
+        expect(matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
     });
 });
 

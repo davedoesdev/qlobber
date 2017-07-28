@@ -20,15 +20,15 @@ module.exports = function ()
     switch (options.Matcher)
     {
         case qlobber.QlobberDedup:
-            common.match(matcher_dedup);
+            common.test(matcher_dedup);
             break;
 
         case MapValQlobber:
-            common.match(matcher_mapval);
+            common.test(matcher_mapval);
             break;
 
         default:
-            common.match(matcher_default);
+            common.test(matcher_default);
             break;
     }
 };

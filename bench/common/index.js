@@ -6,6 +6,7 @@
 /*jslint node: true */
 "use strict";
 
+var assert = require('assert');
 var qlobber = require('../..');
 var MapValQlobber = require('../options/_mapval').MapValQlobber;
 var expect = require('chai').expect;
@@ -31,36 +32,6 @@ exports.add_bindings = function(matcher)
     {
         topic_val = rabbitmq_test_bindings[i];
         matcher.add(topic_val[0], topic_val[1]);
-    }
-};
-
-exports.match = function(matcher)
-{
-    var i, test, vals;
-
-    for (i = 0; i < rabbitmq_expected_results_before_remove.length; i += 1)
-    {
-        test = rabbitmq_expected_results_before_remove[i];
-        vals = matcher.match(test[0]);
-
-        if (options.Matcher === qlobber.Qlobber)
-        {
-            vals = remove_duplicates(vals);
-        }
-
-        if (options.check)
-        {
-            if (options.Matcher === qlobber.QlobberDedup)
-            {
-                vals = Array.from(vals).sort();
-            }
-            else if (options.Matcher === MapValQlobber)
-            {
-                vals = Array.from(vals.keys()).sort();
-            }
-
-            expect(vals).to.eql(test[1].sort());
-        }
     }
 };
 
@@ -99,3 +70,73 @@ exports.remove_bindings = function(matcher)
     }
 };
 
+exports.match = function(matcher)
+{
+    var i, test, vals;
+
+    for (i = 0; i < rabbitmq_expected_results_before_remove.length; i += 1)
+    {
+        test = rabbitmq_expected_results_before_remove[i];
+        vals = matcher.match(test[0]);
+
+        if (options.Matcher === qlobber.Qlobber)
+        {
+            vals = remove_duplicates(vals);
+        }
+
+        if (options.check)
+        {
+            if (options.Matcher === qlobber.QlobberDedup)
+            {
+                vals = Array.from(vals).sort();
+            }
+            else if (options.Matcher === MapValQlobber)
+            {
+                vals = Array.from(vals.keys()).sort();
+            }
+
+            expect(vals).to.eql(test[1].sort());
+        }
+    }
+};
+
+exports.match_search = function(matcher)
+{
+    var i, j, test, vals;
+
+    for (i = 0; i < rabbitmq_expected_results_before_remove.length; i += 1)
+    {
+        test = rabbitmq_expected_results_before_remove[i];
+
+        for (j = 0; j < test[1].length; j += 1)
+        {
+            // Typically app would match and search each time
+            vals = matcher.match(test[0]);
+
+            if ((options.Matcher === qlobber.QlobberDedup) ||
+                (options.Matcher === MapValQlobber))
+            {
+                assert(vals.has(test[1][j]));
+            }
+            else
+            {
+                assert(vals.indexOf(test[1][j]) >= 0);
+            }
+        }
+    }
+};
+
+exports.test = function(matcher)
+{
+    var i, j, test, vals;
+
+    for (i = 0; i < rabbitmq_expected_results_before_remove.length; i += 1)
+    {
+        test = rabbitmq_expected_results_before_remove[i];
+
+        for (j = 0; j < test[1].length; j += 1)
+        {
+            assert(matcher.test(test[0], test[1][j]));
+        }
+    }
+};

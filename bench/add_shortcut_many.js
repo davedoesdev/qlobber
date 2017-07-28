@@ -10,7 +10,8 @@ module.exports = function ()
     var matcher = new options.Matcher(
     {
         separator: "/",
-        wildcard_one: "+"
+        wildcard_one: "+",
+        cache_adds: true
     }), i, j;
 
     for (i = 0; i < 60000; i += 1)
