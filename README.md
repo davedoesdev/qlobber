@@ -176,7 +176,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 ## Qlobber.prototype.test(topic, [val])
 
-> Test whether a topic match contains a value. Faster than calling [`match`](#qlobberprototypematchtopic) and searching the result for the value. Values are tested using [`test_values`](#qlobberprototypetest_valuesvals_val).
+> Test whether a topic match contains a value. Faster than calling [`match`](#qlobberprototypematchtopic) and searching the result for the value. Values are tested using [`test_values`](#qlobberprototypetest_valuesvals-val).
 
 **Parameters:**
 
@@ -191,7 +191,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 ## Qlobber.prototype.test_values(vals, val)
 
-> Test whether values found in a match contain a value passed to [`test`](#qlobberprototypetesttopic_val). You can override this to provide a custom implementation. Defaults to using `indexOf`.
+> Test whether values found in a match contain a value passed to [`test`](#qlobberprototypetesttopic-val). You can override this to provide a custom implementation. Defaults to using `indexOf`.
 
 **Parameters:**
 
