@@ -174,14 +174,14 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
-## Qlobber.prototype.test(topic, [val])
+## Qlobber.prototype.test(topic, val)
 
 > Test whether a topic match contains a value. Faster than calling [`match`](#qlobberprototypematchtopic) and searching the result for the value. Values are tested using [`test_values`](#qlobberprototypetest_valuesvals-val).
 
 **Parameters:**
 
 - `{String} topic` The topic to match against.
-- `{Any} [val]` The value being tested for.
+- `{Any} val` The value being tested for.
 
 **Return:**
 
