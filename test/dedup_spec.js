@@ -214,6 +214,14 @@ describe('qlobber-dedup', function ()
         });
     });
 
+    it('should support undefined as a value', function ()
+    {
+        matcher.add('foo.bar');
+        matcher.add('foo.*');
+        expect(Array.from(matcher.match('foo.bar'))).to.eql([undefined]);
+		expect(matcher.test('foo.bar')).to.equal(true);
+    });
+
     it('should pass example in README', function ()
     {
         matcher.add('foo.*', 'it matched!');
