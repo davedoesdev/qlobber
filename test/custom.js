@@ -33,7 +33,13 @@ QosQlobber.prototype._add_values = function (dest, origin)
 
 QosQlobber.prototype._remove_value = function (vals, val)
 {
+    if (val === undefined)
+    {
+        return true;
+    }
+
     vals.delete(val);
+    return vals.size === 0;
 };
 
 QosQlobber.prototype.test_values = function (vals, val)

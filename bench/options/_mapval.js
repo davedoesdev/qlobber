@@ -32,6 +32,7 @@ MapValQlobber.prototype._add_values = function (dest, origin)
 MapValQlobber.prototype._remove_value = function (vals, val)
 {
     vals.delete(val);
+    return vals.size === 0;
 };
 
 MapValQlobber.prototype.test_values = function (vals, val)
