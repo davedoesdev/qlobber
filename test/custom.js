@@ -4,7 +4,8 @@
 var util = require('util'),
     expect = require('chai').expect,
     qlobber = require('..'),
-    Qlobber = qlobber.Qlobber;
+    Qlobber = qlobber.Qlobber,
+    ctx = 'some context';
 
 function QosQlobber(options)
 {
@@ -23,8 +24,10 @@ QosQlobber.prototype._add_value = function (vals, val)
     vals.set(val.clientId, val);
 };
 
-QosQlobber.prototype._add_values = function (dest, origin)
+QosQlobber.prototype._add_values = function (dest, origin, context)
 {
+    expect(context).to.equal(ctx);
+
     origin.forEach(function (val, key)
     {
         dest.set(key, val);
@@ -49,7 +52,7 @@ QosQlobber.prototype.test_values = function (vals, val)
 
 QosQlobber.prototype.match = function (topic)
 {
-    return this._match2(new Map(), topic);
+    return this._match2(new Map(), topic, ctx);
 };
 
 describe('qlobber-custom', function ()
