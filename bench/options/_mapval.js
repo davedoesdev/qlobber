@@ -1,7 +1,7 @@
 /*jslint node: true */
 
 var util = require('util'),
-	qlobber = require('../..'),
+    qlobber = require('../..'),
     Qlobber = qlobber.Qlobber;
 
 function MapValQlobber(options)
