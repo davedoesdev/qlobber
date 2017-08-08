@@ -6,7 +6,7 @@ module.exports = function (grunt)
     grunt.initConfig(
     {
         jshint: {
-            all: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'aedes/*.js', 'test/*.js', 'bench/**/*.js' ],
+            all: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'aedes/**/*.js', 'test/*.js', 'bench/**/*.js' ],
             options: {
                 esversion: 6
             }
