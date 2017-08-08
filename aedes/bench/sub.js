@@ -1,37 +1,28 @@
-var QlobberSub = require('../qlobber-sub');
-var QlobberOpts = {
-    wildcard_one: '+',
-    wildcard_some: '#',
-    separator: '/'
-};
-var matcher = new QlobberSub(QlobberOpts);
+var QlobberSub = require('../qlobber-sub.js');
+var times = require('./common');
 
-var add_start = new Date();
-
-for (var i = 0; i < 100000; i += 1)
+function add(matcher, clientId, topic, qos)
 {
-    var topic = 'a/b/c/d/' + i;
-    var topic2 = 'a/b/c/d/+';
-    for (var j = 0; j < 50; j += 1)
+    matcher.add(topic,
     {
-        var clientId = 'wxyz' + j;
-        matcher.add(topic, { clientId: clientId, topic: topic, qos: 1 });
-        matcher.add(topic2, { clientId: clientId, topic: topic2, qos: 1 });
-    }
+        clientId: clientId,
+        topic: topic,
+        qos: qos
+    });
 }
 
-var add_end = new Date();
-
-console.log('add', add_end.getTime() - add_start.getTime());
-
-var match_start = new Date();
-
-for (var i = 0; i < 100000; i += 1)
+function remove(matcher, clientId, topic, qos)
 {
-    var topic = 'a/b/c/d/' + i;
-    matcher.match(topic);
+    matcher.remove(topic,
+    {
+        clientId: clientId,
+        topic: topic
+    });
 }
 
-var match_end = new Date();
+function match(matcher, topic)
+{
+    return matcher.match(topic);
+}
 
-console.log('match', match_end.getTime() - match_start.getTime());
+times(QlobberSub, add, remove, match);
