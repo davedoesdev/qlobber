@@ -24,4 +24,29 @@ function match(matcher, topic)
     });
 }
 
-times(QlobberDedup, add, remove, match);
+function test(matcher, clientId, topic)
+{
+    var count = 0;
+    var found = false;
+
+    for (var m of matcher.match(topic))
+    {
+        var parts = m.split(';');
+        if (parts[1] === topic)
+        {
+            count += 1;
+            if (count > 1)
+            {
+                return false;
+            }
+            if (parts[0] === clientId)
+            {
+                found = true;
+            }
+        }
+    }
+
+    return (count === 1) && found;
+}
+
+times(QlobberDedup, add, remove, match, test);

@@ -1,3 +1,5 @@
+var assert = require('assert');
+
 var QlobberOpts = {
     wildcard_one: '+',
     wildcard_some: '#',
@@ -54,11 +56,20 @@ function match_public_topics(matcher, match)
 {
     for (var i = 0; i < 10; i += 1)
     {
-        console.log(match(matcher, 'a/b/c/public/test').length);
+        assert.strictEqual(match(matcher, 'a/b/c/public/test').length, 299990);
     }
 }
 
-function times(QlobberClass, add, remove, match)
+function test_public_topics(matcher, test)
+{
+    for (var i = 0; i < 300000; i += 1)
+    {
+        var clientId = 'someClientId/' + i;
+        assert.strictEqual(test(matcher, clientId, 'a/b/c/public/test'), false);
+    }
+}
+
+function times(QlobberClass, add, remove, match, test)
 {
     gc();
     var start_mem = process.memoryUsage();
@@ -69,6 +80,7 @@ function times(QlobberClass, add, remove, match)
     time(remove_from_qlobber, matcher, remove);
     time(match_client_topics, matcher, match);
     time(match_public_topics, matcher, match);
+    time(test_public_topics, matcher, test);
 
     gc();
     var end_mem = process.memoryUsage();

@@ -96,12 +96,12 @@ describe('qlobber-sub', function ()
         {
             clientId: 'test1',
             topic: 'foo.bar'
-        })).to.equal(true);
+        })).to.equal(false);
         expect(matcher.test('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar'
-        })).to.equal(true);
+        })).to.equal(false);
     });
 
     it('should not dedup multiple values with same client ID and different topics', function ()
@@ -285,8 +285,4 @@ describe('qlobber-sub', function ()
             topic: 'foo.bar'
         })).to.equal(true);
     });
-
-
-
-
 });

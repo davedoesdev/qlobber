@@ -25,4 +25,9 @@ function match(matcher, topic)
     return matcher.match(topic);
 }
 
-times(QlobberSub, add, remove, match);
+function test(matcher, clientId, topic)
+{
+    return matcher.test(topic, { clientId: clientId, topic: topic });
+}
+
+times(QlobberSub, add, remove, match, test);

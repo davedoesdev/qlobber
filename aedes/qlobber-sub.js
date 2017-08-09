@@ -61,6 +61,7 @@ QlobberSub.prototype._remove_value = function (existing, val)
 QlobberSub.prototype.test_values = function (existing, val)
 {
   return (existing.topic === val.topic) &&
+         (existing.clientMap.size === 1) &&
          existing.clientMap.has(val.clientId);
 };
 
