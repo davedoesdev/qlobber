@@ -60,4 +60,28 @@ describe('qlobber-topic-count', function ()
 		expect(matcher.topic_count).to.equal(0);
         expect(matcher.match('a.b.c').length).to.equal(0);
     });
+
+    it('should not decrement count if entry does not exist', function ()
+    {
+        var matcher = new QlobberTopicCount();
+        expect(matcher.topic_count).to.equal(0);
+
+        matcher.add('foo.bar', 23);
+        expect(matcher.topic_count).to.equal(1);
+
+        matcher.remove('foo.bar', 24);
+        expect(matcher.topic_count).to.equal(1);
+
+        matcher.remove('foo.bar2', 23);
+        expect(matcher.topic_count).to.equal(1);
+
+        matcher.remove('foo.bar', 23);
+        expect(matcher.topic_count).to.equal(0);
+
+        matcher.remove('foo.bar', 24);
+        expect(matcher.topic_count).to.equal(0);
+
+        matcher.remove('foo.bar2', 23);
+        expect(matcher.topic_count).to.equal(0);
+    });
 });
