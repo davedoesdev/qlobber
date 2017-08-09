@@ -43,7 +43,7 @@ describe('qlobber-match-count', function ()
         return this.sort().filter(remove_duplicates_filter);
     };
 
-    it('should be able to count topics', function ()
+    it('should be able to count matches', function ()
     {
         var matcher = new QlobberMatchCount();
 
