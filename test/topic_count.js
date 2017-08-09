@@ -1,3 +1,5 @@
+/*globals rabbitmq_test_bindings: false,
+          rabbitmq_bindings_to_remove: false */
 /*jslint mocha: true */
 "use strict";
 
