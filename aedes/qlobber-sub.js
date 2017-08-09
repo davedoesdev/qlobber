@@ -13,72 +13,54 @@ util.inherits(QlobberSub, Qlobber);
 
 QlobberSub.prototype._initial_value = function (val)
 {
-    var topicMap = new Map().set(val.topic, val.qos);
-    return new Map().set(val.clientId, topicMap);
+    return {
+        topic: val.topic,
+        clientMap: new Map().set(val.clientId, val.qos)
+    };
 };
 
-QlobberSub.prototype._add_value = function (clientMap, val)
+QlobberSub.prototype._add_value = function (existing, val)
 {
-    var topicMap = clientMap.get(val.clientId);
-    if (!topicMap)
-    {
-        topicMap = new Map();
-        clientMap.set(val.clientId, topicMap);
-    }
-    topicMap.set(val.topic, val.qos);
+    existing.clientMap.set(val.clientId, val.qos);
 };
 
-QlobberSub.prototype._add_values = function (dest, clientMap, topic)
+QlobberSub.prototype._add_values = function (dest, existing, topic)
 {
-    for (var clientIdAndTopicMap of clientMap)
+    if (topic === undefined)
     {
-        var clientId = clientIdAndTopicMap[0];
-        var topicMap = clientIdAndTopicMap[1];
-        if (topic === undefined)
+        for (var clientIdAndQos of existing.clientMap)
         {
-            for (var topicAndQos of topicMap)
+            dest.push(
             {
-                dest.push(
-                {
-                    clientId: clientId,
-                    topic: topicAndQos[0],
-                    qos: topicAndQos[1]
-                });
-            }
-        }
-        else
-        {
-            var qos = topicMap.get(topic);
-            if (qos !== undefined)
-            {
-                dest.push(
-                {
-                    clientId: clientId,
-                    qos: qos
-                });
-            }
+                clientId: clientIdAndQos[0],
+                topic: existing.topic,
+                qos: clientIdAndQos[1]
+            });
         }
     }
-};
-
-QlobberSub.prototype._remove_value = function (clientMap, val)
-{
-    var topicMap = clientMap.get(val.clientId);
-    if (topicMap)
+    else if (existing.topic === topic)
     {
-        topicMap.delete(val.topic);
-        if (topicMap.size === 0)
+        for (var clientIdAndQos of existing.clientMap)
         {
-            clientMap.delete(val.clientId);
+            dest.push(
+            {
+                clientId: clientIdAndQos[0],
+                qos: clientIdAndQos[1]
+            });
         }
     }
-    return clientMap.size === 0;
 };
 
-QlobberSub.prototype.test_values = function (clientMap, val)
+QlobberSub.prototype._remove_value = function (existing, val)
 {
-  var topicMap = clientMap.get(val.clientId);
-  return topicMap && topicMap.has(val.topic);
+    existing.clientMap.delete(val.clientId);
+    return existing.clientMap.size === 0;
+};
+
+QlobberSub.prototype.test_values = function (existing, val)
+{
+  return (existing.topic === val.topic) &&
+         existing.clientMap.has(val.clientId);
 };
 
 QlobberSub.prototype.match = function (topic, ctx)

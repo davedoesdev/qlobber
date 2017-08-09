@@ -243,7 +243,7 @@ describe('qlobber-sub', function ()
         }]);
     });
 
-    it("removing value not added shouldn't affect match", function ()
+    it("removing value shouldn't care about topic", function ()
     {
         var matcher = new QlobberSub();
         matcher.add('foo.bar',
@@ -270,11 +270,6 @@ describe('qlobber-sub', function ()
         });
         expect(matcher.match('foo.bar')).to.eql([
         {
-            clientId: 'test1',
-            topic: 'foo.bar',
-            qos: 1
-        },
-        {
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
@@ -283,7 +278,7 @@ describe('qlobber-sub', function ()
         {
             clientId: 'test1',
             topic: 'foo.bar'
-        })).to.equal(true);
+        })).to.equal(false);
         expect(matcher.test('foo.bar',
         {
             clientId: 'test2',

@@ -22,12 +22,12 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Statements</span>
-        <span class='fraction'>36/36</span>
+        <span class='fraction'>23/23</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Branches</span>
-        <span class='fraction'>12/12</span>
+        <span class='fraction'>6/6</span>
       </div>
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
@@ -37,7 +37,7 @@
       <div class='fl pad1y space-right2'>
         <span class="strong">100% </span>
         <span class="quiet">Lines</span>
-        <span class='fraction'>36/36</span>
+        <span class='fraction'>23/23</span>
       </div>
     </div>
   </div>
@@ -114,25 +114,7 @@
 69
 70
 71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89
-90</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+72</td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -148,16 +130,12 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -166,13 +144,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">13x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">12x</span>
+<span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -180,13 +154,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -198,21 +170,13 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
-<span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -236,72 +200,54 @@ util.inherits(QlobberSub, Qlobber);
 &nbsp;
 QlobberSub.prototype._initial_value = function (val)
 {
-    var topicMap = new Map().set(val.topic, val.qos);
-    return new Map().set(val.clientId, topicMap);
+    return {
+        topic: val.topic,
+        clientMap: new Map().set(val.clientId, val.qos)
+    };
 };
 &nbsp;
-QlobberSub.prototype._add_value = function (clientMap, val)
+QlobberSub.prototype._add_value = function (existing, val)
 {
-    var topicMap = clientMap.get(val.clientId);
-    if (!topicMap)
-    {
-        topicMap = new Map();
-        clientMap.set(val.clientId, topicMap);
-    }
-    topicMap.set(val.topic, val.qos);
+    existing.clientMap.set(val.clientId, val.qos);
 };
 &nbsp;
-QlobberSub.prototype._add_values = function (dest, clientMap, topic)
+QlobberSub.prototype._add_values = function (dest, existing, topic)
 {
-    for (var clientIdAndTopicMap of clientMap)
+    if (topic === undefined)
     {
-        var clientId = clientIdAndTopicMap[0];
-        var topicMap = clientIdAndTopicMap[1];
-        if (topic === undefined)
+        for (var clientIdAndQos of existing.clientMap)
         {
-            for (var topicAndQos of topicMap)
+            dest.push(
             {
-                dest.push(
-                {
-                    clientId: clientId,
-                    topic: topicAndQos[0],
-                    qos: topicAndQos[1]
-                });
-            }
-        }
-        else
-        {
-            var qos = topicMap.get(topic);
-            if (qos !== undefined)
-            {
-                dest.push(
-                {
-                    clientId: clientId,
-                    qos: qos
-                });
-            }
+                clientId: clientIdAndQos[0],
+                topic: existing.topic,
+                qos: clientIdAndQos[1]
+            });
         }
     }
-};
-&nbsp;
-QlobberSub.prototype._remove_value = function (clientMap, val)
-{
-    var topicMap = clientMap.get(val.clientId);
-    if (topicMap)
+    else if (existing.topic === topic)
     {
-        topicMap.delete(val.topic);
-        if (topicMap.size === 0)
+        for (var clientIdAndQos of existing.clientMap)
         {
-            clientMap.delete(val.clientId);
+            dest.push(
+            {
+                clientId: clientIdAndQos[0],
+                qos: clientIdAndQos[1]
+            });
         }
     }
-    return clientMap.size === 0;
 };
 &nbsp;
-QlobberSub.prototype.test_values = function (clientMap, val)
+QlobberSub.prototype._remove_value = function (existing, val)
 {
-  var topicMap = clientMap.get(val.clientId);
-  return topicMap &amp;&amp; topicMap.has(val.topic);
+    existing.clientMap.delete(val.clientId);
+    return existing.clientMap.size === 0;
+};
+&nbsp;
+QlobberSub.prototype.test_values = function (existing, val)
+{
+  return (existing.topic === val.topic) &amp;&amp;
+         existing.clientMap.has(val.clientId);
 };
 &nbsp;
 QlobberSub.prototype.match = function (topic, ctx)
@@ -316,7 +262,7 @@ module.exports = QlobberSub;
 </div><!-- /wrapper -->
 <div class='footer quiet pad2 space-top1 center small'>
   Code coverage
-  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Mon Aug 07 2017 23:18:32 GMT+0100 (BST)
+  generated by <a href="https://istanbul.js.org/" target="_blank">istanbul</a> at Wed Aug 09 2017 07:00:15 GMT+0100 (BST)
 </div>
 </div>
 <script src="../../prettify.js"></script>
