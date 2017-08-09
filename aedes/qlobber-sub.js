@@ -7,12 +7,14 @@ var util = require('util'),
 function QlobberSub (options)
 {
     Qlobber.call(this, options);
+    this.sub_count = 0;
 }
 
 util.inherits(QlobberSub, Qlobber);
 
 QlobberSub.prototype._initial_value = function (val)
 {
+    this.sub_count += 1;
     return {
         topic: val.topic,
         clientMap: new Map().set(val.clientId, val.qos)
@@ -21,7 +23,9 @@ QlobberSub.prototype._initial_value = function (val)
 
 QlobberSub.prototype._add_value = function (existing, val)
 {
+    var size = existing.clientMap.size;
     existing.clientMap.set(val.clientId, val.qos);
+    this.sub_count += (existing.clientMap.size - size);
 };
 
 QlobberSub.prototype._add_values = function (dest, existing, topic)
@@ -54,10 +58,13 @@ QlobberSub.prototype._add_values = function (dest, existing, topic)
 
 QlobberSub.prototype._remove_value = function (existing, val)
 {
+    var size = existing.clientMap.size;
     existing.clientMap.delete(val.clientId);
+    this.sub_count -= (size - existing.clientMap.size);
     return existing.clientMap.size === 0;
 };
 
+// Returns whether client is last subscriber to topic
 QlobberSub.prototype.test_values = function (existing, val)
 {
   return (existing.topic === val.topic) &&

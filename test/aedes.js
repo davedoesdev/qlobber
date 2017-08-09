@@ -9,12 +9,14 @@ describe('qlobber-sub', function ()
     it('should add and match a single value', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -36,18 +38,21 @@ describe('qlobber-sub', function ()
     it('should dedup multiple values with same client ID and topic', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -69,18 +74,21 @@ describe('qlobber-sub', function ()
     it('should not dedup multiple values with different client IDs and same topic', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(2);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -107,18 +115,21 @@ describe('qlobber-sub', function ()
     it('should not dedup multiple values with same client ID and different topics', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.*',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(2);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -155,23 +166,27 @@ describe('qlobber-sub', function ()
     it('should remove value', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(2);
         matcher.remove('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar'
         });
+        expect(matcher.sub_count).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test2',
@@ -193,24 +208,28 @@ describe('qlobber-sub', function ()
     it('should be able to pass specific topic to match', function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.*',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(2);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(3);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -243,31 +262,36 @@ describe('qlobber-sub', function ()
         }]);
     });
 
-    it("removing value shouldn't care about topic", function ()
+    it("removing value shouldn't care about topic in value", function ()
     {
         var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
             qos: 1
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
         });
+        expect(matcher.sub_count).to.equal(2);
         matcher.remove('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar2'
         });
+        expect(matcher.sub_count).to.equal(1);
         matcher.remove('foo.bar',
         {
             clientId: 'test3',
             topic: 'foo.bar'
         });
+        expect(matcher.sub_count).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test2',
@@ -284,5 +308,17 @@ describe('qlobber-sub', function ()
             clientId: 'test2',
             topic: 'foo.bar'
         })).to.equal(true);
+        matcher.remove('foo.bar',
+        {
+            clientId: 'test2',
+            topic: 'foo.bar2'
+        });
+        expect(matcher.sub_count).to.equal(0);
+        matcher.remove('foo.bar',
+        {
+            clientId: 'test2',
+            topic: 'foo.bar2'
+        });
+        expect(matcher.sub_count).to.equal(0);
     });
 });
