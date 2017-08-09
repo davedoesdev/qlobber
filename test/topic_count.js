@@ -56,8 +56,8 @@ describe('qlobber-topic-count', function ()
         });
         expect(matcher.topic_count).to.equal(21);
 
-		matcher.clear();
-		expect(matcher.topic_count).to.equal(0);
+        matcher.clear();
+        expect(matcher.topic_count).to.equal(0);
         expect(matcher.match('a.b.c').length).to.equal(0);
     });
 

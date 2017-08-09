@@ -321,4 +321,46 @@ describe('qlobber-sub', function ()
         });
         expect(matcher.sub_count).to.equal(0);
     });
+
+    it('should clear matcher', function ()
+    {
+        var matcher = new QlobberSub();
+        expect(matcher.sub_count).to.equal(0);
+        matcher.add('foo.bar',
+        {
+            clientId: 'test1',
+            topic: 'foo.bar',
+            qos: 1
+        });
+        expect(matcher.sub_count).to.equal(1);
+        expect(matcher.match('foo.bar')).to.eql([
+        {
+            clientId: 'test1',
+            topic: 'foo.bar',
+            qos: 1
+        }]);
+        expect(matcher.test('foo.bar',
+        {
+            clientId: 'test1',
+            topic: 'foo.bar'
+        })).to.equal(true);
+        expect(matcher.test('foo.bar',
+        {
+            clientId: 'test2',
+            topic: 'foo.bar'
+        })).to.equal(false);
+        matcher.clear();
+        expect(matcher.sub_count).to.equal(0);
+        expect(matcher.match('foo.bar')).to.eql([]);
+        expect(matcher.test('foo.bar',
+        {
+            clientId: 'test1',
+            topic: 'foo.bar'
+        })).to.equal(false);
+        expect(matcher.test('foo.bar',
+        {
+            clientId: 'test2',
+            topic: 'foo.bar'
+        })).to.equal(false);
+    });
 });

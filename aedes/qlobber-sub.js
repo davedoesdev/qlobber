@@ -77,4 +77,10 @@ QlobberSub.prototype.match = function (topic, ctx)
   return this._match([], 0, topic.split(this._separator), this._trie, ctx);
 };
 
+QlobberSub.prototype.clear = function ()
+{
+    this.sub_count = 0;
+    return Qlobber.prototype.clear.call(this);
+};
+
 module.exports = QlobberSub;
