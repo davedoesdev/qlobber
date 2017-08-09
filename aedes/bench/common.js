@@ -76,6 +76,8 @@ function times(QlobberClass, add, remove, match)
     console.log(
         'heap:', ((end_mem.heapUsed - start_mem.heapUsed) / 1024 / 1024).toFixed(1) + 'MiB',
         'rss:', ((end_mem.rss - start_mem.rss) / 1024 / 1024).toFixed(1) + 'MiB');
+
+    matcher.clear(); // ensure matcher is kept alive for gc above
 }
 
 module.exports = times;
