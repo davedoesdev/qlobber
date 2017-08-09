@@ -26,9 +26,10 @@ QlobberSub.prototype._add_value = function (existing, val)
 
 QlobberSub.prototype._add_values = function (dest, existing, topic)
 {
+    var clientIdAndQos;
     if (topic === undefined)
     {
-        for (var clientIdAndQos of existing.clientMap)
+        for (clientIdAndQos of existing.clientMap)
         {
             dest.push(
             {
@@ -40,7 +41,7 @@ QlobberSub.prototype._add_values = function (dest, existing, topic)
     }
     else if (existing.topic === topic)
     {
-        for (var clientIdAndQos of existing.clientMap)
+        for (clientIdAndQos of existing.clientMap)
         {
             dest.push(
             {
