@@ -6,10 +6,10 @@ var QlobberOpts = {
 
 function time(f, matcher, arg)
 {
-    var start = new Date();
+    var start_time = new Date();
     f(matcher, arg);
-    var end = new Date();
-    console.log(f.name + ':', end.getTime() - start.getTime());
+    var end_time = new Date();
+    console.log(f.name + ':', (end_time.getTime() - start_time.getTime()) + 'ms');
 }
 
 function add_to_qlobber(matcher, add)
@@ -60,12 +60,22 @@ function match_public_topics(matcher, match)
 
 function times(QlobberClass, add, remove, match)
 {
+    gc();
+    var start_mem = process.memoryUsage();
+
     var matcher = new QlobberClass(QlobberOpts);
     time(add_to_qlobber, matcher, add);
     time(add_to_qlobber, matcher, add);
     time(remove_from_qlobber, matcher, remove);
     time(match_client_topics, matcher, match);
     time(match_public_topics, matcher, match);
+
+    gc();
+    var end_mem = process.memoryUsage();
+
+    console.log(
+        'heap:', ((end_mem.heapUsed - start_mem.heapUsed) / 1024 / 1024).toFixed(1) + 'MiB',
+        'rss:', ((end_mem.rss - start_mem.rss) / 1024 / 1024).toFixed(1) + 'MiB');
 }
 
 module.exports = times;

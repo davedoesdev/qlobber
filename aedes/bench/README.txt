@@ -1,5 +1,5 @@
 Run these programs with:
 
-    node file.js
+    node --expose-gc file.js
 
-and compare the timings printed to standard output.
+and compare the figures printed to standard output.
