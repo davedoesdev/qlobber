@@ -23,9 +23,12 @@ QlobberSub.prototype._initial_value = function (val)
 
 QlobberSub.prototype._add_value = function (existing, val)
 {
-    var size = existing.clientMap.size;
+    if (!existing.clientMap.has(val.clientId))
+    {
+        this.sub_count += 1;
+    }
+
     existing.clientMap.set(val.clientId, val.qos);
-    this.sub_count += (existing.clientMap.size - size);
 };
 
 QlobberSub.prototype._add_values = function (dest, existing, topic)
@@ -58,9 +61,13 @@ QlobberSub.prototype._add_values = function (dest, existing, topic)
 
 QlobberSub.prototype._remove_value = function (existing, val)
 {
-    var size = existing.clientMap.size;
+    if (existing.clientMap.has(val.clientId))
+    {
+        this.sub_count -= 1;
+    }
+
     existing.clientMap.delete(val.clientId);
-    this.sub_count -= (size - existing.clientMap.size);
+
     return existing.clientMap.size === 0;
 };
 
