@@ -23,12 +23,15 @@ QlobberSub.prototype._initial_value = function (val)
 
 QlobberSub.prototype._add_value = function (existing, val)
 {
-    if (!existing.clientMap.has(val.clientId))
+    var clientMap = existing.clientMap,
+        size = existing.clientMap.size;
+
+    clientMap.set(val.clientId, val.qos);
+
+    if (clientMap.size > size)
     {
         this.sub_count += 1;
     }
-
-    existing.clientMap.set(val.clientId, val.qos);
 };
 
 QlobberSub.prototype._add_values = function (dest, existing, topic)
@@ -61,14 +64,19 @@ QlobberSub.prototype._add_values = function (dest, existing, topic)
 
 QlobberSub.prototype._remove_value = function (existing, val)
 {
-    if (existing.clientMap.has(val.clientId))
+    var clientMap = existing.clientMap,
+        size_before = clientMap.size;
+
+    clientMap.delete(val.clientId);
+
+    var size_after = clientMap.size;
+
+    if (size_after < size_before)
     {
         this.sub_count -= 1;
     }
 
-    existing.clientMap.delete(val.clientId);
-
-    return existing.clientMap.size === 0;
+    return size_after === 0;
 };
 
 // Returns whether client is last subscriber to topic
