@@ -7,30 +7,58 @@ var util = require('util'),
 function QlobberSub (options)
 {
     Qlobber.call(this, options);
-    this.sub_count = 0;
+    this.subscriptionsCount = 0;
+    this.subscriptionsCountPerClient = new Map();
 }
 
 util.inherits(QlobberSub, Qlobber);
 
 QlobberSub.prototype._initial_value = function (val)
 {
-    this.sub_count += 1;
+    this.subscriptionsCount += 1;
+
+    var scpc = this.subscriptionsCountPerClient,
+        clientId = val.clientId,
+        count = scpc.get(clientId);
+
+    if (count === undefined)
+    {
+        scpc.set(clientId, 1);
+    }
+    else
+    {
+        scpc.set(clientId, count + 1);
+    }
+        
     return {
         topic: val.topic,
-        clientMap: new Map().set(val.clientId, val.qos)
+        clientMap: new Map().set(clientId, val.qos)
     };
 };
 
 QlobberSub.prototype._add_value = function (existing, val)
 {
     var clientMap = existing.clientMap,
-        size = existing.clientMap.size;
+        size = existing.clientMap.size,
+        clientId = val.clientId;
 
-    clientMap.set(val.clientId, val.qos);
+    clientMap.set(clientId, val.qos);
 
     if (clientMap.size > size)
     {
-        this.sub_count += 1;
+        this.subscriptionsCount += 1;
+
+        var scpc = this.subscriptionsCountPerClient,
+            count = scpc.get(clientId);
+
+        if (count === undefined)
+        {
+            scpc.set(clientId, 1);
+        }
+        else
+        {
+            scpc.set(clientId, count + 1);
+        }
     }
 };
 
@@ -65,15 +93,28 @@ QlobberSub.prototype._add_values = function (dest, existing, topic)
 QlobberSub.prototype._remove_value = function (existing, val)
 {
     var clientMap = existing.clientMap,
-        size_before = clientMap.size;
+        size_before = clientMap.size,
+        clientId = val.clientId;
 
-    clientMap.delete(val.clientId);
+    clientMap.delete(clientId);
 
     var size_after = clientMap.size;
 
     if (size_after < size_before)
     {
-        this.sub_count -= 1;
+        this.subscriptionsCount -= 1;
+
+        var scpc = this.subscriptionsCountPerClient,
+            count = scpc.get(clientId);
+
+        if (count === 1)
+        {
+            scpc.delete(clientId);
+        }
+        else
+        {
+            scpc.set(clientId, count - 1);
+        }
     }
 
     return size_after === 0;
@@ -82,19 +123,22 @@ QlobberSub.prototype._remove_value = function (existing, val)
 // Returns whether client is last subscriber to topic
 QlobberSub.prototype.test_values = function (existing, val)
 {
-  return (existing.topic === val.topic) &&
-         (existing.clientMap.size === 1) &&
-         existing.clientMap.has(val.clientId);
+    var clientMap = existing.clientMap;
+
+    return (existing.topic === val.topic) &&
+           (clientMap.size === 1) &&
+           clientMap.has(val.clientId);
 };
 
 QlobberSub.prototype.match = function (topic, ctx)
 {
-  return this._match([], 0, topic.split(this._separator), this._trie, ctx);
+    return this._match([], 0, topic.split(this._separator), this._trie, ctx);
 };
 
 QlobberSub.prototype.clear = function ()
 {
-    this.sub_count = 0;
+    this.subscriptionsCount = 0;
+    this.subscriptionsCountPerClient.clear();
     return Qlobber.prototype.clear.call(this);
 };
 
