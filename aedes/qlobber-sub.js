@@ -39,7 +39,7 @@ QlobberSub.prototype._initial_value = function (val)
 QlobberSub.prototype._add_value = function (existing, val)
 {
     var clientMap = existing.clientMap,
-        size = existing.clientMap.size,
+        size = clientMap.size,
         clientId = val.clientId;
 
     clientMap.set(clientId, val.qos);
