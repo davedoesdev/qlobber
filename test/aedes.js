@@ -10,7 +10,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -18,8 +17,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -42,7 +39,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -50,8 +46,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -59,8 +53,6 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -83,7 +75,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -91,8 +82,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
@@ -100,9 +89,6 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -130,7 +116,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -138,8 +123,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
@@ -147,8 +130,6 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(2);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -186,7 +167,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -194,8 +174,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
@@ -203,17 +181,12 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         matcher.remove('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar'
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test2',
@@ -236,7 +209,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -244,8 +216,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
@@ -253,8 +223,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(2);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
@@ -262,9 +230,6 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(3);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -301,7 +266,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -309,8 +273,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
@@ -318,25 +280,18 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         matcher.remove('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar2'
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         matcher.remove('foo.bar',
         {
             clientId: 'test3',
             topic: 'foo.bar'
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test2',
@@ -365,14 +320,12 @@ describe('qlobber-sub', function ()
             topic: 'foo.bar2'
         });
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
     });
 
     it('should clear matcher', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -380,8 +333,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
@@ -400,7 +351,6 @@ describe('qlobber-sub', function ()
         })).to.equal(false);
         matcher.clear();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         expect(matcher.match('foo.bar')).to.eql([]);
         expect(matcher.test('foo.bar',
         {
@@ -418,7 +368,6 @@ describe('qlobber-sub', function ()
     {
         var matcher = new QlobberSub();
         expect(matcher.subscriptionsCount).to.equal(0);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(0);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
@@ -426,8 +375,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test2',
@@ -435,9 +382,6 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
@@ -445,17 +389,11 @@ describe('qlobber-sub', function ()
             qos: 1
         });
         expect(matcher.subscriptionsCount).to.equal(3);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
         matcher.remove('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.bar',
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.size).to.equal(2);
-        expect(matcher.subscriptionsCountPerClient.get('test1')).to.equal(1);
-        expect(matcher.subscriptionsCountPerClient.get('test2')).to.equal(1);
     });
 });
