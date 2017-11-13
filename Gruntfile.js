@@ -46,7 +46,7 @@ module.exports = function (grunt)
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check-default.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
             },
 
             'bench-many': {
