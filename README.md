@@ -173,7 +173,7 @@ Note you can match more than one value against a topic by calling `add` multiple
 
 **Return:**
 
-`{Array}` List of values that matched the topic. This may contain duplicates.
+`{Array}` List of values that matched the topic. This may contain duplicates. Use a [`QlobberDedup`](#qlobberdedupoptions) if you don't want duplicates.
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
