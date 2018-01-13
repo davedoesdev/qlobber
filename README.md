@@ -118,7 +118,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
 **Parameters:**
 
-- `{Object} [options]` Configures the qlobber. Use the following properties: 
+- `{Object} [options]` Configures the qlobber. Use the following properties:
   - `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
 
   - `{String} wildcard_one` The character to use for matching exactly one word in a topic. Defaults to '*'. MQTT uses '+', for example.
