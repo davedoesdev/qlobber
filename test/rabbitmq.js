@@ -97,3 +97,5 @@ global.rabbitmq_expected_results_after_clear = [
     ["b.b.c", []],
     ["", []]
 ];
+
+exports.test_bindings = global.rabbitmq_test_bindings;

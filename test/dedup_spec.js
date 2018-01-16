@@ -11,7 +11,8 @@
 "use strict";
 
 var expect = require('chai').expect,
-    qlobber = require('..');
+    qlobber = require('..'),
+    common = require('./common');
 
 describe('qlobber-dedup', function ()
 {
@@ -23,19 +24,6 @@ describe('qlobber-dedup', function ()
         done();
     });
 
-    if (Array.from === undefined)
-    {
-        Array.from = function (s)
-        {
-            var a = [];
-            s.forEach(function (v)
-            {
-                a[a.length] = v;
-            });
-            return a;
-        };
-    }
-
     function add_bindings(bindings, mapper)
     {
         mapper = mapper || function (topic) { return topic; };
@@ -46,29 +34,10 @@ describe('qlobber-dedup', function ()
         });
     }
 
-    function get_trie(matcher, t)
-    {
-        t = t || matcher.get_trie();
-        var k, r = {};
-        for (k of t.keys())
-        {
-            if (k === '.')
-            {
-                r[k] = Array.from(t.get(k));
-            }
-            else
-            {
-                r[k] = get_trie(matcher, t.get(k));
-            }
-        }
-        return r;
-    }
-
     it('should support adding bindings', function ()
     {
         add_bindings(rabbitmq_test_bindings);
-
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t1","t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},".":["t11"],"#":{".":["t12"]}}},"#":{".":["t5"],"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{".":["t21"],"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]},"vodka":{"martini":{".":["t19"]}}});
+        expect(common.get_trie(matcher)).to.eql(common.expected_trie);
     });
 
     it('should pass rabbitmq test', function ()
@@ -97,7 +66,7 @@ describe('qlobber-dedup', function ()
                            rabbitmq_test_bindings[i-1][1]);
         });
 
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+        expect(common.get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
         rabbitmq_expected_results_after_remove.forEach(function (test)
         {
@@ -163,7 +132,7 @@ describe('qlobber-dedup', function ()
             matcher.remove(rabbitmq_test_bindings[i-1][0]);
         });
         
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+        expect(common.get_trie(matcher)).to.eql({"a":{"b":{"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
         rabbitmq_expected_results_after_remove_all.forEach(function (test)
         {
@@ -307,7 +276,7 @@ describe('qlobber-dedup', function ()
         matcher.add('a.b', 'foo');
         matcher.add('a.b', 'foo');
         matcher.add('a.*', 'foo');
-        expect(get_trie(matcher)).to.eql({ a: { b: { '.': ['foo'] }, '*': { '.': ['foo'] } } });
+        expect(common.get_trie(matcher)).to.eql({ a: { b: { '.': ['foo'] }, '*': { '.': ['foo'] } } });
         expect(Array.from(matcher.match('a.b'))).to.eql(['foo']);
         expect(matcher.test('a.b', 'foo')).to.equal(true);
     });
@@ -335,5 +304,41 @@ describe('qlobber-dedup', function ()
         expect(matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
         expect(matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
     });
-});
 
+    it('should visit trie', function ()
+    {
+        add_bindings(rabbitmq_test_bindings);
+
+        let objs = [];
+
+        for (let v of matcher.visit())
+        {
+            objs.push(v);
+        }
+
+        expect(objs).to.eql(common.expected_visits);
+    });
+
+    it('should restore trie', function ()
+    {
+        let restorer = matcher.get_restorer();
+
+        for (let v of common.expected_visits)
+        {
+            restorer(v);
+        }
+
+        expect(common.get_trie(matcher)).to.eql(common.expected_trie);
+
+        rabbitmq_expected_results_before_remove.forEach(function (test)
+        {
+            expect(Array.from(matcher.match(test[0])).sort(), test[0]).to.eql(
+                   test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+        });
+    });
+});

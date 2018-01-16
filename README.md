@@ -105,12 +105,16 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobberprototypetesttopic-val"></a>[Qlobber.prototype.test](#qlobberprototypetesttopic-val)
 - <a name="toc_qlobberprototypetest_valuesvals-val"></a>[Qlobber.prototype.test_values](#qlobberprototypetest_valuesvals-val)
 - <a name="toc_qlobberprototypeclear"></a>[Qlobber.prototype.clear](#qlobberprototypeclear)
+- <a name="toc_qlobberprototypevisit"></a>[Qlobber.prototype.visit](#qlobberprototypevisit)
+- <a name="toc_qlobberprototypeget_restoreroptions"></a>[Qlobber.prototype.get_restorer](#qlobberprototypeget_restoreroptions)
 - <a name="toc_qlobberdedupoptions"></a>[QlobberDedup](#qlobberdedupoptions)
 - <a name="toc_qlobberdedupprototypetest_valuesvals-val"></a><a name="toc_qlobberdedupprototype"></a>[QlobberDedup.prototype.test_values](#qlobberdedupprototypetest_valuesvals-val)
 - <a name="toc_qlobberdedupprototypematchtopic"></a>[QlobberDedup.prototype.match](#qlobberdedupprototypematchtopic)
 - <a name="toc_qlobbertrueoptions"></a>[QlobberTrue](#qlobbertrueoptions)
 - <a name="toc_qlobbertrueprototypetest_values"></a><a name="toc_qlobbertrueprototype"></a>[QlobberTrue.prototype.test_values](#qlobbertrueprototypetest_values)
 - <a name="toc_qlobbertrueprototypematchtopic"></a>[QlobberTrue.prototype.match](#qlobbertrueprototypematchtopic)
+- <a name="toc_visitorstreamqlobber"></a>[VisitorStream](#visitorstreamqlobber)
+- <a name="toc_restorerstreamqlobber"></a>[RestorerStream](#restorerstreamqlobber)
 
 ## Qlobber([options])
 
@@ -219,11 +223,37 @@ Removes all topic matchers from the qlobber.
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 
+## Qlobber.prototype.visit()
+
+> Visit each node in the qlobber's trie in turn.
+
+**Return:**
+
+`{Iterator}` An iterator on the trie. The iterator returns objects which, if fed (in the same order) to the function returned by [`get_restorer`](#qlobberprototypeget_restoreroptions) on a different qlobber, will build that qlobber's trie to the same state. The objects can be serialized using `JSON.stringify`, _if_ the values you store in the qlobber are also serializable.
+
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
+
+## Qlobber.prototype.get_restorer([options])
+
+> Get a function which can restore the qlobber's trie to a state you retrieved
+by calling [`visit`](#qlobberprototypevisit) on this or another qlobber.
+
+**Parameters:**
+
+- `{Object} [options]` Options for restoring the trie.
+  - `{Boolean} cache_adds` Whether to cache topics when rebuilding the trie. This only applies if you also passed `cache_adds` as true in the [constructor](#qlobberoptions).
+
+**Return:**
+
+`{Function}` Function to call in order to rebuild the qlobber's trie. You should call this repeatedly with the objects you received from a call to [`visit`](#qlobberprototypevisit). If you serialized the objects, remember to deserialize them first (e.g. with `JSON.parse`)!
+
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
+
 ## QlobberDedup([options])
 
 > Creates a new de-duplicating qlobber.
 
-Inherits from [Qlobber](#qlobberoptions).
+Inherits from [`Qlobber`](#qlobberoptions).
 
 **Parameters:**
 
@@ -271,7 +301,7 @@ Whatever value you [`add`](#qlobberprototypeaddtopic-val) to this qlobber
 qlobber if you only need to test whether topics match, not about the values
 they match to.
 
-Inherits from [Qlobber](#qlobberoptions).
+Inherits from [`Qlobber`](#qlobberoptions).
 
 **Parameters:**
 
@@ -311,5 +341,33 @@ calls [`test`](#qlobberprototypetesttopic-val) (with value `undefined`).
 `{Boolean}` Whether the `QlobberTrue` instance matches the topic.
 
 <sub>Go: [TOC](#tableofcontents) | [QlobberTrue.prototype](#toc_qlobbertrueprototype)</sub>
+
+## VisitorStream(qlobber)
+
+> Creates a new [`Readable`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_class_stream_readable) stream, in object mode, which calls [`visit`](#qlobberprototypevisit) on a qlobber to generate its data.
+
+You could [`pipe`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_readable_pipe_destination_options) this to a [`JSONStream.stringify`](https://github.com/dominictarr/JSONStream#jsonstreamstringifyopen-sep-close) stream, for instance, to serialize the qlobber to JSON. See [this test](`test/json.js`) for an example.
+
+Inherits from [`Readable`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_class_stream_readable).
+
+**Parameters:**
+
+- `{Qlobber} qlobber` The qlobber to call [`visit`](#qlobberprototypevisit) on.
+
+<sub>Go: [TOC](#tableofcontents)</sub>
+
+## RestorerStream(qlobber)
+
+> Creates a new [`Writable`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_class_stream_writable) stream, in object mode, which passes data written to it into the function returned by calling [`get_restorer`](#qlobberprototypeget_restoreroptions) on a qlobber.
+
+You could [`pipe`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_readable_pipe_destination_options) a [`JSONStream.parse`](https://github.com/dominictarr/JSONStream#jsonstreamparsepath) stream to this, for instance, to deserialize the qlobber from JSON. See [this test](`test/json.js`) for an example.
+
+Inherits from [`Writable`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.html#stream_class_stream_writable).
+
+**Parameters:**
+
+- `{Qlobber} qlobber` The qlobber to call [`get_restorer`](#qlobberprototypeget_restoreroptions) on.
+
+<sub>Go: [TOC](#tableofcontents)</sub>
 
 _&mdash;generated by [apidox](https://github.com/codeactual/apidox)&mdash;_

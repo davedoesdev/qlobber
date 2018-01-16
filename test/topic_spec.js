@@ -11,7 +11,8 @@
 "use strict";
 
 var expect = require('chai').expect,
-    qlobber = require('..');
+    qlobber = require('..'),
+    common = require('./common');
 
 describe('qlobber', function ()
 {
@@ -43,20 +44,12 @@ describe('qlobber', function ()
         return this.sort().filter(remove_duplicates_filter);
     };
 
-    function get_trie(matcher, t)
+    function get_shortcuts(matcher)
     {
-        t = t || matcher.get_trie();
         var k, r = {};
-        for (k of t.keys())
+        for (k of matcher._shortcuts.keys())
         {
-            if (k === '.')
-            {
-                r[k] = t.get(k);
-            }
-            else
-            {
-                r[k] = get_trie(matcher, t.get(k));
-            }
+            r[k] = matcher._shortcuts.get(k);
         }
         return r;
     }
@@ -64,8 +57,7 @@ describe('qlobber', function ()
     it('should support adding bindings', function ()
     {
         add_bindings(rabbitmq_test_bindings);
-
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t1","t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},".":["t11"],"#":{".":["t12"]}}},"#":{".":["t5"],"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{".":["t21"],"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]},"vodka":{"martini":{".":["t19"]}}});
+        expect(common.get_trie(matcher)).to.eql(common.expected_trie);
     });
 
     it('should pass rabbitmq test', function ()
@@ -93,7 +85,7 @@ describe('qlobber', function ()
                            rabbitmq_test_bindings[i-1][1]);
         });
 
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+        expect(common.get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
         rabbitmq_expected_results_after_remove.forEach(function (test)
         {
@@ -156,7 +148,7 @@ describe('qlobber', function ()
             matcher.remove(rabbitmq_test_bindings[i-1][0]);
         });
         
-        expect(get_trie(matcher)).to.eql({"a":{"b":{"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+        expect(common.get_trie(matcher)).to.eql({"a":{"b":{"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
         rabbitmq_expected_results_after_remove_all.forEach(function (test)
         {
@@ -223,12 +215,12 @@ describe('qlobber', function ()
     {
         matcher.add('foo.*', 'it matched!');
         expect(matcher.match('foo.bar')).to.eql(['it matched!']);
-		expect(matcher.test('foo.bar', 'it matched!')).to.equal(true);
+        expect(matcher.test('foo.bar', 'it matched!')).to.equal(true);
     });
 
     it('should pass example in rabbitmq topic tutorial', function ()
     {
-	    matcher.add('*.orange.*', 'Q1');
+        matcher.add('*.orange.*', 'Q1');
         matcher.add('*.*.rabbit', 'Q2');
         matcher.add('lazy.#', 'Q2');
         expect(['quick.orange.rabbit',
@@ -242,8 +234,8 @@ describe('qlobber', function ()
                 'lazy.orange.male.rabbit'].map(function (topic)
                 {
                     return [matcher.match(topic).sort(),
-							matcher.test(topic, 'Q1'),
-							matcher.test(topic, 'Q2')];
+                            matcher.test(topic, 'Q1'),
+                            matcher.test(topic, 'Q2')];
                 })).to.eql(
                [[['Q1', 'Q2'], true, true],
                 [['Q1', 'Q2'], true, true],
@@ -319,5 +311,138 @@ describe('qlobber', function ()
         expect(matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
         expect(matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
     });
-});
 
+    it('should visit trie', function ()
+    {
+        add_bindings(rabbitmq_test_bindings);
+
+        let objs = [];
+
+        for (let v of matcher.visit())
+        {
+            objs.push(v);
+        }
+        
+        expect(objs).to.eql(common.expected_visits);
+    });
+
+    it('should restore trie', function ()
+    {
+        let restorer = matcher.get_restorer();
+
+        for (let v of common.expected_visits)
+        {
+            restorer(v);
+        }
+
+        expect(common.get_trie(matcher)).to.eql(common.expected_trie);
+
+        rabbitmq_expected_results_before_remove.forEach(function (test)
+        {
+            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (var v of test[1])
+            {
+                expect(matcher.test(test[0], v)).to.equal(true);
+            }
+            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+        });
+    });
+
+    it('should not restore empty entries', function ()
+    {
+        matcher.add('foo.bar', 90);
+
+        matcher._trie.get('foo').get('bar').get('.').shift();
+
+        let objs = [];
+
+        for (let v of matcher.visit())
+        {
+            objs.push(v);
+        }
+
+        expect(objs).to.eql([
+            { type: 'start_entries' },
+            { type: 'entry', i: 0, key: 'foo' },
+            { type: 'start_entries' },
+            { type: 'entry', i: 0, key: 'bar' },
+            { type: 'start_entries' },
+            { type: 'entry', i: 0, key: '.' },
+            { type: 'start_values' },
+            { type: 'end_values' },
+            { type: 'end_entries' },
+            { type: 'end_entries' },
+            { type: 'end_entries' }
+        ]);
+
+        let matcher2 = new qlobber.Qlobber(),
+            restorer = matcher2.get_restorer();
+
+        for (let v of objs)
+        {
+            restorer(v);
+        }
+
+        expect(common.get_trie(matcher2)).to.eql({});
+        expect(matcher2.match('foo.bar')).to.eql([]);
+        expect(matcher2.test('foo.bar', 90)).to.equal(false);
+    });
+
+    it('should restore shortcuts', function ()
+    {
+        matcher = new qlobber.Qlobber({ cache_adds: true });
+        add_bindings(rabbitmq_test_bindings);
+
+        let shortcuts = get_shortcuts(matcher);
+        expect(shortcuts).to.eql({
+            'a.b.c': [ 't1', 't20' ],
+            'a.*.c': [ 't2' ],
+            'a.#.b': [ 't3' ],
+            'a.b.b.c': [ 't4' ],
+            '#': [ 't5' ],
+            '#.#': [ 't6' ],
+            '#.b': [ 't7' ],
+            '*.*': [ 't8' ],
+            'a.*': [ 't9' ],
+            '*.b.c': [ 't10' ],
+            'a.#': [ 't11' ],
+            'a.#.#': [ 't12' ],
+            'b.b.c': [ 't13' ],
+            'a.b.b': [ 't14' ],
+            'a.b': [ 't15' ],
+            'b.c': [ 't16' ],
+            '': [ 't17' ],
+            '*.*.*': [ 't18' ],
+            'vodka.martini': [ 't19' ],
+            '*.#': [ 't21' ],
+            '#.*.#': [ 't22' ],
+            '*.#.#': [ 't23' ],
+            '#.#.#': [ 't24' ],
+            '*': [ 't25' ],
+            '#.b.#': [ 't26' ]
+        });
+
+        let objs = [];
+        for (let v of matcher.visit())
+        {
+            objs.push(v);
+        }
+        expect(objs).to.eql(common.expected_visits);
+
+        let matcher2 = new qlobber.Qlobber({ cache_adds: true }),
+            restorer = matcher2.get_restorer();
+        for (let v of common.expected_visits)
+        {
+            restorer(v);
+        }
+        expect(get_shortcuts(matcher2)).to.eql({});
+
+        matcher2 = new qlobber.Qlobber({ cache_adds: true });
+        restorer = matcher2.get_restorer({ cache_adds: true });
+        for (let v of common.expected_visits)
+        {
+            restorer(v);
+        }
+        expect(get_shortcuts(matcher2)).to.eql(shortcuts);
+    });
+});
