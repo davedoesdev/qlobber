@@ -129,7 +129,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 
   - `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
 
-  - `{Boolean} cache_adds` Whether to cache topics when adding topic matchers. This will make adding multiple matchers for the same topic faster at the cost of extra memory usage. Defaults to `false`.
+  - `{Boolean|Map} cache_adds` Whether to cache topics when adding topic matchers. This will make adding multiple matchers for the same topic faster at the cost of extra memory usage. Defaults to `false`. If you supply a `Map` then it will be used to cache the topics (use this to enumerate all the topics in the qlobber).
 
 <sub>Go: [TOC](#tableofcontents)</sub>
 

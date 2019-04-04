@@ -18,6 +18,18 @@ describe('shortcut', function ()
         expect(matcher.test('a.b.c.d', 90)).to.equal(true);
     });
 
+    it('should accept Map as cache', function ()
+    {
+        var topics = new Map();
+        var matcher = new QlobberDedup({ cache_adds: topics });
+        matcher.add('a.b.c.d', 90);
+        expect(topics.size).to.equal(1);
+        expect(topics.size).to.equal(1);
+        expect(topics.get('a.b.c.d').size).to.equal(1);
+        expect(Array.from(matcher.match('a.b.c.d'))).to.eql([90]);
+        expect(matcher.test('a.b.c.d', 90)).to.equal(true);
+    });
+
     it('should use shortcut when adding again', function ()
     {
         var matcher = new QlobberDedup({ cache_adds: true });

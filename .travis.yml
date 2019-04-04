@@ -3,6 +3,6 @@ language: node_js
 node_js:
   - 6
   - 8
-  - 9
+  - 10
 script:
-  - if [ $TRAVIS_NODE_VERSION = 9 ]; then npm run coverage; else npm run test; fi
+  - if [ $TRAVIS_NODE_VERSION = 10 ]; then npm run coverage; else npm run test; fi
