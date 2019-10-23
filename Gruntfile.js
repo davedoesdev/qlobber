@@ -25,6 +25,14 @@ module.exports = function (grunt)
         },
 
         exec: {
+            build: {
+                cmd: 'node-gyp build --debug'
+            },
+
+            rebuild: {
+                cmd: 'node-gyp rebuild --debug'
+            },
+
             cover: {
                 cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' ./node_modules/.bin/grunt test"
             },
@@ -61,6 +69,8 @@ module.exports = function (grunt)
     grunt.loadNpmTasks('grunt-exec');
 
     grunt.registerTask('lint', 'jshint');
+    grunt.registerTask('build', 'exec:build');
+    grunt.registerTask('rebuild', 'exec:rebuild');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover',
