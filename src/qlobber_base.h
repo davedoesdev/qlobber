@@ -5,7 +5,7 @@
 #include <variant>
 #include <optional>
 
-template<typename Value, typename ValueStorage>
+template<typename Value, typename ValueStorage, MapResult, Context>
 class QlobberBase {
 public:
     QlobberBase(const char separator = '.',
@@ -90,6 +90,53 @@ private:
         }
 
         return r;
+    }
+
+    MatchResult& match_some(MatchResult& v,
+                            const std::size_t i,
+                            const std::vector<std::string>& words,
+                            const struct Trie& st,
+                            const Context& ctx) {
+        for (const auto& w : std::get<0>(sub_trie.v)) {
+            if (w.first != separator) {
+                for (std::size_t j = i; j < words.size(); ++j) {
+                    v = match(v, j, words, st, ctx);
+                }
+                break;
+            }
+        }
+
+        return v;
+    }
+
+    MatchResult& match(MatchResult& v,
+                       const std::size_t i,
+                       const std::vector<std::string>& words,
+                       const struct Trie& sub_trie,
+                       const Context& ctx) {
+        {
+            const auto& st = std::get<0>(sub_trie.v)->find(wildcard_some);
+
+            if (st != std::get<0>(sub_trie.v)->end()) {
+                // in the common case there will be no more levels...
+                v = match_some(v, i, words, st, ctx);
+                // and we'll end up matching the rest of the words:
+                v = match(v, words.size(), words, st, ctx);
+            }
+        }
+
+        if (i == words.size()) {
+            const auto& st = std::get<0>(sub_trie.v)->find(separator);
+
+            if (st != std::get<0>(sub_trie.v)->end()) {
+                add_values(v, std::get<1>(st.second.v), ctx);
+            }
+        } else {
+
+
+        }
+
+        return v;
     }
 
     std::vector<std::string> split(const std::string& topic) {
