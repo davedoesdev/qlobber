@@ -23,7 +23,17 @@ struct SubStorage {
     std::unordered_map<std::string, QoS> clientMap;
 };
 
-class QlobberSub : public QlobberBase<Sub, SubStorage> {
+struct SubResult {
+    std::string clientId;
+    std::optional<std::string> topic;
+    QoS qos;
+};
+
+class QlobberSub :
+    public QlobberBase<Sub,
+                       SubStorage,
+                       std::vector<SubResult>,
+                       const std::optional<const std::string>> {
 private:
     std::size_t subscriptionsCount = 0;
 
@@ -44,10 +54,34 @@ private:
         }
         return vals.clientMap.empty();
     }
+
+    void add_values(std::vector<SubResult>& dest,
+                    const SubStorage& existing,
+                    const std::optional<const std::string>& topic) {
+        if (!topic) {
+            for (const auto& clientIdAndQos : existing.clientMap) {
+                dest.push_back({
+                    clientIdAndQos.first,
+                    std::optional<std::string>(existing.topic),
+                    clientIdAndQos.second
+                });
+            }
+        } else {
+            for (const auto& clientIdAndQoS : existing.clientMap) {
+                dest.push_back({
+                    clientIdAndQoS.first,
+                    std::nullopt,
+                    clientIdAndQoS.second
+                });
+            }
+        }
+    }
 };
+
 
 void wup() {
     QlobberSub matcher;
     matcher.add("foo.bar", { "test1", "foo.bar", at_least_once });
     matcher.remove("foo.bar", std::optional<Sub>({ "test1", "foo.bar", std::nullopt }));
+    matcher.match("foo.bar", std::nullopt);
 }

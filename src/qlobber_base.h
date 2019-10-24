@@ -5,7 +5,10 @@
 #include <variant>
 #include <optional>
 
-template<typename Value, typename ValueStorage, MapResult, Context>
+template<typename Value,
+         typename ValueStorage,
+         typename MatchResult,
+         typename Context>
 class QlobberBase {
 public:
     QlobberBase(const char separator = '.',
@@ -24,6 +27,13 @@ public:
     void remove(const std::string& topic,
                 const std::optional<const Value>& val) {
         remove(val, 0, split(topic), trie);
+    }
+
+    MatchResult match(const std::string& topic,
+                      Context& ctx) {
+        MatchResult r;
+        match(r, 0, split(topic), trie, ctx);
+        return r;
     }
 
 private:
@@ -92,51 +102,62 @@ private:
         return r;
     }
 
-    MatchResult& match_some(MatchResult& v,
-                            const std::size_t i,
-                            const std::vector<std::string>& words,
-                            const struct Trie& st,
-                            const Context& ctx) {
-        for (const auto& w : std::get<0>(sub_trie.v)) {
+    void match_some(MatchResult& r,
+                    const std::size_t i,
+                    const std::vector<std::string>& words,
+                    const struct Trie& st,
+                    Context& ctx) {
+        for (const auto& w : *std::get<0>(st.v)) {
             if (w.first != separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
-                    v = match(v, j, words, st, ctx);
+                    match(r, j, words, st, ctx);
                 }
                 break;
             }
         }
-
-        return v;
     }
 
-    MatchResult& match(MatchResult& v,
-                       const std::size_t i,
-                       const std::vector<std::string>& words,
-                       const struct Trie& sub_trie,
-                       const Context& ctx) {
+    void match(MatchResult& r,
+               const std::size_t i,
+               const std::vector<std::string>& words,
+               const struct Trie& sub_trie,
+               Context& ctx) {
         {
-            const auto& st = std::get<0>(sub_trie.v)->find(wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(wildcard_some);
 
-            if (st != std::get<0>(sub_trie.v)->end()) {
+            if (it != std::get<0>(sub_trie.v)->end()) {
                 // in the common case there will be no more levels...
-                v = match_some(v, i, words, st, ctx);
+                match_some(r, i, words, it->second, ctx);
                 // and we'll end up matching the rest of the words:
-                v = match(v, words.size(), words, st, ctx);
+                match(r, words.size(), words, it->second, ctx);
             }
         }
 
         if (i == words.size()) {
-            const auto& st = std::get<0>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(separator);
 
-            if (st != std::get<0>(sub_trie.v)->end()) {
-                add_values(v, std::get<1>(st.second.v), ctx);
+            if (it != std::get<0>(sub_trie.v)->end()) {
+                add_values(r, std::get<1>(it->second.v), ctx);
             }
         } else {
+            const auto& word = words[i];
 
+            if ((word != wildcard_one) && (word != wildcard_some)) {
+                const auto it = std::get<0>(sub_trie.v)->find(word);
 
+                if (it != std::get<0>(sub_trie.v)->end()) {
+                    match(r, i + 1, words, it->second, ctx);
+                }
+            }
+
+            if (!word.empty()) {
+                const auto it = std::get<0>(sub_trie.v)->find(wildcard_one);
+
+                if (it != std::get<0>(sub_trie.v)->end()) {
+                    match(r, i + 1, words, it->second, ctx);
+                }
+            }
         }
-
-        return v;
     }
 
     std::vector<std::string> split(const std::string& topic) {
@@ -153,4 +174,7 @@ private:
     virtual void add_value(ValueStorage& vals, const Value& val) = 0;
     virtual bool remove_value(ValueStorage& vals,
                               const std::optional<const Value>& val) = 0;
+    virtual void add_values(MatchResult& r,
+                            const ValueStorage& vals,
+                            Context& ctx) = 0;
 };
