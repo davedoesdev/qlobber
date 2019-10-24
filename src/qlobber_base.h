@@ -26,9 +26,11 @@ private:
     std::string wildcard_some;
 
     struct Trie {
+        Trie() {}
+        Trie(const Value& val) : v(std::in_place_index<1>, val) {}
         typedef std::unordered_map<std::string, struct Trie> map_type;
         typedef std::unique_ptr<map_type> map_ptr;
-        std::variant<ValueStorage, map_ptr> v;
+        std::variant<map_ptr, ValueStorage> v;
     } trie;
 
     ValueStorage& _add(const Value& val,
@@ -36,18 +38,20 @@ private:
                        const std::vector<std::string>& words,
                        const struct Trie& sub_trie) {
         if (i == words.size()) {
-            const auto it = std::get<1>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(separator);
 
-            if (it != std::get<1>(sub_trie.v)->end()) {
-                add_value(std::get<0>(it->second.v), val);
-                return std::get<0>(it->second.v);
+            if (it != std::get<0>(sub_trie.v)->end()) {
+                ValueStorage& storage = std::get<1>(it->second.v);
+                add_value(storage, val);
+                return storage;
             }
 
-            (*std::get<1>(sub_trie.v))[separator].v = initial_value(val);
-            return std::get<0>((*std::get<1>(sub_trie.v))[separator].v);
+            std::get<0>(sub_trie.v)->emplace(separator, val);
+            initial_value_inserted(val);
+            return std::get<1>((*std::get<0>(sub_trie.v))[separator].v);
         }
 
-        return _add(val, i + 1, words, (*std::get<1>(sub_trie.v))[words[i]]);
+        return _add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
     }
 
     std::vector<std::string> split(const std::string& topic) {
@@ -60,6 +64,6 @@ private:
         return words;
     }
 
-    virtual ValueStorage initial_value(const Value& val) = 0;
+    virtual void initial_value_inserted(const Value&) {}
     virtual void add_value(ValueStorage& vals, const Value& val) = 0;
 };

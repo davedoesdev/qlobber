@@ -8,6 +8,10 @@ struct Sub {
 };
 
 struct SubStorage {
+    SubStorage(const Sub& sub) :
+        topic(sub.topic) {
+        clientMap.insert_or_assign(sub.clientId, sub.qos);
+    }
     std::string topic;
     std::unordered_map<std::string, uint8_t> clientMap;
 };
@@ -16,18 +20,12 @@ class QlobberSub : public QlobberBase<Sub, SubStorage> {
 private:
     uint64_t subscriptionsCount = 0;
 
-    SubStorage initial_value(const Sub& sub) {
+    void initial_value_inserted(const Sub&) override {
         ++subscriptionsCount;
-        SubStorage storage;
-        storage.topic = sub.topic;
-        storage.clientMap[sub.clientId] = sub.qos;
-        return storage;
     }
 
     void add_value(SubStorage& existing, const Sub& sub) {
-        auto size = existing.clientMap.size();
-        existing.clientMap[sub.clientId] = sub.qos;
-        if (existing.clientMap.size() > size) {
+        if (existing.clientMap.insert_or_assign(sub.clientId, sub.qos).second) {
             ++subscriptionsCount;
         }
     }
