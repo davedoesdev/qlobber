@@ -34,7 +34,7 @@ private:
     } trie;
 
     ValueStorage& _add(const Value& val,
-                       const uint64_t i,
+                       const std::size_t i,
                        const std::vector<std::string>& words,
                        const struct Trie& sub_trie) {
         if (i == words.size()) {

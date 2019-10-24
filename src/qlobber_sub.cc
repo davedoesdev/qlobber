@@ -1,10 +1,16 @@
 #include <vector>
 #include "qlobber_base.h"
 
+enum QoS {
+    at_most_once = 0,
+    at_least_once = 1,
+    exactly_once = 2
+};
+
 struct Sub {
     std::string clientId;
     std::string topic;
-    uint8_t qos;
+    QoS qos;
 };
 
 struct SubStorage {
@@ -13,12 +19,12 @@ struct SubStorage {
         clientMap.insert_or_assign(sub.clientId, sub.qos);
     }
     std::string topic;
-    std::unordered_map<std::string, uint8_t> clientMap;
+    std::unordered_map<std::string, QoS> clientMap;
 };
 
 class QlobberSub : public QlobberBase<Sub, SubStorage> {
 private:
-    uint64_t subscriptionsCount = 0;
+    std::size_t subscriptionsCount = 0;
 
     void initial_value_inserted(const Sub&) override {
         ++subscriptionsCount;
@@ -33,5 +39,5 @@ private:
 
 void wup() {
     QlobberSub sub;    
-    sub.add("foo.bar", { "test1", "foo.bar", 1 });
+    sub.add("foo.bar", { "test1", "foo.bar", at_least_once });
 }
