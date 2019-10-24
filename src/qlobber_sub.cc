@@ -32,13 +32,14 @@ private:
     }
 
     void add_value(SubStorage& existing, const Sub& sub) {
-        if (existing.clientMap.insert_or_assign(sub.clientId, sub.qos.value()).second) {
+        if (existing.clientMap.insert_or_assign(sub.clientId,
+                                                sub.qos.value()).second) {
             ++subscriptionsCount;
         }
     }
 
-    bool remove_value(SubStorage& vals, const Sub& sub) {
-        if (vals.clientMap.erase(sub.clientId) > 0) {
+    bool remove_value(SubStorage& vals, const std::optional<const Sub>& sub) {
+        if (vals.clientMap.erase(sub.value().clientId) > 0) {
             --subscriptionsCount;
         }
         return vals.clientMap.empty();
@@ -48,5 +49,5 @@ private:
 void wup() {
     QlobberSub matcher;
     matcher.add("foo.bar", { "test1", "foo.bar", at_least_once });
-    matcher.remove("foo.bar", { "test1", "foo.bar", std::nullopt });
+    matcher.remove("foo.bar", std::optional<Sub>({ "test1", "foo.bar", std::nullopt }));
 }

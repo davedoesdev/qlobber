@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <memory>
 #include <variant>
+#include <optional>
 
 template<typename Value, typename ValueStorage>
 class QlobberBase {
@@ -20,8 +21,8 @@ public:
         add(val, 0, split(topic), trie);
     }
 
-    // TODO: optional val
-    void remove(const std::string& topic, const Value& val) {
+    void remove(const std::string& topic,
+                const std::optional<const Value>& val) {
         remove(val, 0, split(topic), trie);
     }
 
@@ -59,7 +60,7 @@ private:
         return add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
     }
 
-    bool remove(const Value& val,
+    bool remove(const std::optional<const Value>& val,
                 const std::size_t i,
                 const std::vector<std::string>& words,
                 const struct Trie& sub_trie) {
@@ -103,5 +104,6 @@ private:
 
     virtual void initial_value_inserted(const Value& val) {}
     virtual void add_value(ValueStorage& vals, const Value& val) = 0;
-    virtual bool remove_value(ValueStorage& vals, const Value& val) = 0;
+    virtual bool remove_value(ValueStorage& vals,
+                              const std::optional<const Value>& val) = 0;
 };
