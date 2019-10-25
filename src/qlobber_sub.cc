@@ -46,6 +46,15 @@ class QlobberSub :
                        SubStorage,
                        std::vector<SubResult>,
                        const std::optional<const std::string>> {
+public:
+    // Returns whether client is last subscriber to topic
+    bool test_values(const SubStorage& existing,
+                     const Sub& val) {
+        return (existing.topic == val.topic.value()) &&
+               (existing.clientMap.size() == 1) &&
+               (existing.clientMap.count(val.clientId) == 1);
+    }
+
 private:
     std::size_t subscriptionsCount = 0;
 
@@ -99,4 +108,7 @@ void wup() {
         "test1", std::nullopt, std::nullopt
     }));
     matcher.match("foo.bar", std::nullopt);
+    matcher.test("foo.bar", {
+        "test1", "foo.bar", std::nullopt
+    });
 }

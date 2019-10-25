@@ -36,6 +36,13 @@ public:
         return r;
     }
 
+    bool test(const std::string& topic, const Value& val) {
+        return test(val, 0, split(topic), trie);
+    }
+
+    virtual bool test_values(const ValueStorage& vals,
+                             const Value& val) = 0;
+
 private:
     std::string separator;
     std::string wildcard_one;
@@ -158,6 +165,73 @@ private:
                 }
             }
         }
+    }
+
+    bool test_some(const Value& v,
+                   const std::size_t i,
+                   const std::vector<std::string>& words,
+                   const struct Trie& st) {
+        for (const auto& w : *std::get<0>(st.v)) {
+            if (w.first != separator) {
+                for (std::size_t j = i; j < words.size(); ++j) {
+                    if (test(v, j, words, st)) {
+                        return true;
+                    }
+                }
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    bool test(const Value& v,
+              const std::size_t i,
+              const std::vector<std::string>& words,
+              const struct Trie& sub_trie) {
+        {
+            const auto it = std::get<0>(sub_trie.v)->find(wildcard_some);
+
+            if (it != std::get<0>(sub_trie.v)->end()) {
+                    // in the common case there will be no more levels...
+                if (test_some(v, i, words, it->second) ||
+                    // and we'll end up matching the rest of the words:
+                    test(v, words.size(), words, it->second)) {
+                    return true;
+                }
+            }
+        }
+
+        if (i == words.size()) {
+            const auto it = std::get<0>(sub_trie.v)->find(separator);
+
+            if ((it != std::get<0>(sub_trie.v)->end()) &&
+                test_values(std::get<1>(it->second.v), v)) {
+                return true;
+            }
+        } else {
+            const auto& word = words[i];
+
+            if ((word != wildcard_one) && (word != wildcard_some)) {
+                const auto it = std::get<0>(sub_trie.v)->find(word);
+
+                if ((it != std::get<0>(sub_trie.v)->end()) &&
+                    test(v, i + 1, words, it->second)) {
+                    return true;
+                }
+            }
+
+            if (!word.empty()) {
+                const auto it = std::get<0>(sub_trie.v)->find(wildcard_one);
+
+                if ((it != std::get<0>(sub_trie.v)->end()) &&
+                    test(v, i + 1, words, it->second)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     std::vector<std::string> split(const std::string& topic) {
