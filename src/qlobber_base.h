@@ -236,11 +236,16 @@ private:
 
     std::vector<std::string> split(const std::string& topic) {
         std::vector<std::string> words;
-        std::stringstream stream(topic);
-        std::string word;
-        while (std::getline(stream, word, separator[0])) {
-            words.push_back(std::move(word));
+        std::size_t last = 0;
+        while (true) {
+            std::size_t next = topic.find(separator, last);
+            if (next == std::string::npos) {
+                break;
+            }
+            words.push_back(std::move(topic.substr(last, next - last)));
+            last = next + 1;
         }
+        words.push_back(std::move(topic.substr(last)));
         return words;
     }
 

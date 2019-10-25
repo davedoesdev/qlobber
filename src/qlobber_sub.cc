@@ -87,7 +87,20 @@ class QlobberSub :
     public Napi::ObjectWrap<QlobberSub> {
 public:
     QlobberSub(const Napi::CallbackInfo& info) :
-        Napi::ObjectWrap<QlobberSub>(info) {}
+        Napi::ObjectWrap<QlobberSub>(info) {
+        if (info.Length() == 1) {
+            auto options = info[0].As<Napi::Object>();
+            if (options.Has("separator")) {
+                separator = options.Get("separator").As<Napi::String>();
+            }
+            if (options.Has("wildcard_one")) {
+                wildcard_one = options.Get("wildcard_one").As<Napi::String>();
+            }
+            if (options.Has("wildcard_some")) {
+                wildcard_some = options.Get("wildcard_some").As<Napi::String>();
+            }
+        }
+    }
 
     virtual ~QlobberSub() {}
 
