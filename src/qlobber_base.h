@@ -165,7 +165,7 @@ private:
         std::stringstream stream(topic);
         std::string word;
         while (std::getline(stream, word, separator[0])) {
-            words.push_back(word);
+            words.push_back(std::move(word));
         }
         return words;
     }
