@@ -11,12 +11,7 @@ template<typename Value,
          typename Context>
 class QlobberBase {
 public:
-    QlobberBase(const char separator = '.',
-                const char wildcard_one = '*',
-                const char wildcard_some = '#') :
-        separator(1, separator),
-        wildcard_one(1, wildcard_one),
-        wildcard_some(1, wildcard_some) {
+    QlobberBase() {
         // TODO: cache_adds/shortcuts        
     }
 
@@ -47,11 +42,12 @@ public:
     virtual bool test_values(const ValueStorage& vals,
                              const Value& val) = 0;
 
-private:
-    std::string separator;
-    std::string wildcard_one;
-    std::string wildcard_some;
+protected:
+    std::string separator = ".";
+    std::string wildcard_one = "*";
+    std::string wildcard_some = "#";
 
+private:
     struct Trie {
         Trie() {}
         Trie(const Value& val) : v(std::in_place_index<1>, val) {}
