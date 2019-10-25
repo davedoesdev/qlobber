@@ -44,14 +44,11 @@ struct SubResult {
 
 template<typename MatchResult, typename Context>
 class QlobberSubBase :
-    public QlobberBase<Sub,
-                       SubStorage,
-                       MatchResult,
-                       Context> {
+    public QlobberBase<Sub, SubStorage, MatchResult, Context> {
 public:
     // Returns whether client is last subscriber to topic
     bool test_values(const SubStorage& existing,
-                     const Sub& val) {
+                     const Sub& val) override {
         return (existing.topic == val.topic.value()) &&
                (existing.clientMap.size() == 1) &&
                (existing.clientMap.count(val.clientId) == 1);
@@ -64,14 +61,15 @@ private:
         ++subscriptionsCount;
     }
 
-    void add_value(SubStorage& existing, const Sub& sub) {
+    void add_value(SubStorage& existing, const Sub& sub) override {
         if (existing.clientMap.insert_or_assign(sub.clientId,
                                                 sub.qos.value()).second) {
             ++subscriptionsCount;
         }
     }
 
-    bool remove_value(SubStorage& vals, const std::optional<const Sub>& sub) {
+    bool remove_value(SubStorage& vals,
+                      const std::optional<const Sub>& sub) override {
         if (vals.clientMap.erase(sub.value().clientId) > 0) {
             --subscriptionsCount;
         }
@@ -85,12 +83,29 @@ struct TopicAndEnv {
 };
 
 class QlobberSub :
-    public QlobberSubBase<Napi::Array,
-                          TopicAndEnv> {
+    public QlobberSubBase<Napi::Array, const TopicAndEnv>,
+    public Napi::ObjectWrap<QlobberSub> {
+public:
+    QlobberSub(const Napi::CallbackInfo& info) :
+        Napi::ObjectWrap<QlobberSub>(info) {}
+
+    virtual ~QlobberSub() {}
+
+    static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
+        exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
+
+
+
+
+        }));
+
+        return exports;
+    }
+
 private:
     void add_values(Napi::Array& dest,
                     const SubStorage& existing,
-                    const TopicAndEnv& context) {
+                    const TopicAndEnv& context) override {
         if (!context.topic) {
             for (const auto& clientIdAndQos : existing.clientMap) {
                 Napi::Object obj = Napi::Object::New(context.env);
@@ -151,3 +166,9 @@ void wup() {
     });
 }
 */
+
+Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
+    return QlobberSub::Initialize(env, exports);
+}
+
+NODE_API_MODULE(qlobber_sub, Initialize);
