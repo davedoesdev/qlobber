@@ -10,13 +10,13 @@ enum QoS {
 
 struct Sub {
     std::string clientId;
-    std::string topic;
+    std::optional<std::string> topic;
     std::optional<QoS> qos;
 };
 
 struct SubStorage {
     SubStorage(const Sub& sub) :
-        topic(sub.topic) {
+        topic(sub.topic.value()) {
         clientMap.insert_or_assign(sub.clientId, sub.qos.value());
     }
     std::string topic;
@@ -66,7 +66,7 @@ private:
                     clientIdAndQos.second
                 });
             }
-        } else {
+        } else if (existing.topic == topic.value()) {
             for (const auto& clientIdAndQoS : existing.clientMap) {
                 dest.push_back({
                     clientIdAndQoS.first,
@@ -82,6 +82,6 @@ private:
 void wup() {
     QlobberSub matcher;
     matcher.add("foo.bar", { "test1", "foo.bar", at_least_once });
-    matcher.remove("foo.bar", std::optional<Sub>({ "test1", "foo.bar", std::nullopt }));
+    matcher.remove("foo.bar", std::optional<Sub>({ "test1", std::nullopt, std::nullopt }));
     matcher.match("foo.bar", std::nullopt);
 }
