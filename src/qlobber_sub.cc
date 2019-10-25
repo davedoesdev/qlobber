@@ -104,11 +104,19 @@ public:
 
     virtual ~QlobberSub() {}
 
+    Napi::Value Add(const Napi::CallbackInfo& info) {
+        auto val = info[1].As<Napi::Object>();
+        add(info[0].As<Napi::String>(), {
+            val.Get("clientId").As<Napi::String>(),
+            val.Get("topic").As<Napi::String>(),
+            static_cast<QoS>(val.Get("qos").As<Napi::Number>().Uint32Value())
+        });
+        return info.This();
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
-
-
-
+            InstanceMethod("add", &QlobberSub::Add)
 
         }));
 
