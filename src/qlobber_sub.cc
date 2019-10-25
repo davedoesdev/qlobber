@@ -1,5 +1,6 @@
 #include <vector>
 #include <optional>
+#include <napi.h>
 #include "qlobber_base.h"
 
 enum QoS {
