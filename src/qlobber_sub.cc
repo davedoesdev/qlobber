@@ -41,10 +41,11 @@ struct SubResult {
     QoS qos;
 };
 
-class QlobberSub :
+template<typename MatchResult>
+class QlobberSubBase :
     public QlobberBase<Sub,
                        SubStorage,
-                       std::vector<SubResult>,
+                       MatchResult,
                        const std::optional<const std::string>> {
 public:
     // Returns whether client is last subscriber to topic
@@ -76,6 +77,11 @@ private:
         return vals.clientMap.empty();
     }
 
+};
+
+class QlobberSub :
+    public QlobberSubBase<std::vector<SubResult>> {
+private:
     void add_values(std::vector<SubResult>& dest,
                     const SubStorage& existing,
                     const std::optional<const std::string>& topic) {
@@ -97,7 +103,6 @@ private:
         }
     }
 };
-
 
 void wup() {
     QlobberSub matcher;
