@@ -40,6 +40,10 @@ public:
         return test(val, 0, split(topic), trie);
     }
 
+    void clear() {
+        std::get<0>(trie).clear();
+    }
+
     virtual bool test_values(const ValueStorage& vals,
                              const Value& val) = 0;
 
