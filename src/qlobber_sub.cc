@@ -42,12 +42,12 @@ struct SubResult {
     QoS qos;
 };
 
-template<typename MatchResult>
+template<typename MatchResult, typename Context>
 class QlobberSubBase :
     public QlobberBase<Sub,
                        SubStorage,
                        MatchResult,
-                       const std::optional<const std::string>> {
+                       Context> {
 public:
     // Returns whether client is last subscriber to topic
     bool test_values(const SubStorage& existing,
@@ -77,11 +77,43 @@ private:
         }
         return vals.clientMap.empty();
     }
+};
 
+struct TopicAndEnv {
+    std::optional<const std::string> topic;
+    Napi::Env env;
 };
 
 class QlobberSub :
-    public QlobberSubBase<std::vector<SubResult>> {
+    public QlobberSubBase<Napi::Array,
+                          TopicAndEnv> {
+private:
+    void add_values(Napi::Array& dest,
+                    const SubStorage& existing,
+                    const TopicAndEnv& context) {
+        if (!context.topic) {
+            for (const auto& clientIdAndQos : existing.clientMap) {
+                Napi::Object obj = Napi::Object::New(context.env);
+                obj.Set("clientId", clientIdAndQos.first);
+                obj.Set("topic", existing.topic);
+                obj.Set("qos", static_cast<uint32_t>(clientIdAndQos.second));
+                dest.Set(dest.Length(), obj);
+            }
+        } else if (existing.topic == context.topic.value()) {
+            for (const auto& clientIdAndQos : existing.clientMap) {
+                Napi::Object obj = Napi::Object::New(context.env);
+                obj.Set("clientId", clientIdAndQos.first);
+                obj.Set("qos", static_cast<uint32_t>(clientIdAndQos.second));
+                dest.Set(dest.Length(), obj);
+            }
+        }
+    }
+};
+
+/*
+class QlobberSub :
+    public QlobberSubBase<std::vector<SubResult>,
+                          const std::optional<const std::string>> {
 private:
     void add_values(std::vector<SubResult>& dest,
                     const SubStorage& existing,
@@ -95,10 +127,10 @@ private:
                 );
             }
         } else if (existing.topic == topic.value()) {
-            for (const auto& clientIdAndQoS : existing.clientMap) {
+            for (const auto& clientIdAndQos : existing.clientMap) {
                 dest.emplace_back(
-                    clientIdAndQoS.first,
-                    clientIdAndQoS.second
+                    clientIdAndQos.first,
+                    clientIdAndQos.second
                 );
             }
         }
@@ -118,3 +150,4 @@ void wup() {
         "test1", "foo.bar", std::nullopt
     });
 }
+*/
