@@ -24,6 +24,18 @@ struct SubStorage {
 };
 
 struct SubResult {
+    SubResult(const std::string& clientId,
+              const std::string& topic,
+              const QoS qos) :
+        clientId(clientId),
+        topic(topic),
+        qos(qos) {}
+
+    SubResult(const std::string& clientId,
+              const QoS qos) :
+        clientId(clientId),
+        qos(qos) {}
+
     std::string clientId;
     std::optional<std::string> topic;
     QoS qos;
@@ -60,19 +72,18 @@ private:
                     const std::optional<const std::string>& topic) {
         if (!topic) {
             for (const auto& clientIdAndQos : existing.clientMap) {
-                dest.push_back({
+                dest.emplace_back(
                     clientIdAndQos.first,
-                    std::optional<std::string>(existing.topic),
+                    existing.topic,
                     clientIdAndQos.second
-                });
+                );
             }
         } else if (existing.topic == topic.value()) {
             for (const auto& clientIdAndQoS : existing.clientMap) {
-                dest.push_back({
+                dest.emplace_back(
                     clientIdAndQoS.first,
-                    std::nullopt,
                     clientIdAndQoS.second
-                });
+                );
             }
         }
     }
@@ -81,7 +92,11 @@ private:
 
 void wup() {
     QlobberSub matcher;
-    matcher.add("foo.bar", { "test1", "foo.bar", at_least_once });
-    matcher.remove("foo.bar", std::optional<Sub>({ "test1", std::nullopt, std::nullopt }));
+    matcher.add("foo.bar", {
+        "test1", "foo.bar", at_least_once
+    });
+    matcher.remove("foo.bar", std::optional<Sub>({
+        "test1", std::nullopt, std::nullopt
+    }));
     matcher.match("foo.bar", std::nullopt);
 }
