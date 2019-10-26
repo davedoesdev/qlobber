@@ -145,11 +145,21 @@ public:
         });
     }
 
+    Napi::Value Test(const Napi::CallbackInfo& info) {
+        auto topic = info[0].As<Napi::String>();
+        auto val = info[1].As<Napi::Object>();
+        return Napi::Boolean::New(info.Env(), test(topic, {
+            val.Get("clientId").As<Napi::String>(),
+            val.Get("topic").As<Napi::String>()
+        }));
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
             InstanceMethod("add", &QlobberSub::Add),
             InstanceMethod("remove", &QlobberSub::Remove),
-            InstanceMethod("match", &QlobberSub::Match)
+            InstanceMethod("match", &QlobberSub::Match),
+            InstanceMethod("test", &QlobberSub::Test)
 
         }));
 
