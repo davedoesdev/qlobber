@@ -26,11 +26,10 @@ public:
         remove(val, 0, split(topic), trie);
     }
 
-    MatchResult match(const std::string& topic,
-                      Context& ctx) {
-        MatchResult r;
+    void match(MatchResult& r,
+               const std::string& topic,
+               Context& ctx) {
         match(r, 0, split(topic), trie, ctx);
-        return r;
     }
 
     bool test(const std::string& topic, const Test& val) {
@@ -51,10 +50,10 @@ protected:
 
 private:
     struct Trie {
-        Trie() {}
-        Trie(const Value& val) : v(std::in_place_index<1>, val) {}
         typedef std::unordered_map<std::string, struct Trie> map_type;
         typedef std::unique_ptr<map_type> map_ptr;
+        Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
+        Trie(const Value& val) : v(std::in_place_index<1>, val) {}
         std::variant<map_ptr, ValueStorage> v;
     } trie;
 

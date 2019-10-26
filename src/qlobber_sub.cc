@@ -64,9 +64,10 @@ public:
         QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>::clear();
     }
 
-private:
+protected:
     std::size_t subscriptionsCount = 0;
 
+private:
     void initial_value_inserted(const Sub& sub) override {
         ++subscriptionsCount;
     }
@@ -126,7 +127,7 @@ public:
 
     Napi::Value Remove(const Napi::CallbackInfo& info) {
         auto topic = info[0].As<Napi::String>();
-        if (info.Length() == 0) {
+        if (info.Length() == 1) {
             remove(topic, std::nullopt);
         } else {
             auto val = info[1].As<Napi::Object>();
@@ -137,12 +138,14 @@ public:
 
     Napi::Value Match(const Napi::CallbackInfo& info) {
         auto topic = info[0].As<Napi::String>();
-        return match(topic, {
-            info.Length() == 0 ?
+        auto r = Napi::Array::New(info.Env());
+        match(r, topic, {
+            info.Length() == 1 ?
                 std::nullopt :
                 std::optional<std::string>(info[1].As<Napi::String>()),
             info.Env()
         });
+        return r;
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
@@ -159,13 +162,18 @@ public:
         return info.This();
     }
 
+    Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), subscriptionsCount);
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
             InstanceMethod("add", &QlobberSub::Add),
             InstanceMethod("remove", &QlobberSub::Remove),
             InstanceMethod("match", &QlobberSub::Match),
             InstanceMethod("test", &QlobberSub::Test),
-            InstanceMethod("clear", &QlobberSub::Clear)
+            InstanceMethod("clear", &QlobberSub::Clear),
+            InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
         }));
 
         return exports;
@@ -229,7 +237,7 @@ void wup() {
     matcher.remove("foo.bar", std::optional<Sub>({
         "test1", std::nullopt, std::nullopt
     }));
-    matcher.match("foo.bar", std::nullopt);
+    matcher.match(std::vector<SubResult>(), "foo.bar", std::nullopt);
     matcher.test("foo.bar", {
         "test1", "foo.bar", std::nullopt
     });

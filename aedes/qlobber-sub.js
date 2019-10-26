@@ -101,4 +101,12 @@ QlobberSub.prototype.clear = function ()
     return Qlobber.prototype.clear.call(this);
 };
 
+try
+{
+    QlobberSub.native = require('bindings')('qlobber.node').QlobberSubNative;
+}
+catch
+{
+}
+
 module.exports = QlobberSub;

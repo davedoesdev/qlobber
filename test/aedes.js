@@ -4,7 +4,19 @@
 var expect = require('chai').expect,
     QlobberSub = require('../aedes/qlobber-sub');
 
-describe('qlobber-sub', function ()
+function json_sort(l)
+{
+    return l.sort((a, b) => {
+        var ja = JSON.stringify(a),
+            jb = JSON.stringify(b);
+        return ja < jb ? -1 : ja > jb ? 1 : 0;
+    });
+}
+
+function test(type, QlobberSub)
+{
+
+describe(`qlobber-sub (${type})`, function ()
 {
     it('should add and match a single value', function ()
     {
@@ -89,7 +101,7 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(matcher.match('foo.bar')).to.eql([
+        expect(json_sort(matcher.match('foo.bar'))).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
@@ -230,7 +242,12 @@ describe('qlobber-sub', function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(3);
-        expect(matcher.match('foo.bar')).to.eql([
+        expect(json_sort(matcher.match('foo.bar'))).to.eql([
+        {
+            clientId: 'test1',
+            topic: 'foo.*',
+            qos: 1
+        },
         {
             clientId: 'test1',
             topic: 'foo.bar',
@@ -240,13 +257,8 @@ describe('qlobber-sub', function ()
             clientId: 'test2',
             topic: 'foo.bar',
             qos: 2
-        },
-        {
-            clientId: 'test1',
-            topic: 'foo.*',
-            qos: 1
         }]);
-        expect(matcher.match('foo.bar', 'foo.bar')).to.eql([
+        expect(json_sort(matcher.match('foo.bar', 'foo.bar'))).to.eql([
         {
             clientId: 'test1',
             qos: 1
@@ -397,3 +409,8 @@ describe('qlobber-sub', function ()
         expect(matcher.subscriptionsCount).to.equal(2);
     });
 });
+
+}
+
+test('non-native', QlobberSub);
+test('native', QlobberSub.native);
