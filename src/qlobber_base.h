@@ -15,6 +15,8 @@ class QlobberBase {
 public:
     QlobberBase() {
         // TODO: cache_adds/shortcuts        
+        // TODO: implement Qlobber.native and QlobberDup.native
+        //         to check algo is correct by testing and benchmarking them
         // TODO: async
         // TODO: worker threads
     }
