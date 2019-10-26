@@ -59,6 +59,11 @@ public:
                (existing.clientMap.count(val.clientId) == 1);
     }
 
+    void clear() {
+        subscriptionsCount = 0;
+        QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>::clear();
+    }
+
 private:
     std::size_t subscriptionsCount = 0;
 
@@ -109,8 +114,9 @@ public:
     virtual ~QlobberSub() {}
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
+        auto topic = info[0].As<Napi::String>();
         auto val = info[1].As<Napi::Object>();
-        add(info[0].As<Napi::String>(), {
+        add(topic, {
             val.Get("clientId").As<Napi::String>(),
             val.Get("topic").As<Napi::String>(),
             static_cast<QoS>(val.Get("qos").As<Napi::Number>().Uint32Value())
@@ -129,10 +135,21 @@ public:
         return info.This();
     }
 
+    Napi::Value Match(const Napi::CallbackInfo& info) {
+        auto topic = info[0].As<Napi::String>();
+        return match(topic, {
+            info.Length() == 0 ?
+                std::nullopt :
+                std::optional<std::string>(info[1].As<Napi::String>()),
+            info.Env()
+        });
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
             InstanceMethod("add", &QlobberSub::Add),
-            InstanceMethod("remove", &QlobberSub::Remove)
+            InstanceMethod("remove", &QlobberSub::Remove),
+            InstanceMethod("match", &QlobberSub::Match)
 
         }));
 
