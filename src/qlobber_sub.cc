@@ -11,14 +11,14 @@ enum QoS {
 
 struct Sub {
     std::string clientId;
-    std::optional<std::string> topic;
-    std::optional<QoS> qos;
+    std::string topic;
+    QoS qos;
 };
 
 struct SubStorage {
     SubStorage(const Sub& sub) :
-        topic(sub.topic.value()) {
-        clientMap.insert_or_assign(sub.clientId, sub.qos.value());
+        topic(sub.topic) {
+        clientMap.insert_or_assign(sub.clientId, sub.qos);
     }
     std::string topic;
     std::unordered_map<std::string, QoS> clientMap;
@@ -42,14 +42,19 @@ struct SubResult {
     QoS qos;
 };
 
+struct SubTest {
+    std::string clientId;
+    std::string topic;
+};
+
 template<typename MatchResult, typename Context>
 class QlobberSubBase :
-    public QlobberBase<Sub, SubStorage, MatchResult, Context> {
+    public QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest> {
 public:
     // Returns whether client is last subscriber to topic
     bool test_values(const SubStorage& existing,
-                     const Sub& val) override {
-        return (existing.topic == val.topic.value()) &&
+                     const SubTest& val) override {
+        return (existing.topic == val.topic) &&
                (existing.clientMap.size() == 1) &&
                (existing.clientMap.count(val.clientId) == 1);
     }
@@ -62,15 +67,14 @@ private:
     }
 
     void add_value(SubStorage& existing, const Sub& sub) override {
-        if (existing.clientMap.insert_or_assign(sub.clientId,
-                                                sub.qos.value()).second) {
+        if (existing.clientMap.insert_or_assign(sub.clientId, sub.qos).second) {
             ++subscriptionsCount;
         }
     }
 
     bool remove_value(SubStorage& vals,
-                      const std::optional<const Sub>& sub) override {
-        if (vals.clientMap.erase(sub.value().clientId) > 0) {
+                      const std::optional<const std::string>& clientId) override {
+        if (vals.clientMap.erase(clientId.value()) > 0) {
             --subscriptionsCount;
         }
         return vals.clientMap.empty();
@@ -114,9 +118,21 @@ public:
         return info.This();
     }
 
+    Napi::Value Remove(const Napi::CallbackInfo& info) {
+        auto topic = info[0].As<Napi::String>();
+        if (info.Length() == 0) {
+            remove(topic, std::nullopt);
+        } else {
+            auto val = info[1].As<Napi::Object>();
+            remove(topic, val.Get("clientId").As<Napi::String>());
+        }
+        return info.This();
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
-            InstanceMethod("add", &QlobberSub::Add)
+            InstanceMethod("add", &QlobberSub::Add),
+            InstanceMethod("remove", &QlobberSub::Remove)
 
         }));
 

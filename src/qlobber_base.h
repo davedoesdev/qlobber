@@ -7,8 +7,10 @@
 
 template<typename Value,
          typename ValueStorage,
+         typename Remove,
          typename MatchResult,
-         typename Context>
+         typename Context,
+         typename Test>
 class QlobberBase {
 public:
     QlobberBase() {
@@ -20,7 +22,7 @@ public:
     }
 
     void remove(const std::string& topic,
-                const std::optional<const Value>& val) {
+                const std::optional<const Remove>& val) {
         remove(val, 0, split(topic), trie);
     }
 
@@ -31,7 +33,7 @@ public:
         return r;
     }
 
-    bool test(const std::string& topic, const Value& val) {
+    bool test(const std::string& topic, const Test& val) {
         return test(val, 0, split(topic), trie);
     }
 
@@ -40,7 +42,7 @@ public:
     }
 
     virtual bool test_values(const ValueStorage& vals,
-                             const Value& val) = 0;
+                             const Test& val) = 0;
 
 protected:
     std::string separator = ".";
@@ -77,7 +79,7 @@ private:
         return add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
     }
 
-    bool remove(const std::optional<const Value>& val,
+    bool remove(const std::optional<const Remove>& val,
                 const std::size_t i,
                 const std::vector<std::string>& words,
                 const struct Trie& sub_trie) {
@@ -167,7 +169,7 @@ private:
         }
     }
 
-    bool test_some(const Value& v,
+    bool test_some(const Test& v,
                    const std::size_t i,
                    const std::vector<std::string>& words,
                    const struct Trie& st) {
@@ -185,7 +187,7 @@ private:
         return false;
     }
 
-    bool test(const Value& v,
+    bool test(const Test& v,
               const std::size_t i,
               const std::vector<std::string>& words,
               const struct Trie& sub_trie) {
@@ -252,7 +254,7 @@ private:
     virtual void initial_value_inserted(const Value& val) {}
     virtual void add_value(ValueStorage& vals, const Value& val) = 0;
     virtual bool remove_value(ValueStorage& vals,
-                              const std::optional<const Value>& val) = 0;
+                              const std::optional<const Remove>& val) = 0;
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
                             Context& ctx) = 0;
