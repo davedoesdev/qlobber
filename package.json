@@ -18,6 +18,7 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
+    "install": "node-gyp rebuild || true",
     "test": "grunt lint test",
     "coverage": "grunt lint coverage coveralls"
   },
