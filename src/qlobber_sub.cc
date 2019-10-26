@@ -154,13 +154,18 @@ public:
         }));
     }
 
+    Napi::Value Clear(const Napi::CallbackInfo& info) {
+        clear();
+        return info.This();
+    }
+
     static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
             InstanceMethod("add", &QlobberSub::Add),
             InstanceMethod("remove", &QlobberSub::Remove),
             InstanceMethod("match", &QlobberSub::Match),
-            InstanceMethod("test", &QlobberSub::Test)
-
+            InstanceMethod("test", &QlobberSub::Test),
+            InstanceMethod("clear", &QlobberSub::Clear)
         }));
 
         return exports;

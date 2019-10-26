@@ -38,7 +38,7 @@ public:
     }
 
     void clear() {
-        std::get<0>(trie).clear();
+        std::get<0>(trie.v)->clear();
     }
 
     virtual bool test_values(const ValueStorage& vals,
