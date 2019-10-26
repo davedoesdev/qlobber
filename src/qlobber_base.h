@@ -15,6 +15,8 @@ class QlobberBase {
 public:
     QlobberBase() {
         // TODO: cache_adds/shortcuts        
+        // TODO: async
+        // TODO: worker threads
     }
 
     void add(const std::string& topic, const Value& val) {
