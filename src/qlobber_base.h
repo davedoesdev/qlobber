@@ -4,6 +4,7 @@
 #include <memory>
 #include <variant>
 #include <optional>
+#include <functional>
 
 template<typename Value,
          typename ValueStorage,
@@ -14,7 +15,6 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {
-        // TODO: cache_adds/shortcuts        
         // TODO: implement Qlobber.native and QlobberDup.native
         //         to check algo is correct by testing and benchmarking them
         // TODO: async
@@ -22,12 +22,23 @@ public:
     }
 
     void add(const std::string& topic, const Value& val) {
-        add(val, 0, split(topic), trie);
+        if (cache_adds) {
+            const auto it = shortcuts.find(topic);
+            if (it != shortcuts.end()) {
+                return add_value(it->second, val);
+            }
+        }
+        auto& storage = add(val, 0, split(topic), trie);
+        if (cache_adds) {
+            shortcuts.emplace(topic, storage);
+        }
     }
 
     void remove(const std::string& topic,
                 const std::optional<const Remove>& val) {
-        remove(val, 0, split(topic), trie);
+        if (remove(val, 0, split(topic), trie) && cache_adds) {
+            shortcuts.erase(topic);
+        }
     }
 
     void match(MatchResult& r,
@@ -41,6 +52,7 @@ public:
     }
 
     void clear() {
+        shortcuts.clear();
         std::get<0>(trie.v)->clear();
     }
 
@@ -51,6 +63,8 @@ protected:
     std::string separator = ".";
     std::string wildcard_one = "*";
     std::string wildcard_some = "#";
+    bool cache_adds = false;
+    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
 private:
     struct Trie {
@@ -69,7 +83,7 @@ private:
             const auto it = std::get<0>(sub_trie.v)->find(separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
-                ValueStorage& storage = std::get<1>(it->second.v);
+                auto& storage = std::get<1>(it->second.v);
                 add_value(storage, val);
                 return storage;
             }

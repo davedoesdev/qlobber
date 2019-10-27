@@ -109,6 +109,9 @@ public:
             if (options.Has("wildcard_some")) {
                 wildcard_some = options.Get("wildcard_some").As<Napi::String>();
             }
+            if (options.Has("cache_adds")) {
+                cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
+            }
         }
     }
 
