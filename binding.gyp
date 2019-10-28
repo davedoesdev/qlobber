@@ -2,7 +2,7 @@
   "targets": [
     {
       "target_name": "qlobber",
-      "sources": [ "src/qlobber_sub.cc" ],
+      "sources": [ "src/qlobber.cc" ],
       "include_dirs": ["<!@(node -p \"require('node-addon-api').include\")"],
       "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],
 

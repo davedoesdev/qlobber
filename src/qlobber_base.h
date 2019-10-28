@@ -5,6 +5,7 @@
 #include <variant>
 #include <optional>
 #include <functional>
+#include "options.h"
 
 template<typename Value,
          typename ValueStorage,
@@ -14,44 +15,43 @@ template<typename Value,
          typename Test>
 class QlobberBase {
 public:
-    QlobberBase() {
+    QlobberBase() {}
         // TODO: implement Qlobber.native and QlobberDup.native
         //         to check algo is correct by testing and benchmarking them
         // TODO: async
         // TODO: worker threads
-    }
 
-    void add(const std::string& topic, const Value& val) {
-        if (cache_adds) {
+    QlobberBase(const Options& options) : options(options) {}
+
+    virtual void add(const std::string& topic, const Value& val) {
+        if (options.cache_adds) {
             const auto it = shortcuts.find(topic);
             if (it != shortcuts.end()) {
                 return add_value(it->second, val);
             }
         }
         auto& storage = add(val, 0, split(topic), trie);
-        if (cache_adds) {
+        if (options.cache_adds) {
             shortcuts.emplace(topic, storage);
         }
     }
 
-    void remove(const std::string& topic,
-                const std::optional<const Remove>& val) {
-        if (remove(val, 0, split(topic), trie) && cache_adds) {
+    virtual void remove(const std::string& topic,
+                        const std::optional<const Remove>& val) {
+        if (remove(val, 0, split(topic), trie) && options.cache_adds) {
             shortcuts.erase(topic);
         }
     }
 
-    void match(MatchResult& r,
-               const std::string& topic,
-               Context& ctx) {
+    virtual void match(MatchResult& r, const std::string& topic, Context& ctx) {
         match(r, 0, split(topic), trie, ctx);
     }
 
-    bool test(const std::string& topic, const Test& val) {
+    virtual bool test(const std::string& topic, const Test& val) {
         return test(val, 0, split(topic), trie);
     }
 
-    void clear() {
+    virtual void clear() {
         shortcuts.clear();
         std::get<0>(trie.v)->clear();
     }
@@ -60,15 +60,12 @@ public:
                              const Test& val) = 0;
 
 protected:
-    std::string separator = ".";
-    std::string wildcard_one = "*";
-    std::string wildcard_some = "#";
-    bool cache_adds = false;
+    Options options;
     std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
 private:
     struct Trie {
-        typedef std::unordered_map<std::string, struct Trie> map_type;
+        typedef std::unordered_map<std::string, Trie> map_type;
         typedef std::unique_ptr<map_type> map_ptr;
         Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
         Trie(const Value& val) : v(std::in_place_index<1>, val) {}
@@ -78,9 +75,9 @@ private:
     ValueStorage& add(const Value& val,
                       const std::size_t i,
                       const std::vector<std::string>& words,
-                      const struct Trie& sub_trie) {
+                      const Trie& sub_trie) {
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 auto& storage = std::get<1>(it->second.v);
@@ -88,9 +85,9 @@ private:
                 return storage;
             }
 
-            std::get<0>(sub_trie.v)->emplace(separator, val);
+            std::get<0>(sub_trie.v)->emplace(options.separator, val);
             initial_value_inserted(val);
-            return std::get<1>((*std::get<0>(sub_trie.v))[separator].v);
+            return std::get<1>((*std::get<0>(sub_trie.v))[options.separator].v);
         }
 
         return add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
@@ -99,9 +96,9 @@ private:
     bool remove(const std::optional<const Remove>& val,
                 const std::size_t i,
                 const std::vector<std::string>& words,
-                const struct Trie& sub_trie) {
+                const Trie& sub_trie) {
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
             if ((it != std::get<0>(sub_trie.v)->end()) &&
                 remove_value(std::get<1>(it->second.v), val)) {
@@ -131,10 +128,10 @@ private:
     void match_some(MatchResult& r,
                     const std::size_t i,
                     const std::vector<std::string>& words,
-                    const struct Trie& st,
+                    const Trie& st,
                     Context& ctx) {
         for (const auto& w : *std::get<0>(st.v)) {
-            if (w.first != separator) {
+            if (w.first != options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
                     match(r, j, words, st, ctx);
                 }
@@ -146,10 +143,10 @@ private:
     void match(MatchResult& r,
                const std::size_t i,
                const std::vector<std::string>& words,
-               const struct Trie& sub_trie,
+               const Trie& sub_trie,
                Context& ctx) {
         {
-            const auto it = std::get<0>(sub_trie.v)->find(wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 // in the common case there will be no more levels...
@@ -160,7 +157,7 @@ private:
         }
 
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 add_values(r, std::get<1>(it->second.v), ctx);
@@ -168,7 +165,8 @@ private:
         } else {
             const auto& word = words[i];
 
-            if ((word != wildcard_one) && (word != wildcard_some)) {
+            if ((word != options.wildcard_one) &&
+                (word != options.wildcard_some)) {
                 const auto it = std::get<0>(sub_trie.v)->find(word);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
@@ -177,7 +175,7 @@ private:
             }
 
             if (!word.empty()) {
-                const auto it = std::get<0>(sub_trie.v)->find(wildcard_one);
+                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
                     match(r, i + 1, words, it->second, ctx);
@@ -189,9 +187,9 @@ private:
     bool test_some(const Test& v,
                    const std::size_t i,
                    const std::vector<std::string>& words,
-                   const struct Trie& st) {
+                   const Trie& st) {
         for (const auto& w : *std::get<0>(st.v)) {
-            if (w.first != separator) {
+            if (w.first != options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
                     if (test(v, j, words, st)) {
                         return true;
@@ -207,9 +205,9 @@ private:
     bool test(const Test& v,
               const std::size_t i,
               const std::vector<std::string>& words,
-              const struct Trie& sub_trie) {
+              const Trie& sub_trie) {
         {
-            const auto it = std::get<0>(sub_trie.v)->find(wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                     // in the common case there will be no more levels...
@@ -222,7 +220,7 @@ private:
         }
 
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(separator);
+            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
             if ((it != std::get<0>(sub_trie.v)->end()) &&
                 test_values(std::get<1>(it->second.v), v)) {
@@ -231,7 +229,8 @@ private:
         } else {
             const auto& word = words[i];
 
-            if ((word != wildcard_one) && (word != wildcard_some)) {
+            if ((word != options.wildcard_one) &&
+                (word != options.wildcard_some)) {
                 const auto it = std::get<0>(sub_trie.v)->find(word);
 
                 if ((it != std::get<0>(sub_trie.v)->end()) &&
@@ -241,7 +240,7 @@ private:
             }
 
             if (!word.empty()) {
-                const auto it = std::get<0>(sub_trie.v)->find(wildcard_one);
+                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
 
                 if ((it != std::get<0>(sub_trie.v)->end()) &&
                     test(v, i + 1, words, it->second)) {
@@ -257,7 +256,7 @@ private:
         std::vector<std::string> words;
         std::size_t last = 0;
         while (true) {
-            std::size_t next = topic.find(separator, last);
+            std::size_t next = topic.find(options.separator, last);
             if (next == std::string::npos) {
                 break;
             }
