@@ -8,10 +8,10 @@ template<typename Value,
          typename MatchResult,
          template<typename, typename, typename> typename Base>
 class QlobberJSBase :
-    public Base<Value, MatchResult, const Napi::Env> {
+    public Base<Value, MatchResult, const std::nullptr_t> {
 public:
     QlobberJSBase(const Napi::CallbackInfo& info) :
-        Base<Value, MatchResult, const Napi::Env>(JSOptions(info)) {}
+        Base<Value, MatchResult, const std::nullptr_t>(JSOptions(info)) {}
 
     virtual ~QlobberJSBase() {}
 
@@ -36,7 +36,8 @@ public:
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
         auto r = NewMatchResult(info.Env());
-        this->match(r, topic, info.Env());
+        const auto ctx = nullptr;
+        this->match(r, topic, ctx);
         return r;
     }
 

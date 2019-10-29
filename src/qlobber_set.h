@@ -17,7 +17,8 @@ private:
 
     void add_values(Napi::Object& dest,
                     const SetStorage<Value>& origin,
-                    const Napi::Env& env) override {
+                    const std::nullptr_t&) override {
+        const auto env = dest.Env();
         const auto Map = env.Global().Get("Map").As<Napi::Function>();
         const auto proto = Map.Get("prototype").As<Napi::Object>();
         const auto add = proto.Get("add").As<Napi::Function>();

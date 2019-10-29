@@ -17,7 +17,8 @@ private:
 
     void add_values(Napi::Array& dest,
                     const VecStorage<Value>& origin,
-                    const Napi::Env& env) override {
+                    const std::nullptr_t&) override {
+        const auto env = dest.Env();
         for (const auto& v : origin) {
             dest.Set(dest.Length(), JSValue::New(env, v));
         }
