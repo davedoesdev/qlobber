@@ -69,7 +69,7 @@ public:
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
 
-    static Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
+    static void Initialize(Napi::Env env, Napi::Object exports) {
         exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
             InstanceMethod("add", &QlobberSub::Add),
             InstanceMethod("remove", &QlobberSub::Remove),
@@ -78,8 +78,6 @@ public:
             InstanceMethod("clear", &QlobberSub::Clear),
             InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
         }));
-
-        return exports;
     }
 
 private:
