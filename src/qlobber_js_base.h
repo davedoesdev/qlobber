@@ -16,33 +16,33 @@ public:
     virtual ~QlobberJSBase() {}
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
-        auto topic = info[0].As<Napi::String>();
-        auto val = info[1].As<JSValue>();
+        const auto topic = info[0].As<Napi::String>();
+        const auto val = info[1].As<JSValue>();
         this->add(topic, val);
         return info.This();
     }
 
     Napi::Value Remove(const Napi::CallbackInfo& info) {
-        auto topic = info[0].As<Napi::String>();
+        const auto topic = info[0].As<Napi::String>();
         if (info.Length() == 1) {
             this->remove(topic, std::nullopt);
         } else {
-            auto val = info[1].As<JSValue>();
+            const auto val = info[1].As<JSValue>();
             this->remove(topic, val);
         }
         return info.This();
     }
 
     Napi::Value Match(const Napi::CallbackInfo& info) {
-        auto topic = info[0].As<Napi::String>();
+        const auto topic = info[0].As<Napi::String>();
         auto r = NewMatchResult(info.Env());
         this->match(r, topic, info.Env());
         return r;
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
-        auto topic = info[0].As<Napi::String>();
-        auto val = info[1].As<JSValue>();
+        const auto topic = info[0].As<Napi::String>();
+        const auto val = info[1].As<JSValue>();
         return Napi::Boolean::New(info.Env(), this->test(topic, val));
     }
 
