@@ -3,8 +3,8 @@
 #include "qlobber_vec.h"
 
 Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
-    QlobberSub::Initialize(env, exports);
-    Initialize<QlobberVec<std::string, Napi::String>>(env, "QlobberNative", exports);
+    Initialize<QlobberSub>(env, "QlobberSub", exports);
+    Initialize<QlobberVec<std::string, Napi::String>>(env, "QlobberString", exports);
     return exports;
 }
 

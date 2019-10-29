@@ -103,7 +103,7 @@ QlobberSub.prototype.clear = function ()
 
 try
 {
-    QlobberSub.native = require('bindings')('qlobber.node').QlobberSubNative;
+    QlobberSub.native = require('bindings')('qlobber.node').QlobberSub;
 }
 catch
 {

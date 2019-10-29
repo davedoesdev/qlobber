@@ -1,5 +1,6 @@
 #include <napi.h>
 #include "qlobber_sub_base.h"
+#include "qlobber_js_base.h"
 #include "js_options.h"
 
 struct TopicAndEnv {
@@ -69,17 +70,6 @@ public:
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
 
-    static void Initialize(Napi::Env env, Napi::Object exports) {
-        exports.Set("QlobberSubNative", DefineClass(env, "QlobberSubNative", {
-            InstanceMethod("add", &QlobberSub::Add),
-            InstanceMethod("remove", &QlobberSub::Remove),
-            InstanceMethod("match", &QlobberSub::Match),
-            InstanceMethod("test", &QlobberSub::Test),
-            InstanceMethod("clear", &QlobberSub::Clear),
-            InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
-        }));
-    }
-
 private:
     void add_values(Napi::Array& dest,
                     const SubStorage& existing,
@@ -102,3 +92,10 @@ private:
         }
     }
 };
+
+template<>
+std::vector<Napi::ClassPropertyDescriptor<QlobberSub>> Properties() {
+    return {
+        QlobberSub::InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
+    };
+}

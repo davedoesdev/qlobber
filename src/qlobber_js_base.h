@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "js_options.h"
 
 template<typename Value,
@@ -56,12 +57,22 @@ private:
 };
 
 template<typename T>
+std::vector<Napi::ClassPropertyDescriptor<T>> Properties() {
+    return {};
+}
+
+template<typename T>
 void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
-    exports.Set(name, T::DefineClass(env, name, {
+    std::vector<Napi::ClassPropertyDescriptor<T>> props {
         T::InstanceMethod("add", &T::Add),
         T::InstanceMethod("remove", &T::Remove),
         T::InstanceMethod("match", &T::Match),
         T::InstanceMethod("test", &T::Test),
         T::InstanceMethod("clear", &T::Clear)
-    }));
+    };
+
+    const auto props2 = Properties<T>();
+    props.insert(props.end(), props2.begin(), props2.end());
+
+    exports.Set(name, T::DefineClass(env, name, props));
 }
