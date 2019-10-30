@@ -18,10 +18,9 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        // TODO: implement Qlobber.native, QlobberDup.native, QlobberTrue.native
-        //         to check algo is correct by testing and benchmarking them
-        // visit and restore?
+        // TODO: check algo is correct by testing and benchmarking them
         // TODO: async
+        // TODO: visit and restore? - using async?
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}

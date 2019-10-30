@@ -11,16 +11,19 @@
 "use strict";
 
 var expect = require('chai').expect,
-    qlobber = require('..'),
+    Qlobber = require('..').Qlobber,
     common = require('./common');
 
-describe('qlobber', function ()
+function test(type, Qlobber)
+{
+
+describe(`qlobber (${type})`, function ()
 {
     var matcher;
 
     beforeEach(function (done)
     {
-        matcher = new qlobber.Qlobber();
+        matcher = new Qlobber();
         done();
     });
 
@@ -272,7 +275,7 @@ describe('qlobber', function ()
 
     it('should be configurable', function ()
     {
-        matcher = new qlobber.Qlobber({
+        matcher = new Qlobber({
             separator: '/',
             wildcard_one: '+',
             wildcard_some: 'M'
@@ -375,7 +378,7 @@ describe('qlobber', function ()
             { type: 'end_entries' }
         ]);
 
-        let matcher2 = new qlobber.Qlobber(),
+        let matcher2 = new Qlobber(),
             restorer = matcher2.get_restorer();
 
         for (let v of objs)
@@ -390,7 +393,7 @@ describe('qlobber', function ()
 
     it('should restore shortcuts', function ()
     {
-        matcher = new qlobber.Qlobber({ cache_adds: true });
+        matcher = new Qlobber({ cache_adds: true });
         add_bindings(rabbitmq_test_bindings);
 
         let shortcuts = get_shortcuts(matcher);
@@ -429,7 +432,7 @@ describe('qlobber', function ()
         }
         expect(objs).to.eql(common.expected_visits);
 
-        let matcher2 = new qlobber.Qlobber({ cache_adds: true }),
+        let matcher2 = new Qlobber({ cache_adds: true }),
             restorer = matcher2.get_restorer();
         for (let v of common.expected_visits)
         {
@@ -437,7 +440,7 @@ describe('qlobber', function ()
         }
         expect(get_shortcuts(matcher2)).to.eql({});
 
-        matcher2 = new qlobber.Qlobber({ cache_adds: true });
+        matcher2 = new Qlobber({ cache_adds: true });
         restorer = matcher2.get_restorer({ cache_adds: true });
         for (let v of common.expected_visits)
         {
@@ -449,10 +452,15 @@ describe('qlobber', function ()
     it('should add shortcuts to passed in Map', function ()
     {
         var topics = new Map();
-        matcher = new qlobber.Qlobber({ cache_adds: topics });
+        matcher = new Qlobber({ cache_adds: topics });
         add_bindings(rabbitmq_test_bindings);
         var added = Array.from(topics.keys()).sort();
         var rtopics = new Set(rabbitmq_test_bindings.map(v => v[0]));
         expect(added).to.eql(Array.from(rtopics).sort());
     });
 });
+
+}
+
+test('non-native', Qlobber);
+test('native', Qlobber.nativeString);
