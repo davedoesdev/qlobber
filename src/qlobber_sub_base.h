@@ -89,3 +89,25 @@ private:
         return vals.clientMap.empty();
     }
 };
+
+template<>
+void VisitValues<Sub, SubStorage>(
+    const SubStorage& storage,
+    typename boost::coroutines2::coroutine<Visit<Sub>>::push_type& sink) {
+    std::size_t i = 0;
+    for (const auto& entry : storage.clientMap) {
+        sink({
+            Visit<Sub>::value,
+            VisitData<Sub> {
+                i++,
+                std::variant<std::string, Sub>(
+                    std::in_place_index<1>,
+                    Sub {
+                        entry.first,
+                        storage.topic,
+                        entry.second
+                    })
+            }
+        });
+    }
+}

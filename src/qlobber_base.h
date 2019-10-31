@@ -7,7 +7,43 @@
 #include <variant>
 #include <optional>
 #include <functional>
+#include <boost/coroutine2/all.hpp>
 #include "options.h"
+
+template<typename Value>
+struct VisitData {
+    std::size_t i;
+    std::variant<std::string, Value> data;
+};
+
+template<typename Value>
+struct Visit {
+    enum {
+        start_entries,
+        end_entries,
+        entry,
+        start_values,
+        value,
+        end_values
+    } type;
+    std::optional<VisitData<Value>> v;
+};
+
+template<typename Value, typename ValueStorage>
+void VisitValues(const ValueStorage& storage,
+                 typename boost::coroutines2::coroutine<Visit<Value>>::push_type& sink) {
+    std::size_t i = 0;
+    for (const auto& v : storage) {
+        sink({
+            Visit<Value>::value,
+            VisitData<Value> {
+                i++,
+                std::variant<std::string, Value>(
+                    std::in_place_index<1>, v)
+            }
+        });
+    }
+}
 
 template<typename Value,
          typename ValueStorage,
@@ -19,6 +55,7 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO: check algo is correct by testing and benchmarking them
+        // TODO: do we need all virtuals?
         // TODO: async
         // TODO: visit and restore? - using async?
         // TODO: worker threads
@@ -58,12 +95,19 @@ public:
         std::get<0>(trie.v)->clear();
     }
 
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
+    
+    virtual typename coro_t::pull_type visit() {
+        return typename coro_t::pull_type(
+            std::bind(&QlobberBase::generate,
+            this, std::placeholders::_1));
+    }
+
     virtual bool test_values(const ValueStorage& vals,
                              const Test& val) = 0;
 
 protected:
     Options options;
-    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
 private:
     struct Trie {
@@ -73,6 +117,8 @@ private:
         Trie(const Value& val) : v(std::in_place_index<1>, val) {}
         std::variant<map_ptr, ValueStorage> v;
     } trie;
+
+    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
     ValueStorage& add(const Value& val,
                       const std::size_t i,
@@ -252,6 +298,57 @@ private:
         }
 
         return false;
+    }
+
+    void generate(typename coro_t::push_type& sink) {
+        struct Saved {
+            typename Trie::map_type::const_iterator it, end;
+            std::size_t i;
+        } cur = {
+            std::get<0>(trie.v)->cbegin(),
+            std::get<0>(trie.v)->cend(),
+            0
+        };
+        std::vector<Saved> saved;
+
+        while (true) {
+            if (cur.i == 0) {
+                sink({ Visit<Value>::start_entries, std::nullopt });
+            }
+
+            if (cur.it == cur.end) {
+                sink({ Visit<Value>::end_entries, std::nullopt });
+
+                if (saved.empty()) {
+                    return;
+                }
+
+                cur = saved.back();
+                saved.pop_back();
+                continue;
+            }
+
+            sink({
+                Visit<Value>::entry,
+                VisitData<Value> {
+                    cur.i++,
+                    std::variant<std::string, Value>(
+                        std::in_place_index<0>, cur.it->first)
+            }});
+
+            if (cur.it->first == options.separator) {
+                sink({ Visit<Value>::start_values, std::nullopt });
+                VisitValues<Value, ValueStorage>(std::get<1>(cur.it->second.v), sink);
+                sink({ Visit<Value>::end_values, std::nullopt });
+                continue;
+            }
+
+            saved.push_back(cur);
+            cur.end = std::get<0>(cur.it->second.v)->cend();
+            cur.it = std::get<0>(cur.it++->second.v)->cbegin();
+            cur.i = 0;
+        }
+
     }
 
     std::vector<std::string> split(const std::string& topic) {
