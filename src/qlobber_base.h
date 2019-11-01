@@ -20,8 +20,8 @@ template<typename Value>
 struct Visit {
     enum {
         start_entries,
-        end_entries,
         entry,
+        end_entries,
         start_values,
         value,
         end_values
@@ -55,6 +55,8 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO: check algo is correct by testing and benchmarking them
+        // TODO: test visit/restore on QlobberSub
+        //         may need iterator on stored value to produce values
         // TODO: do we need all virtuals?
         // TODO: async
         // TODO: visit and restore? - using async?
@@ -99,8 +101,7 @@ public:
     
     virtual typename coro_t::pull_type visit() {
         return typename coro_t::pull_type(
-            std::bind(&QlobberBase::generate,
-            this, std::placeholders::_1));
+            std::bind(&QlobberBase::generate, this, std::placeholders::_1));
     }
 
     virtual bool test_values(const ValueStorage& vals,

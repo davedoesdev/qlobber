@@ -1,11 +1,13 @@
 #include "qlobber_base.h"
 
+struct TrueValue {};
+
 struct TrueStorage {
-    TrueStorage(const std::nullptr_t&) {}
+    TrueStorage(const TrueValue&) {}
 };
 
 class QlobberTrueBase :
-    public QlobberBase<std::nullptr_t,
+    public QlobberBase<TrueValue,
                        TrueStorage,
                        std::nullptr_t,
                        std::nullptr_t,
@@ -15,7 +17,7 @@ public:
     QlobberTrueBase() {}
 
     QlobberTrueBase(const Options& options) :
-        QlobberBase<std::nullptr_t,
+        QlobberBase<TrueValue,
                     TrueStorage,
                     std::nullptr_t, 
                     std::nullptr_t,
@@ -28,7 +30,7 @@ public:
     }
 
 private:
-    void add_value(TrueStorage&, const std::nullptr_t&) override {}
+    void add_value(TrueStorage&, const TrueValue&) override {}
 
     bool remove_value(TrueStorage&,
                       const std::optional<const std::nullptr_t>&) override {
@@ -39,15 +41,15 @@ private:
 };
 
 template<>
-void VisitValues<std::nullptr_t, TrueStorage>(
+void VisitValues<TrueValue, TrueStorage>(
     const TrueStorage&,
-    typename boost::coroutines2::coroutine<Visit<std::nullptr_t>>::push_type& sink) {
+    typename boost::coroutines2::coroutine<Visit<TrueValue>>::push_type& sink) {
     sink({
-        Visit<std::nullptr_t>::value,
-        VisitData<std::nullptr_t> {
+        Visit<TrueValue>::value,
+        VisitData<TrueValue> {
             0,
-            std::variant<std::string, std::nullptr_t>(
-                std::in_place_index<1>, nullptr)
+            std::variant<std::string, TrueValue>(
+                std::in_place_index<1>, TrueValue())
         }
     });
 }

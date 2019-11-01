@@ -23,7 +23,7 @@ private:
         const auto proto = Map.Get("prototype").As<Napi::Object>();
         const auto add = proto.Get("add").As<Napi::Function>();
         for (const auto& v : origin) {
-            add.Call({ dest, JSValue::New(env, v) });
+            add.Call({ dest, FromValue<Value, JSValue>(env, v) });
         }
     }
 };

@@ -58,6 +58,14 @@ public:
         return info.This();
     }
 
+    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
+        return GetVisitorT<QlobberSub, Sub>(this, info);
+    }
+
+    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
+        return VisitNextT<Sub, Napi::Object>(info);
+    }
+
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
@@ -90,4 +98,13 @@ std::vector<Napi::ClassPropertyDescriptor<QlobberSub>> Properties() {
     return {
         QlobberSub::InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
     };
+}
+
+template<>
+Napi::Value FromValue<Sub, Napi::Object>(const Napi::Env& env, const Sub& sub) {
+    Napi::Object obj = Napi::Object::New(env);
+    obj.Set("clientId", sub.clientId);
+    obj.Set("topic", sub.topic);
+    obj.Set("qos", static_cast<uint32_t>(sub.qos));
+    return obj;
 }

@@ -15,7 +15,7 @@ public:
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        add(topic, nullptr);
+        add(topic, TrueValue());
         return info.This();
     }
 
@@ -38,4 +38,17 @@ public:
         this->clear();
         return info.This();
     }
+
+    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
+        return GetVisitorT<QlobberTrue, TrueValue>(this, info);
+    }
+
+    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
+        return VisitNextT<TrueValue, Napi::Boolean>(info);
+    }
 };
+
+template<>
+Napi::Value FromValue<TrueValue, Napi::Boolean>(const Napi::Env& env, const TrueValue&) {
+    return Napi::Boolean::New(env, true);
+}

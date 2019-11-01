@@ -20,7 +20,7 @@ private:
                     const std::nullptr_t&) override {
         const auto env = dest.Env();
         for (const auto& v : origin) {
-            dest.Set(dest.Length(), JSValue::New(env, v));
+            dest.Set(dest.Length(), FromValue<Value, JSValue>(env, v));
         }
     }
 };
