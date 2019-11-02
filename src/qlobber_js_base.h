@@ -45,8 +45,7 @@ Napi::Value VisitNextT(const Napi::CallbackInfo& info) {
 
         case Visit<Value>::entry:
             r.Set("type", "entry");
-            r.Set("i", Napi::Number::New(info.Env(), visitor->it->v->i));
-            r.Set("key", Napi::String::New(info.Env(), std::get<0>(visitor->it->v->data)));
+            r.Set("key", Napi::String::New(info.Env(), std::get<0>(*visitor->it->v)));
             break;
 
         case Visit<Value>::end_entries:
@@ -59,9 +58,8 @@ Napi::Value VisitNextT(const Napi::CallbackInfo& info) {
 
         case Visit<Value>::value:
             r.Set("type", "value");
-            r.Set("i", Napi::Number::New(info.Env(), visitor->it->v->i));
             r.Set("value", FromValue<Value, JSValue>(
-                info.Env(), std::get<1>(visitor->it->v->data)));
+                info.Env(), std::get<1>(*visitor->it->v)));
             break;
 
         case Visit<Value>::end_values:

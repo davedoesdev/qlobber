@@ -2,16 +2,8 @@
 "use strict";
 
 var expect = require('chai').expect,
-    QlobberSub = require('../aedes/qlobber-sub');
-
-function json_sort(l)
-{
-    return l.sort((a, b) => {
-        var ja = JSON.stringify(a),
-            jb = JSON.stringify(b);
-        return ja < jb ? -1 : ja > jb ? 1 : 0;
-    });
-}
+    QlobberSub = require('../aedes/qlobber-sub'),
+    common = require('./common');
 
 function test(type, QlobberSub)
 {
@@ -101,7 +93,7 @@ describe(`qlobber-sub (${type})`, function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(2);
-        expect(json_sort(matcher.match('foo.bar'))).to.eql([
+        expect(common.ordered_sort(matcher.match('foo.bar'))).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
@@ -242,7 +234,7 @@ describe(`qlobber-sub (${type})`, function ()
             qos: 2
         });
         expect(matcher.subscriptionsCount).to.equal(3);
-        expect(json_sort(matcher.match('foo.bar'))).to.eql([
+        expect(common.ordered_sort(matcher.match('foo.bar'))).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.*',
@@ -258,7 +250,7 @@ describe(`qlobber-sub (${type})`, function ()
             topic: 'foo.bar',
             qos: 2
         }]);
-        expect(json_sort(matcher.match('foo.bar', 'foo.bar'))).to.eql([
+        expect(common.ordered_sort(matcher.match('foo.bar', 'foo.bar'))).to.eql([
         {
             clientId: 'test1',
             qos: 1

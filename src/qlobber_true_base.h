@@ -47,7 +47,6 @@ void VisitValues<TrueValue, TrueStorage>(
     sink({
         Visit<TrueValue>::value,
         VisitData<TrueValue> {
-            0,
             std::variant<std::string, TrueValue>(
                 std::in_place_index<1>, TrueValue())
         }

@@ -10,11 +10,8 @@
 #include <boost/coroutine2/all.hpp>
 #include "options.h"
 
-template<typename Value>
-struct VisitData {
-    std::size_t i;
-    std::variant<std::string, Value> data;
-};
+template <typename Value>
+using VisitData = std::variant<std::string, Value>;
 
 template<typename Value>
 struct Visit {
@@ -32,12 +29,10 @@ struct Visit {
 template<typename Value, typename ValueStorage>
 void VisitValues(const ValueStorage& storage,
                  typename boost::coroutines2::coroutine<Visit<Value>>::push_type& sink) {
-    std::size_t i = 0;
     for (const auto& v : storage) {
         sink({
             Visit<Value>::value,
             VisitData<Value> {
-                i++,
                 std::variant<std::string, Value>(
                     std::in_place_index<1>, v)
             }
@@ -336,10 +331,11 @@ private:
             sink({
                 Visit<Value>::entry,
                 VisitData<Value> {
-                    cur.i++,
                     std::variant<std::string, Value>(
                         std::in_place_index<0>, cur.it->first)
             }});
+
+            ++cur.i;
 
             if (cur.it->first == options.separator) {
                 sink({ Visit<Value>::start_values, std::nullopt });

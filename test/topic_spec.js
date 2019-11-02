@@ -14,7 +14,7 @@ var expect = require('chai').expect,
     Qlobber = require('..').Qlobber,
     common = require('./common');
 
-function test(type, Qlobber)
+function test(type, Qlobber, is_native)
 {
 
 describe(`qlobber (${type})`, function ()
@@ -164,55 +164,58 @@ describe(`qlobber (${type})`, function ()
         });
     });
 
-    it('should support functions as values', function ()
+    if (!is_native)
     {
-        add_bindings(rabbitmq_test_bindings, function (topic)
+        it('should support functions as values', function ()
         {
-            return function ()
+            add_bindings(rabbitmq_test_bindings, function (topic)
             {
-                return topic;
-            };
-        });
-
-        matcher.test_values = function (vals, val)
-        {
-            for (var v of vals)
-            {
-                if (v() === val)
+                return function ()
                 {
-                    return true;
+                    return topic;
+                };
+            });
+
+            matcher.test_values = function (vals, val)
+            {
+                for (var v of vals)
+                {
+                    if (v() === val)
+                    {
+                        return true;
+                    }
                 }
-            }
 
-            return false;
-        };
+                return false;
+            };
 
-        matcher.equals_value = function (matched_value, test_value)
-        {
-            return matched_value() === test_value;
-        };
-
-        rabbitmq_expected_results_before_remove.forEach(function (test)
-        {
-            expect(matcher.match(test[0], test[0]).map(function (f)
+            matcher.equals_value = function (matched_value, test_value)
             {
-                return f();
-            }).remove_duplicates()).to.eql(test[1].sort());
-            for (var v of test[1])
+                return matched_value() === test_value;
+            };
+
+            rabbitmq_expected_results_before_remove.forEach(function (test)
             {
-                expect(matcher.test(test[0], v)).to.equal(true);
-            }
-            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+                expect(matcher.match(test[0], test[0]).map(function (f)
+                {
+                    return f();
+                }).remove_duplicates()).to.eql(test[1].sort());
+                for (var v of test[1])
+                {
+                    expect(matcher.test(test[0], v)).to.equal(true);
+                }
+                expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+            });
         });
-    });
 
-    it('should support undefined as a value', function ()
-    {
-        matcher.add('foo.bar');
-        matcher.add('foo.*');
-        expect(matcher.match('foo.bar')).to.eql([undefined, undefined]);
-        expect(matcher.test('foo.bar')).to.equal(true);
-    });
+        it('should support undefined as a value', function ()
+        {
+            matcher.add('foo.bar');
+            matcher.add('foo.*');
+            expect(matcher.match('foo.bar')).to.eql([undefined, undefined]);
+            expect(matcher.test('foo.bar')).to.equal(true);
+        });
+    }
 
     it('should pass example in README', function ()
     {
@@ -326,7 +329,14 @@ describe(`qlobber (${type})`, function ()
             objs.push(v);
         }
         
-        expect(objs).to.eql(common.expected_visits);
+        if (is_native)
+        {
+            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
+        }
+        else
+        {
+            expect(objs).to.eql(common.expected_visits);
+        }
     });
 
     it('should restore trie', function ()
@@ -366,11 +376,11 @@ describe(`qlobber (${type})`, function ()
 
         expect(objs).to.eql([
             { type: 'start_entries' },
-            { type: 'entry', i: 0, key: 'foo' },
+            { type: 'entry', key: 'foo' },
             { type: 'start_entries' },
-            { type: 'entry', i: 0, key: 'bar' },
+            { type: 'entry', key: 'bar' },
             { type: 'start_entries' },
-            { type: 'entry', i: 0, key: '.' },
+            { type: 'entry', key: '.' },
             { type: 'start_values' },
             { type: 'end_values' },
             { type: 'end_entries' },
@@ -462,5 +472,5 @@ describe(`qlobber (${type})`, function ()
 
 }
 
-test('non-native', Qlobber);
-test('native', Qlobber.nativeString);
+test('non-native', Qlobber, false);
+test('native string', Qlobber.nativeString, true);
