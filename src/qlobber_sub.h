@@ -66,6 +66,10 @@ public:
         return VisitNextT<Sub, Napi::Object>(info);
     }
 
+    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
+        return JSOptions::get(info.Env(), options);
+    }
+
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }

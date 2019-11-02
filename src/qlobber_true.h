@@ -46,6 +46,10 @@ public:
     Napi::Value VisitNext(const Napi::CallbackInfo& info) {
         return VisitNextT<TrueValue, Napi::Boolean>(info);
     }
+
+    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
+        return JSOptions::get(info.Env(), options);
+    }
 };
 
 template<>

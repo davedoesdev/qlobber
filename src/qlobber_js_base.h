@@ -130,6 +130,10 @@ public:
         return VisitNextT<Value, JSValue>(info);
     }
 
+    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
+        return JSOptions::get(info.Env(), this->options);
+    }
+
 private:
     virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 };
@@ -148,7 +152,8 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("test", &T::Test),
         T::InstanceMethod("clear", &T::Clear),
         T::InstanceMethod("get_visitor", &T::GetVisitor),
-        T::InstanceMethod("visit_next", &T::VisitNext)
+        T::InstanceMethod("visit_next", &T::VisitNext),
+        T::InstanceAccessor("options", &T::GetOptions, nullptr)
     };
 
     const auto props2 = Properties<T>();

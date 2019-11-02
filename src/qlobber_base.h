@@ -107,6 +107,10 @@ public:
     virtual bool test_values(const ValueStorage& vals,
                              const Test& val) = 0;
 
+    Options get_options() {
+        return options;
+    }
+
 protected:
     Options options;
 
@@ -341,13 +345,15 @@ private:
                 sink({ Visit<Value>::start_values, std::nullopt });
                 VisitValues<Value, ValueStorage>(std::get<1>(cur.it->second.v), sink);
                 sink({ Visit<Value>::end_values, std::nullopt });
+                ++cur.it;
                 continue;
             }
 
             saved.push_back(cur);
             cur.end = std::get<0>(cur.it->second.v)->cend();
-            cur.it = std::get<0>(cur.it++->second.v)->cbegin();
+            cur.it = std::get<0>(cur.it->second.v)->cbegin();
             cur.i = 0;
+            ++saved.back().it;
         }
 
     }

@@ -21,4 +21,13 @@ struct JSOptions : Options {
             }
         }
     }
+
+    static Napi::Value get(const Napi::Env& env, const Options& options) {
+        Napi::Object r = Napi::Object::New(env);
+        r.Set("separator", options.separator);
+        r.Set("wildcard_one", options.wildcard_one);
+        r.Set("wildcard_some", options.wildcard_some);
+        r.Set("cache_adds", options.cache_adds);
+        return r;
+    }
 };
