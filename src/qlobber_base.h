@@ -410,7 +410,9 @@ private:
 
                 case Visit<Value>::end_entries:
                     if (entry && std::get<0>(entry->v)->empty()) {
-                        delete entry;
+                        if (entry != &trie) {
+                            delete entry;
+                        }
                         entry = nullptr;
                     }
                     // falls through
@@ -418,7 +420,9 @@ private:
                 case Visit<Value>::end_values:
                     if (saved.empty()) {
                         if (entry) {
-                            delete entry;
+                            if (entry != &trie) {
+                                delete entry;
+                            }
                             entry = nullptr;
                         }
                     } else {

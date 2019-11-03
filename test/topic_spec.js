@@ -464,15 +464,18 @@ describe(`qlobber (${type})`, function ()
         expect(get_shortcuts(matcher2)).to.eql(shortcuts);
     });
 
-    it('should add shortcuts to passed in Map', function ()
+    if (!Qlobber.is_native)
     {
-        var topics = new Map();
-        matcher = new Qlobber({ cache_adds: topics });
-        add_bindings(rabbitmq_test_bindings);
-        var added = Array.from(topics.keys()).sort();
-        var rtopics = new Set(rabbitmq_test_bindings.map(v => v[0]));
-        expect(added).to.eql(Array.from(rtopics).sort());
-    });
+        it('should add shortcuts to passed in Map', function ()
+        {
+            var topics = new Map();
+            matcher = new Qlobber({ cache_adds: topics });
+            add_bindings(rabbitmq_test_bindings);
+            var added = Array.from(topics.keys()).sort();
+            var rtopics = new Set(rabbitmq_test_bindings.map(v => v[0]));
+            expect(added).to.eql(Array.from(rtopics).sort());
+        });
+    }
 });
 
 }
