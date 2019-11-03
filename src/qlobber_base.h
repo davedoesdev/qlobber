@@ -364,13 +364,14 @@ private:
 
     void inject(typename coro_t::pull_type& source) {
         struct Saved {
-            Saved(Trie* entry, const std::string& key) :
-                entry(entry), key(key) {}
+            Saved(Trie* entry, const std::string& key, const std::string& path) :
+                entry(entry), key(key), path(path) {}
             Trie* entry;
-            std::string key;
+            std::string key, path;
         };
         std::vector<Saved> saved;
         Trie* entry = &trie;
+        std::string path;
 
         for (const auto& v : source) {
             switch (v.type) {
@@ -379,12 +380,18 @@ private:
                         entry = new Trie();
                     }
                     const auto& key = std::get<0>(*v.v);
-                    saved.emplace_back(entry, key);
+                    saved.emplace_back(entry, key, path);
                     const auto it = std::get<0>(entry->v)->find(key);
                     if (it == std::get<0>(entry->v)->end()) {
                         entry = nullptr;
                     } else {
                         entry = &it->second;
+                    }
+                    if (options.cache_adds) {
+                        if (!path.empty()) {
+                            path += options.separator;
+                        }
+                        path += key;
                     }
                     break;
                 }
@@ -415,6 +422,11 @@ private:
                         }
                     } else {
                         if (entry) {
+                            if (options.cache_adds &&
+                                (v.type == Visit<Value>::end_values)) {
+                                shortcuts.emplace(saved.back().path,
+                                                  std::get<1>(entry->v));
+                            }
                             std::get<0>(saved.back().entry->v)->emplace(
                                 saved.back().key, entry);
                         }
