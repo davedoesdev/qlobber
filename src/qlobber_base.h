@@ -99,6 +99,11 @@ public:
             std::bind(&QlobberBase::generate, this, std::placeholders::_1));
     }
 
+    virtual typename coro_t::push_type restore() {
+        return typename coro_t::push_type(
+            std::bind(&QlobberBase::inject, this, std::placeholders::_1));
+    }
+
     virtual bool test_values(const ValueStorage& vals,
                              const Test& val) = 0;
 
@@ -115,6 +120,9 @@ private:
         typedef std::unique_ptr<map_type> map_ptr;
         Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
         Trie(const Value& val) : v(std::in_place_index<1>, val) {}
+        Trie(Trie* t) : v(std::move(t->v)) {
+            delete t;
+        }
         std::variant<map_ptr, ValueStorage> v;
     } trie;
 
@@ -352,6 +360,74 @@ private:
             ++saved.back().it;
         }
 
+    }
+
+    void inject(typename coro_t::pull_type& source) {
+        struct Saved {
+            Saved(Trie* entry, const std::string& key) :
+                entry(entry), key(key) {}
+            Trie* entry;
+            std::string key;
+        };
+        std::vector<Saved> saved;
+        Trie* entry = &trie;
+
+        for (const auto& v : source) {
+            switch (v.type) {
+                case Visit<Value>::entry: {
+                    if (!entry) {
+                        entry = new Trie();
+                    }
+                    const auto& key = std::get<0>(*v.v);
+                    saved.emplace_back(entry, key);
+                    const auto it = std::get<0>(entry->v)->find(key);
+                    if (it == std::get<0>(entry->v)->end()) {
+                        entry = nullptr;
+                    } else {
+                        entry = &it->second;
+                    }
+                    break;
+                }
+
+                case Visit<Value>::value: {
+                    const auto& val = std::get<1>(*v.v);
+                    if (entry) {
+                        add_value(std::get<1>(entry->v), val);
+                    } else {
+                        entry = new Trie(val);
+                        initial_value_inserted(val);
+                    }
+                    break;
+                }
+
+                case Visit<Value>::end_entries:
+                    if (entry && std::get<0>(entry->v)->empty()) {
+                        delete entry;
+                        entry = nullptr;
+                    }
+                    // falls through
+
+                case Visit<Value>::end_values:
+                    if (saved.empty()) {
+                        if (entry) {
+                            delete entry;
+                            entry = nullptr;
+                        }
+                    } else {
+                        if (entry) {
+                            std::get<0>(saved.back().entry->v)->emplace(
+                                saved.back().key, entry);
+                        }
+                        entry = saved.back().entry;
+                        saved.pop_back();
+                    }
+                    break;
+
+                case Visit<Value>::start_entries:
+                case Visit<Value>::start_values:
+                    break;
+            }
+        }
     }
 
     std::vector<std::string> split(const std::string& topic) {
