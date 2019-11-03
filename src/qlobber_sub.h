@@ -66,6 +66,14 @@ public:
         return VisitNextT<Sub, Napi::Object>(info);
     }
 
+    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
+        return GetRestorerT<QlobberSub, Sub>(this, info);
+    }
+
+    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
+        return RestoreNextT<Sub, Napi::Object>(info);
+    }
+
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), options);
     }
@@ -111,4 +119,13 @@ Napi::Value FromValue<Sub, Napi::Object>(const Napi::Env& env, const Sub& sub) {
     obj.Set("topic", sub.topic);
     obj.Set("qos", static_cast<uint32_t>(sub.qos));
     return obj;
+}
+
+template<>
+Sub ToValue<Sub, Napi::Object>(const Napi::Object& v) {
+    return Sub {
+        v.Get("clientId").As<Napi::String>(),
+        v.Get("topic").As<Napi::String>(),
+        static_cast<QoS>(v.Get("qos").As<Napi::Number>().Uint32Value())
+    };
 }

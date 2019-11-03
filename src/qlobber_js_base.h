@@ -3,6 +3,16 @@
 #include <vector>
 #include "js_options.h"
 
+template<typename Value, typename JSValue>
+Napi::Value FromValue(const Napi::Env& env, const Value& v) {
+    return JSValue::New(env, v);
+}
+
+template<typename Value, typename JSValue>
+Value ToValue(const JSValue& v) {
+    return v;
+}
+
 template<typename Value>
 struct Visitor {
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
@@ -23,11 +33,6 @@ Napi::Value GetVisitorT(T* obj, const Napi::CallbackInfo& info) {
         [](Napi::Env, Visitor<Value>* visitor) {
             delete visitor;
         });
-}
-
-template<typename Value, typename JSValue>
-Napi::Value FromValue(const Napi::Env& env, const Value& v) {
-    return JSValue::New(env, v);
 }
 
 template<typename Value, typename JSValue>
@@ -69,6 +74,62 @@ Napi::Value VisitNextT(const Napi::CallbackInfo& info) {
 
     ++visitor->it;
     return r;
+}
+
+template<typename Value>
+struct Restorer {
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
+    typedef typename coro_t::push_type push_t;
+    Restorer(push_t sink) :
+        sink(std::move(sink)) {}
+    push_t sink;
+};
+
+template<typename T, typename Value>
+Napi::Value GetRestorerT(T* obj, const Napi::CallbackInfo& info) {
+    return Napi::External<Restorer<Value>>::New(
+        info.Env(),
+        new Restorer<Value>(obj->restore()),
+        [](Napi::Env, Restorer<Value>* restorer) {
+            delete restorer;
+        });
+}
+
+template<typename Value, typename JSValue>
+Napi::Value RestoreNextT(const Napi::CallbackInfo& info) {
+    const auto restorer = info[0].As<Napi::External<Restorer<Value>>>().Data();
+    const auto obj = info[1].As<Napi::Object>();
+    const std::string type = obj.Get("type").As<Napi::String>();
+
+    if (type == "start_entries") {
+        restorer->sink({ Visit<Value>::start_entries, std::nullopt });
+    } else if (type == "entry") {
+        restorer->sink({
+            Visit<Value>::entry, 
+            VisitData<Value> {
+                std::variant<std::string, Value>(
+                    std::in_place_index<0>,
+                    obj.Get("key").As<Napi::String>())
+            }
+        });
+    } else if (type == "end_entries") {
+        restorer->sink({ Visit<Value>::end_entries, std::nullopt });
+    } else if (type == "start_values") {
+        restorer->sink({ Visit<Value>::start_values, std::nullopt });
+    } else if (type == "value") {
+        restorer->sink({
+            Visit<Value>::value,
+            VisitData<Value> {
+                std::variant<std::string, Value>(
+                    std::in_place_index<1>,
+                    ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
+            }
+        });
+    } else if (type == "end_values") {
+        restorer->sink({ Visit<Value>::end_values, std::nullopt });
+    }
+
+    return info.Env().Undefined();
 }
 
 template<typename Value,
@@ -128,6 +189,14 @@ public:
         return VisitNextT<Value, JSValue>(info);
     }
 
+    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
+        return GetRestorerT<QlobberJSBase, Value>(this, info);
+    }
+
+    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
+        return RestoreNextT<Value, JSValue>(info);
+    }
+
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), this->options);
     }
@@ -151,6 +220,8 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("clear", &T::Clear),
         T::InstanceMethod("get_visitor", &T::GetVisitor),
         T::InstanceMethod("visit_next", &T::VisitNext),
+        T::InstanceMethod("get_restorer", &T::GetRestorer),
+        T::InstanceMethod("restore_next", &T::RestoreNext),
         T::InstanceAccessor("options", &T::GetOptions, nullptr)
     };
 

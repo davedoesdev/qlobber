@@ -47,6 +47,14 @@ public:
         return VisitNextT<TrueValue, Napi::Boolean>(info);
     }
 
+    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
+        return GetRestorerT<QlobberTrue, TrueValue>(this, info);
+    }
+
+    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
+        return RestoreNextT<TrueValue, Napi::Boolean>(info);
+    }
+
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), options);
     }
@@ -55,4 +63,9 @@ public:
 template<>
 Napi::Value FromValue<TrueValue, Napi::Boolean>(const Napi::Env& env, const TrueValue&) {
     return Napi::Boolean::New(env, true);
+}
+
+template<>
+TrueValue ToValue<TrueValue, Napi::Boolean>(const Napi::Boolean& v) {
+    return TrueValue();
 }

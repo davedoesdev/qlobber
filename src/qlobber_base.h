@@ -341,7 +341,8 @@ private:
                 VisitData<Value> {
                     std::variant<std::string, Value>(
                         std::in_place_index<0>, cur.it->first)
-            }});
+                }
+            });
 
             ++cur.i;
 
