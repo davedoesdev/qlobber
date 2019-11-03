@@ -18,7 +18,7 @@ public:
 
 private:
     bool remove_value(Storage<Value>& existing,
-                      const std::optional<const std::string>& topic) override {
+                      const std::optional<const Value>& topic) override {
         if (!topic) {
             return true;
         }

@@ -14,7 +14,7 @@ var expect = require('chai').expect,
     Qlobber = require('..').Qlobber,
     common = require('./common');
 
-function test(type, Qlobber, is_native)
+function test(type, Qlobber)
 {
 
 describe(`qlobber (${type})`, function ()
@@ -164,7 +164,7 @@ describe(`qlobber (${type})`, function ()
         });
     });
 
-    if (!is_native)
+    if (!Qlobber.is_native)
     {
         it('should support functions as values', function ()
         {
@@ -295,6 +295,11 @@ describe(`qlobber (${type})`, function ()
 
     it('should match expected number of topics', function ()
     {
+        if (Qlobber.is_native)
+        {
+            matcher = new Qlobber.nonNative.nativeNumber;
+        }
+
         // under coverage this takes longer
         this.timeout(60000);
 
@@ -329,7 +334,7 @@ describe(`qlobber (${type})`, function ()
             objs.push(v);
         }
         
-        if (is_native)
+        if (Qlobber.is_native)
         {
             expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
         }
@@ -472,5 +477,5 @@ describe(`qlobber (${type})`, function ()
 
 }
 
-test('non-native', Qlobber, false);
-test('native string', Qlobber.nativeString, true);
+test('non-native', Qlobber);
+test('native string', Qlobber.nativeString);
