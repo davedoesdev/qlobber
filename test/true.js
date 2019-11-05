@@ -4,11 +4,13 @@
 "use strict";
 
 var expect = require('chai').expect,
-    qlobber = require('..'),
-    QlobberTrue = qlobber.QlobberTrue,
-    expected_visits = require('./common').expected_true_visits;
+    QlobberTrue = require('..').QlobberTrue,
+    common = require('./common');
 
-describe('true', function ()
+function test(type, QlobberTrue)
+{
+
+describe(`true (${type})`, function ()
 {
     it('should add and test', function ()
     {
@@ -97,7 +99,14 @@ describe('true', function ()
             objs.push(v);
         }
 
-        expect(objs).to.eql(expected_visits);
+        if (QlobberTrue.is_native)
+        {
+            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_true_visits));
+        }
+        else
+        {
+            expect(objs).to.eql(common.expected_true_visits);
+        }
     });
 
     it('should restore trie', function ()
@@ -105,7 +114,7 @@ describe('true', function ()
         let matcher = new QlobberTrue(),
             restorer = matcher.get_restorer();
 
-        for (let v of expected_visits)
+        for (let v of common.expected_true_visits)
         {
             restorer(v);
         }
@@ -126,3 +135,8 @@ describe('true', function ()
         expect(matcher.test('xyzfoo')).to.equal(true);
     });
 });
+
+}
+
+test('non-native', QlobberTrue);
+test('native', QlobberTrue.native);

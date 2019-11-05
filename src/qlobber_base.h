@@ -49,7 +49,6 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        // TODO: check algo is correct by testing and benchmarking them
         // TODO: test visit/restore on QlobberSub
         //         may need iterator on stored value to produce values
         // TODO: do we need all virtuals?
