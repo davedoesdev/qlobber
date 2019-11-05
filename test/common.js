@@ -412,6 +412,18 @@ if (Array.from === undefined)
 	};
 }
 
+const util = require('util');
+
+function ordered_sort(l)
+{
+    return [...l].sort((a, b) => {
+        var ja = util.inspect(a, { sorted: true }),
+            jb = util.inspect(b, { sorted: true });
+        return ja < jb ? -1 : ja > jb ? 1 : 0;
+    });
+};
+exports.ordered_sort = ordered_sort;
+
 function get_trie(matcher, t)
 {
     t = t || matcher.get_trie();
@@ -420,7 +432,7 @@ function get_trie(matcher, t)
     {
         if (k === '.')
         {
-            r[k] = Array.from(t.get(k));
+            r[k] = ordered_sort(Array.from(t.get(k)));
         }
         else
         {
@@ -431,14 +443,3 @@ function get_trie(matcher, t)
 }
 
 exports.get_trie = get_trie;
-
-const util = require('util');
-
-exports.ordered_sort = function (l)
-{
-    return [...l].sort((a, b) => {
-        var ja = util.inspect(a, { sorted: true }),
-            jb = util.inspect(b, { sorted: true });
-        return ja < jb ? -1 : ja > jb ? 1 : 0;
-    });
-};

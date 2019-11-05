@@ -11,16 +11,19 @@
 "use strict";
 
 var expect = require('chai').expect,
-    qlobber = require('..'),
+    QlobberDedup = require('..').QlobberDedup,
     common = require('./common');
 
-describe('qlobber-dedup', function ()
+function test(type, QlobberDedup)
+{
+
+describe(`qlobber-dedup (${type})`, function ()
 {
     var matcher;
 
     beforeEach(function (done)
     {
-        matcher = new qlobber.QlobberDedup();
+        matcher = new QlobberDedup();
         done();
     });
 
@@ -146,50 +149,53 @@ describe('qlobber-dedup', function ()
         });
     });
 
-    it('should support functions as values', function ()
+    if (!QlobberDedup.is_native)
     {
-        add_bindings(rabbitmq_test_bindings, function (topic)
+        it('should support functions as values', function ()
         {
-            return function ()
+            add_bindings(rabbitmq_test_bindings, function (topic)
             {
-                return topic;
-            };
-        });
-
-        matcher.test_values = function (vals, val)
-        {
-            for (var v of vals)
-            {
-                if (v() === val)
+                return function ()
                 {
-                    return true;
+                    return topic;
+                };
+            });
+
+            matcher.test_values = function (vals, val)
+            {
+                for (var v of vals)
+                {
+                    if (v() === val)
+                    {
+                        return true;
+                    }
                 }
-            }
 
-            return false;
-        };
+                return false;
+            };
 
-        rabbitmq_expected_results_before_remove.forEach(function (test)
-        {
-            expect(Array.from(matcher.match(test[0], test[0])).map(function (f)
+            rabbitmq_expected_results_before_remove.forEach(function (test)
             {
-                return f();
-            }).sort()).to.eql(test[1].sort());
-            for (var v of test[1])
-            {
-                expect(matcher.test(test[0], v)).to.equal(true);
-            }
-            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+                expect(Array.from(matcher.match(test[0], test[0])).map(function (f)
+                {
+                    return f();
+                }).sort()).to.eql(test[1].sort());
+                for (var v of test[1])
+                {
+                    expect(matcher.test(test[0], v)).to.equal(true);
+                }
+                expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+            });
         });
-    });
 
-    it('should support undefined as a value', function ()
-    {
-        matcher.add('foo.bar');
-        matcher.add('foo.*');
-        expect(Array.from(matcher.match('foo.bar'))).to.eql([undefined]);
-		expect(matcher.test('foo.bar')).to.equal(true);
-    });
+        it('should support undefined as a value', function ()
+        {
+            matcher.add('foo.bar');
+            matcher.add('foo.*');
+            expect(Array.from(matcher.match('foo.bar'))).to.eql([undefined]);
+            expect(matcher.test('foo.bar')).to.equal(true);
+        });
+    }
 
     it('should pass example in README', function ()
     {
@@ -254,7 +260,7 @@ describe('qlobber-dedup', function ()
 
     it('should be configurable', function ()
     {
-        matcher = new qlobber.QlobberDedup({
+        matcher = new QlobberDedup({
             separator: '/',
             wildcard_one: '+',
             wildcard_some: 'M'
@@ -283,6 +289,11 @@ describe('qlobber-dedup', function ()
 
     it('should match expected number of topics', function ()
     {
+        if (QlobberDedup.is_native)
+        {
+            matcher = new QlobberDedup.nonNative.nativeNumber;
+        }
+
         // under coverage this takes longer
         this.timeout(60000);
 
@@ -316,7 +327,14 @@ describe('qlobber-dedup', function ()
             objs.push(v);
         }
 
-        expect(objs).to.eql(common.expected_visits);
+        if (QlobberDedup.is_native)
+        {
+            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
+        }
+        else
+        {
+            expect(objs).to.eql(common.expected_visits);
+        }
     });
 
     it('should restore trie', function ()
@@ -342,3 +360,8 @@ describe('qlobber-dedup', function ()
         });
     });
 });
+
+}
+
+test('non-native', QlobberDedup);
+test('native string', QlobberDedup.nativeString);
