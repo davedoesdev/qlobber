@@ -37,7 +37,7 @@ public:
 
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        auto r = Napi::Array::New(info.Env());
+        auto r = NewMatchResult(info.Env());
         match(r, topic, info.Length() == 1 ?
             std::nullopt :
             std::optional<std::string>(info[1].As<Napi::String>()));
@@ -82,7 +82,20 @@ public:
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
 
+    // for tests
+
+    friend Napi::Value GetShortcutsT<QlobberSub, const std::optional<const std::string>>(
+        QlobberSub*, const Napi::CallbackInfo&, const std::optional<const std::string>&);
+
+    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
+        return GetShortcutsT<QlobberSub, const std::optional<const std::string>>(this, info, std::nullopt);
+    }
+
 private:
+    Napi::Array NewMatchResult(const Napi::Env& env) {
+        return Napi::Array::New(env);
+    }
+
     void add_values(Napi::Array& dest,
                     const SubStorage& existing,
                     const std::optional<const std::string>& topic) override {

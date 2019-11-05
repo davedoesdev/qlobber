@@ -5,7 +5,7 @@
 
 struct JSOptions : Options {
     JSOptions(const Napi::CallbackInfo& info) {
-        if (info.Length() > 0) {
+        if ((info.Length() > 0) && info[0].IsObject()) {
             auto options = info[0].As<Napi::Object>();
             if (options.Has("separator")) {
                 separator = options.Get("separator").As<Napi::String>();

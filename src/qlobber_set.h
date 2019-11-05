@@ -12,18 +12,18 @@ public:
 
 private:
     Napi::Object NewMatchResult(const Napi::Env& env) override {
-        return env.Global().Get("Map").As<Napi::Function>().New({});
+        return env.Global().Get("Set").As<Napi::Function>().New({});
     }
 
     void add_values(Napi::Object& dest,
                     const SetStorage<Value>& origin,
                     const std::nullptr_t&) override {
         const auto env = dest.Env();
-        const auto Map = env.Global().Get("Map").As<Napi::Function>();
-        const auto proto = Map.Get("prototype").As<Napi::Object>();
+        const auto Set = env.Global().Get("Set").As<Napi::Function>();
+        const auto proto = Set.Get("prototype").As<Napi::Object>();
         const auto add = proto.Get("add").As<Napi::Function>();
         for (const auto& v : origin) {
-            add.Call({ dest, FromValue<Value, JSValue>(env, v) });
+            add.Call(dest, { FromValue<Value, JSValue>(env, v) });
         }
     }
 };

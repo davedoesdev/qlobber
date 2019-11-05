@@ -87,9 +87,16 @@ struct Restorer {
 
 template<typename T, typename Value>
 Napi::Value GetRestorerT(T* obj, const Napi::CallbackInfo& info) {
+    bool cache_adds = false;
+    if ((info.Length() > 0) && info[0].IsObject()) {
+        auto options = info[0].As<Napi::Object>();
+        if (options.Has("cache_adds")) {
+            cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
+        }
+    }
     return Napi::External<Restorer<Value>>::New(
         info.Env(),
-        new Restorer<Value>(obj->restore()),
+        new Restorer<Value>(obj->restore(cache_adds)),
         [](Napi::Env, Restorer<Value>* restorer) {
             delete restorer;
         });
@@ -132,6 +139,23 @@ Napi::Value RestoreNextT(const Napi::CallbackInfo& info) {
     return info.Env().Undefined();
 }
 
+template<typename T, typename Context>
+Napi::Value GetShortcutsT(T* obj, const Napi::CallbackInfo& info, Context& ctx) {
+    const auto env = info.Env();
+    const auto Map = env.Global().Get("Map").As<Napi::Function>();
+    const auto proto = Map.Get("prototype").As<Napi::Object>();
+    const auto set = proto.Get("set").As<Napi::Function>();
+    Napi::Object r = Map.New({});
+
+    for (const auto& topic_and_values : obj->shortcuts) {
+        auto entry = obj->NewMatchResult(env);
+        obj->add_values(entry, topic_and_values.second, ctx);
+        set.Call(r, { Napi::String::New(env, topic_and_values.first), entry });
+    }
+
+    return r;
+}
+
 template<typename Value,
          typename JSValue,
          typename MatchResult,
@@ -165,8 +189,7 @@ public:
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
         auto r = NewMatchResult(info.Env());
-        const auto ctx = nullptr;
-        this->match(r, topic, ctx);
+        this->match(r, topic, nullptr);
         return r;
     }
 
@@ -201,6 +224,15 @@ public:
         return JSOptions::get(info.Env(), this->options);
     }
 
+    // for tests
+
+    friend Napi::Value GetShortcutsT<QlobberJSBase, const std::nullptr_t>(
+        QlobberJSBase*, const Napi::CallbackInfo&, const std::nullptr_t&);
+
+    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
+        return GetShortcutsT<QlobberJSBase, const std::nullptr_t>(this, info, nullptr);
+    }
+
 private:
     virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 };
@@ -222,7 +254,8 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("visit_next", &T::VisitNext),
         T::InstanceMethod("get_restorer", &T::GetRestorer),
         T::InstanceMethod("restore_next", &T::RestoreNext),
-        T::InstanceAccessor("options", &T::GetOptions, nullptr)
+        T::InstanceAccessor("options", &T::GetOptions, nullptr),
+        T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr)
     };
 
     const auto props2 = Properties<T>();

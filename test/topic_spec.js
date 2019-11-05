@@ -49,10 +49,10 @@ describe(`qlobber (${type})`, function ()
 
     function get_shortcuts(matcher)
     {
-        var k, r = {};
-        for (k of matcher._shortcuts.keys())
+        var k, r = {}, shortcuts = matcher._shortcuts;
+        for (k of shortcuts.keys())
         {
-            r[k] = matcher._shortcuts.get(k);
+            r[k] = shortcuts.get(k);
         }
         return r;
     }
@@ -368,18 +368,7 @@ describe(`qlobber (${type})`, function ()
 
     it('should not restore empty entries', function ()
     {
-        matcher.add('foo.bar', 90);
-
-        matcher._trie.get('foo').get('bar').get('.').shift();
-
-        let objs = [];
-
-        for (let v of matcher.visit())
-        {
-            objs.push(v);
-        }
-
-        expect(objs).to.eql([
+        const expected_visits = [
             { type: 'start_entries' },
             { type: 'entry', key: 'foo' },
             { type: 'start_entries' },
@@ -391,12 +380,28 @@ describe(`qlobber (${type})`, function ()
             { type: 'end_entries' },
             { type: 'end_entries' },
             { type: 'end_entries' }
-        ]);
+        ];
 
-        let matcher2 = new Qlobber(),
+        if (!Qlobber.is_native)
+        {
+            matcher.add('foo.bar', 90);
+
+            matcher._trie.get('foo').get('bar').get('.').shift();
+
+            let objs = [];
+
+            for (let v of matcher.visit())
+            {
+                objs.push(v);
+            }
+
+            expect(objs).to.eql(expected_visits);
+        }
+
+        let matcher2 = new (Qlobber.is_native ? Qlobber.nonNative.nativeNumber : Qlobber)(),
             restorer = matcher2.get_restorer();
 
-        for (let v of objs)
+        for (let v of expected_visits)
         {
             restorer(v);
         }
@@ -445,7 +450,14 @@ describe(`qlobber (${type})`, function ()
         {
             objs.push(v);
         }
-        expect(objs).to.eql(common.expected_visits);
+        if (Qlobber.is_native)
+        {
+            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
+        }
+        else
+        {
+            expect(objs).to.eql(common.expected_visits);
+        }
 
         let matcher2 = new Qlobber({ cache_adds: true }),
             restorer = matcher2.get_restorer();

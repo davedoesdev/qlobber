@@ -58,6 +58,20 @@ public:
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), options);
     }
+
+    friend Napi::Value GetShortcutsT<QlobberTrue, const std::nullptr_t>(
+        QlobberTrue*, const Napi::CallbackInfo&, const std::nullptr_t&);
+
+    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
+        return GetShortcutsT<QlobberTrue, const std::nullptr_t>(this, info, nullptr);
+    }
+
+private:
+    Napi::Boolean NewMatchResult(const Napi::Env& env) {
+        return Napi::Boolean::New(env, true);
+    }
+
+    void add_values(Napi::Boolean&, const TrueStorage&, const std::nullptr_t&) {}
 };
 
 template<>

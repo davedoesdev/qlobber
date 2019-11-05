@@ -54,7 +54,6 @@ public:
         //         may need iterator on stored value to produce values
         // TODO: do we need all virtuals?
         // TODO: async
-        // TODO: visit and restore? - using async?
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}
@@ -99,9 +98,9 @@ public:
             std::bind(&QlobberBase::generate, this, std::placeholders::_1));
     }
 
-    virtual typename coro_t::push_type restore() {
+    virtual typename coro_t::push_type restore(bool cache_adds = false) {
         return typename coro_t::push_type(
-            std::bind(&QlobberBase::inject, this, std::placeholders::_1));
+            std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
     }
 
     virtual bool test_values(const ValueStorage& vals,
@@ -113,6 +112,15 @@ public:
 
 protected:
     Options options;
+    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
+
+    virtual void initial_value_inserted(const Value& val) {}
+    virtual void add_value(ValueStorage& vals, const Value& val) = 0;
+    virtual bool remove_value(ValueStorage& vals,
+                              const std::optional<const Remove>& val) = 0;
+    virtual void add_values(MatchResult& r,
+                            const ValueStorage& vals,
+                            Context& ctx) = 0;
 
 private:
     struct Trie {
@@ -120,13 +128,9 @@ private:
         typedef std::unique_ptr<map_type> map_ptr;
         Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
         Trie(const Value& val) : v(std::in_place_index<1>, val) {}
-        Trie(Trie* t) : v(std::move(t->v)) {
-            delete t;
-        }
+        Trie(std::shared_ptr<Trie>& t) : v(std::move(t->v)) {}
         std::variant<map_ptr, ValueStorage> v;
     } trie;
-
-    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
     ValueStorage& add(const Value& val,
                       const std::size_t i,
@@ -363,32 +367,34 @@ private:
 
     }
 
-    void inject(typename coro_t::pull_type& source) {
+    void inject(typename coro_t::pull_type& source, bool cache_adds) {
         struct Saved {
-            Saved(Trie* entry, const std::string& key, const std::string& path) :
+            Saved(std::shared_ptr<Trie> entry,
+                  const std::string& key,
+                  const std::string& path) :
                 entry(entry), key(key), path(path) {}
-            Trie* entry;
+            std::shared_ptr<Trie> entry;
             std::string key, path;
         };
         std::vector<Saved> saved;
-        Trie* entry = &trie;
+        std::shared_ptr<Trie> entry(&trie, [](Trie*) {});
         std::string path;
 
         for (const auto& v : source) {
             switch (v.type) {
                 case Visit<Value>::entry: {
                     if (!entry) {
-                        entry = new Trie();
+                        entry = std::make_shared<Trie>();
                     }
                     const auto& key = std::get<0>(*v.v);
                     saved.emplace_back(entry, key, path);
                     const auto it = std::get<0>(entry->v)->find(key);
                     if (it == std::get<0>(entry->v)->end()) {
-                        entry = nullptr;
+                        entry.reset();
                     } else {
-                        entry = &it->second;
+                        entry.reset(&it->second, [](Trie*) {});
                     }
-                    if (options.cache_adds) {
+                    if (cache_adds) {
                         if (!path.empty()) {
                             path += options.separator;
                         }
@@ -402,7 +408,7 @@ private:
                     if (entry) {
                         add_value(std::get<1>(entry->v), val);
                     } else {
-                        entry = new Trie(val);
+                        entry = std::make_unique<Trie>(val);
                         initial_value_inserted(val);
                     }
                     break;
@@ -410,32 +416,27 @@ private:
 
                 case Visit<Value>::end_entries:
                     if (entry && std::get<0>(entry->v)->empty()) {
-                        if (entry != &trie) {
-                            delete entry;
-                        }
-                        entry = nullptr;
+                        entry.reset();
                     }
                     // falls through
 
                 case Visit<Value>::end_values:
                     if (saved.empty()) {
-                        if (entry) {
-                            if (entry != &trie) {
-                                delete entry;
-                            }
-                            entry = nullptr;
-                        }
+                        entry.reset();
+                        path.clear();
                     } else {
                         if (entry) {
-                            if (options.cache_adds &&
+                            const auto it = std::get<0>(saved.back().entry->v)->emplace(
+                                saved.back().key, entry);
+                            if (cache_adds &&
+                                options.cache_adds &&
                                 (v.type == Visit<Value>::end_values)) {
                                 shortcuts.emplace(saved.back().path,
-                                                  std::get<1>(entry->v));
+                                                  std::get<1>(it.first->second.v));
                             }
-                            std::get<0>(saved.back().entry->v)->emplace(
-                                saved.back().key, entry);
                         }
                         entry = saved.back().entry;
+                        path = saved.back().path;
                         saved.pop_back();
                     }
                     break;
@@ -461,12 +462,4 @@ private:
         words.push_back(std::move(topic.substr(last)));
         return words;
     }
-
-    virtual void initial_value_inserted(const Value& val) {}
-    virtual void add_value(ValueStorage& vals, const Value& val) = 0;
-    virtual bool remove_value(ValueStorage& vals,
-                              const std::optional<const Remove>& val) = 0;
-    virtual void add_values(MatchResult& r,
-                            const ValueStorage& vals,
-                            Context& ctx) = 0;
 };
