@@ -26,11 +26,15 @@ module.exports = function (grunt)
 
         exec: {
             build: {
-                cmd: 'node-gyp build --debug'
+                cmd: function () {
+                    return `node-gyp build ${grunt.option('debug') ? '--debug' : ''}`;
+                }
             },
 
             rebuild: {
-                cmd: 'node-gyp rebuild --debug'
+                cmd: function () {
+                    return `node-gyp rebuild ${grunt.option('debug') ? '--debug' : ''}`;
+                }
             },
 
             cover: {

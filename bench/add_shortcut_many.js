@@ -28,7 +28,8 @@ module.exports = function ()
     {
         for (j = 0; j < 5; j += 1)
         {
-            if ((options.Matcher !== qlobber.Qlobber) ||
+            if (((options.Matcher !== qlobber.Qlobber) &&
+                 (options.Matcher !== qlobber.Qlobber.nativeString)) ||
                 // mosca pre-dedup checks whether already added
                 (matcher.match('app/test/user/behrad/testTopic-' + j).indexOf(i) < 0))
             {

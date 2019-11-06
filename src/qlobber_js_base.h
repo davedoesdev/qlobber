@@ -13,6 +13,11 @@ Value ToValue(const JSValue& v) {
     return v;
 }
 
+template<typename MatchResult>
+Napi::Value MatchResultValue(MatchResult& r) {
+    return r;
+}
+
 template<typename Value>
 struct Visitor {
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
@@ -150,7 +155,10 @@ Napi::Value GetShortcutsT(T* obj, const Napi::CallbackInfo& info, Context& ctx) 
     for (const auto& topic_and_values : obj->shortcuts) {
         auto entry = obj->NewMatchResult(env);
         obj->add_values(entry, topic_and_values.second, ctx);
-        set.Call(r, { Napi::String::New(env, topic_and_values.first), entry });
+        set.Call(r, {
+            Napi::String::New(env, topic_and_values.first),
+            MatchResultValue(entry)
+        });
     }
 
     return r;
@@ -190,7 +198,7 @@ public:
         const auto topic = info[0].As<Napi::String>();
         auto r = NewMatchResult(info.Env());
         this->match(r, topic, nullptr);
-        return r;
+        return MatchResultValue(r);
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {

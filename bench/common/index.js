@@ -80,7 +80,8 @@ exports.match = function(matcher)
         test = rabbitmq_expected_results_before_remove[i];
         vals = matcher.match(test[0]);
 
-        if (options.Matcher === qlobber.Qlobber)
+        if ((options.Matcher === qlobber.Qlobber) ||
+            (options.Matcher === qlobber.Qlobber.nativeString))
         {
             vals = remove_duplicates(vals);
         }

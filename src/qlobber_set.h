@@ -3,27 +3,39 @@
 
 template<typename Value, typename JSValue>
 class QlobberSet :
-    public QlobberJSBase<Value, JSValue, Napi::Object, QlobberSetBase>,
+    public QlobberJSBase<Value,
+                         JSValue,
+                         std::pair<Napi::Object, Napi::Function>,
+                         QlobberSetBase>,
     public Napi::ObjectWrap<QlobberSet<Value, JSValue>> {
 public:
     QlobberSet(const Napi::CallbackInfo& info) :
-        QlobberJSBase<Value, JSValue, Napi::Object, QlobberSetBase>(info),
+        QlobberJSBase<Value,
+                      JSValue,
+                      std::pair<Napi::Object, Napi::Function>,
+                      QlobberSetBase>(info),
         Napi::ObjectWrap<QlobberSet<Value, JSValue>>(info) {}
 
 private:
-    Napi::Object NewMatchResult(const Napi::Env& env) override {
-        return env.Global().Get("Set").As<Napi::Function>().New({});
-    }
-
-    void add_values(Napi::Object& dest,
-                    const SetStorage<Value>& origin,
-                    const std::nullptr_t&) override {
-        const auto env = dest.Env();
+    std::pair<Napi::Object, Napi::Function>
+    NewMatchResult(const Napi::Env& env) override {
         const auto Set = env.Global().Get("Set").As<Napi::Function>();
         const auto proto = Set.Get("prototype").As<Napi::Object>();
         const auto add = proto.Get("add").As<Napi::Function>();
+        return std::make_pair(Set.New({}), add);
+    }
+
+    void add_values(std::pair<Napi::Object, Napi::Function>& r,
+                    const SetStorage<Value>& origin,
+                    const std::nullptr_t&) override {
+        const auto env = r.first.Env();
         for (const auto& v : origin) {
-            add.Call(dest, { FromValue<Value, JSValue>(env, v) });
+            r.second.Call(r.first, { FromValue<Value, JSValue>(env, v) });
         }
     }
 };
+
+template<>
+Napi::Value MatchResultValue(std::pair<Napi::Object, Napi::Function>& r) {
+    return r.first;
+}
