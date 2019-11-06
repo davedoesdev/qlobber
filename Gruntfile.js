@@ -50,15 +50,15 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js,bench/options/default-native.js,bench/options/dedup-native.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
             },
 
             'bench-check': {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check-default.js,bench/options/check-dedup.js,bench/options/check-mapval.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
+                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/check-default.js,bench/options/check-dedup.js,bench/options/check-mapval.js,bench/options/check-default-native.js,bench/options/check-dedup-native.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
             },
 
             'bench-many': {
-                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js -k options bench/add_many bench/add_shortcut_many bench/match_many bench/match_search_many bench/test_many'
+                cmd: './node_modules/.bin/bench -c 1 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js,bench/options/default-native.js,bench/options/dedup-native.js -k options bench/add_many bench/add_shortcut_many bench/match_many bench/match_search_many bench/test_many'
             }
         }
     });

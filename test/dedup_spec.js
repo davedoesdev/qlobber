@@ -291,7 +291,7 @@ describe(`qlobber-dedup (${type})`, function ()
     {
         if (QlobberDedup.is_native)
         {
-            matcher = new QlobberDedup.nonNative.nativeNumber;
+            matcher = new QlobberDedup.nonNative.nativeNumber();
         }
 
         // under coverage this takes longer

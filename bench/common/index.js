@@ -52,7 +52,8 @@ exports.remove_bindings = function(matcher)
             test = rabbitmq_expected_results_after_remove[i];
             vals = matcher.match(test[0]);
             
-            if (options.Matcher === qlobber.QlobberDedup)
+            if ((options.Matcher === qlobber.QlobberDedup) ||
+                (options.Matcher === qlobber.QlobberDedup.nativeString))
             {
                 vals = Array.from(vals).sort();
             }
@@ -86,7 +87,8 @@ exports.match = function(matcher)
 
         if (options.check)
         {
-            if (options.Matcher === qlobber.QlobberDedup)
+            if ((options.Matcher === qlobber.QlobberDedup) ||
+                (options.Matcher === qlobber.QlobberDedup.nativeString))
             {
                 vals = Array.from(vals).sort();
             }
@@ -114,6 +116,7 @@ exports.match_search = function(matcher)
             vals = matcher.match(test[0]);
 
             if ((options.Matcher === qlobber.QlobberDedup) ||
+                (options.Matcher === qlobber.QlobberDedup.nativeString) ||
                 (options.Matcher === MapValQlobber))
             {
                 assert(vals.has(test[1][j]));

@@ -28,8 +28,14 @@ function add_bindings(matcher)
 var matcher_default = new qlobber.Qlobber(matcher_options);
 add_bindings(matcher_default);
 
+var matcher_default_native = new qlobber.Qlobber.nativeNumber(matcher_options);
+add_bindings(matcher_default_native);
+
 var matcher_dedup = new qlobber.QlobberDedup(matcher_options);
 add_bindings(matcher_dedup);
+
+var matcher_dedup_native = new qlobber.QlobberDedup.nativeNumber(matcher_options);
+add_bindings(matcher_dedup_native);
 
 var matcher_mapval = new MapValQlobber(matcher_options);
 add_bindings(matcher_mapval);
@@ -46,8 +52,16 @@ module.exports = function ()
 				matcher_dedup.match('app/test/user/behrad/testTopic-' + j);
 				break;
 
+            case qlobber.QlobberDedup.nativeString:
+				matcher_dedup_native.match('app/test/user/behrad/testTopic-' + j);
+				break;
+
 			case MapValQlobber:
 				matcher_mapval.match('app/test/user/behrad/testTopic-' + j);
+				break;
+
+            case qlobber.Qlobber.nativeString:
+				common.remove_duplicates(matcher_default_native.match('app/test/user/behrad/testTopic-' + j));
 				break;
 
 			default:

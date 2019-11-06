@@ -297,7 +297,7 @@ describe(`qlobber (${type})`, function ()
     {
         if (Qlobber.is_native)
         {
-            matcher = new Qlobber.nonNative.nativeNumber;
+            matcher = new Qlobber.nonNative.nativeNumber();
         }
 
         // under coverage this takes longer
@@ -398,7 +398,8 @@ describe(`qlobber (${type})`, function ()
             expect(objs).to.eql(expected_visits);
         }
 
-        let matcher2 = new (Qlobber.is_native ? Qlobber.nonNative.nativeNumber : Qlobber)(),
+        let Matcher = Qlobber.is_native ? Qlobber.nonNative.nativeNumber : Qlobber,
+            matcher2 = new Matcher(),
             restorer = matcher2.get_restorer();
 
         for (let v of expected_visits)

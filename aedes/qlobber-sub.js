@@ -105,7 +105,7 @@ try
 {
     QlobberSub.native = require('bindings')('qlobber.node').QlobberSub;
 }
-catch
+catch (ex)
 {
 }
 

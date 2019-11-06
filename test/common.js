@@ -421,7 +421,7 @@ function ordered_sort(l)
             jb = util.inspect(b, { sorted: true });
         return ja < jb ? -1 : ja > jb ? 1 : 0;
     });
-};
+}
 exports.ordered_sort = ordered_sort;
 
 function get_trie(matcher, t)

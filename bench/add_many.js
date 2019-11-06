@@ -7,7 +7,17 @@ var qlobber = require('..'),
 
 module.exports = function ()
 {
-    var matcher = new options.Matcher(
+    var Matcher = options.Matcher;
+    if (Matcher == qlobber.Qlobber.nativeString)
+    {
+        Matcher = qlobber.Qlobber.nativeNumber;
+    }
+    else if (Matcher == qlobber.QlobberDedup.nativeString)
+    {
+        Matcher = qlobber.QlobberDedup.nativeNumber;
+    }
+
+    var matcher = new Matcher(
     {
         separator: "/",
         wildcard_one: "+"
