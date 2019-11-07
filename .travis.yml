@@ -2,5 +2,7 @@ dist: bionic
 language: node_js
 node_js:
   - 12
+before_install:
+  - sudo apt install libboost-dev
 script:
   - if [ $TRAVIS_NODE_VERSION = 12 ]; then npm run coverage; else npm run test; fi
