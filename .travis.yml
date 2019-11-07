@@ -4,6 +4,6 @@ node_js:
   - 12
 before_install:
   - sudo apt update
-  - sudo apt install libboost-dev
+  - sudo apt install libboost-dev libboost-context-dev
 script:
   - if [ $TRAVIS_NODE_VERSION = 12 ]; then npm run coverage; else npm run test; fi
