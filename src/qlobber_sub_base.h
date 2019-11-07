@@ -54,20 +54,12 @@ public:
     QlobberSubBase(const Options& options) :
         QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>(options) {}
 
-    // Returns whether client is last subscriber to topic
-    bool test_values(const SubStorage& existing,
-                     const SubTest& val) override {
-        return (existing.topic == val.topic) &&
-               (existing.clientMap.size() == 1) &&
-               (existing.clientMap.count(val.clientId) == 1);
-    }
-
+protected:
     void clear() override {
         subscriptionsCount = 0;
         QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>::clear();
     }
 
-protected:
     std::size_t subscriptionsCount = 0;
 
 private:
@@ -87,6 +79,14 @@ private:
             --subscriptionsCount;
         }
         return vals.clientMap.empty();
+    }
+
+    // Returns whether client is last subscriber to topic
+    bool test_values(const SubStorage& existing,
+                     const SubTest& val) override {
+        return (existing.topic == val.topic) &&
+               (existing.clientMap.size() == 1) &&
+               (existing.clientMap.count(val.clientId) == 1);
     }
 };
 

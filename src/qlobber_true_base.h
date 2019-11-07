@@ -24,11 +24,6 @@ public:
                     const std::nullptr_t,
                     std::nullptr_t>(options) {}
 
-    bool test_values(const TrueStorage& existing,
-                     const std::nullptr_t&) override {
-        return true;
-    }
-
 private:
     void add_value(TrueStorage&, const TrueValue&) override {}
 
@@ -38,6 +33,11 @@ private:
     }
 
     void add_values(std::nullptr_t&, const TrueStorage&, const std::nullptr_t&) {}
+
+    bool test_values(const TrueStorage& existing,
+                     const std::nullptr_t&) override {
+        return true;
+    }
 };
 
 template<>

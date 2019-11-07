@@ -49,12 +49,24 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        //       sort out what needs to be public
         // TODO: async
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}
 
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
+
+    typename coro_t::pull_type visit() {
+        return typename coro_t::pull_type(
+            std::bind(&QlobberBase::generate, this, std::placeholders::_1));
+    }
+
+    typename coro_t::push_type restore(bool cache_adds = false) {
+        return typename coro_t::push_type(
+            std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
+    }
+
+protected:
     void add(const std::string& topic, const Value& val) {
         if (options.cache_adds) {
             const auto it = shortcuts.find(topic);
@@ -88,38 +100,21 @@ public:
         std::get<0>(trie.v)->clear();
     }
 
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
-    
-    typename coro_t::pull_type visit() {
-        return typename coro_t::pull_type(
-            std::bind(&QlobberBase::generate, this, std::placeholders::_1));
-    }
-
-    typename coro_t::push_type restore(bool cache_adds = false) {
-        return typename coro_t::push_type(
-            std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
-    }
-
-    virtual bool test_values(const ValueStorage& vals,
-                             const Test& val) = 0;
-
-    Options get_options() {
-        return options;
-    }
-
-protected:
     Options options;
     std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
 
-    virtual void initial_value_inserted(const Value& val) {}
-    virtual void add_value(ValueStorage& vals, const Value& val) = 0;
-    virtual bool remove_value(ValueStorage& vals,
-                              const std::optional<const Remove>& val) = 0;
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
                             Context& ctx) = 0;
 
 private:
+    virtual void initial_value_inserted(const Value& val) {}
+    virtual void add_value(ValueStorage& vals, const Value& val) = 0;
+    virtual bool remove_value(ValueStorage& vals,
+                              const std::optional<const Remove>& val) = 0;
+    virtual bool test_values(const ValueStorage& vals,
+                             const Test& val) = 0;
+
     struct Trie {
         typedef std::unordered_map<std::string, Trie> map_type;
         typedef std::unique_ptr<map_type> map_ptr;

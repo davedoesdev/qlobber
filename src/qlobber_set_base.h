@@ -18,11 +18,6 @@ public:
     QlobberSetBase(const Options& options) :
         QlobberContainerBase<Value, SetStorage, MatchResult, Context>(options) {}
 
-    bool test_values(const SetStorage<Value>& existing,
-                     const Value& val) override {
-        return existing.find(val) != existing.end();
-    }
-
 private:
     void add_value(SetStorage<Value>& existing, const Value& val) override {
         existing.insert(val);
@@ -37,5 +32,10 @@ private:
         existing.erase(*topic);
 
         return existing.empty();
+    }
+
+    bool test_values(const SetStorage<Value>& existing,
+                     const Value& val) override {
+        return existing.find(val) != existing.end();
     }
 };
