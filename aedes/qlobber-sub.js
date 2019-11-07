@@ -2,7 +2,8 @@
 "use strict";
 
 var util = require('util'),
-    Qlobber = require('..').Qlobber;
+    qlobber = require('..'),
+    Qlobber = qlobber.Qlobber;
 
 function QlobberSub (options)
 {
@@ -16,10 +17,20 @@ QlobberSub.prototype._initial_value = function (val)
 {
     this.subscriptionsCount += 1;
 
-    return {
+    let r = {
         topic: val.topic,
-        clientMap: new Map().set(val.clientId, val.qos)
+        clientMap: new Map().set(val.clientId, val.qos),
     };
+
+    r[Symbol.iterator] = function* ()
+    {
+        for (let [clientId, qos] of r.clientMap)
+        {
+            yield { topic: r.topic, clientId, qos };
+        }
+    };
+
+    return r;
 };
 
 QlobberSub.prototype._add_value = function (existing, val)
@@ -103,7 +114,8 @@ QlobberSub.prototype.clear = function ()
 
 try
 {
-    QlobberSub.native = require('bindings')('qlobber.node').QlobberSub;
+    const binding = require('bindings')('qlobber.node');
+    QlobberSub.native = qlobber.wrap_native(binding.QlobberSub, QlobberSub);
 }
 catch (ex)
 {

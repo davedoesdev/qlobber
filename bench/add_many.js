@@ -30,7 +30,7 @@ module.exports = function ()
             if (((options.Matcher !== qlobber.Qlobber) &&
                  (options.Matcher !== qlobber.Qlobber.nativeString)) ||
                 // mosca pre-dedup checks whether already added
-                (matcher.match('app/test/user/behrad/testTopic-' + j).indexOf(i) < 0))
+                !matcher.test('app/test/user/behrad/testTopic-' + j, i))
             {
                 matcher.add('app/test/user/behrad/testTopic-' + j, i);
             }

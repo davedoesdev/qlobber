@@ -49,15 +49,13 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        // TODO: test visit/restore on QlobberSub
-        //         may need iterator on stored value to produce values
-        // TODO: do we need all virtuals?
+        //       sort out what needs to be public
         // TODO: async
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}
 
-    virtual void add(const std::string& topic, const Value& val) {
+    void add(const std::string& topic, const Value& val) {
         if (options.cache_adds) {
             const auto it = shortcuts.find(topic);
             if (it != shortcuts.end()) {
@@ -70,18 +68,18 @@ public:
         }
     }
 
-    virtual void remove(const std::string& topic,
-                        const std::optional<const Remove>& val) {
+    void remove(const std::string& topic,
+                const std::optional<const Remove>& val) {
         if (remove(val, 0, split(topic), trie) && options.cache_adds) {
             shortcuts.erase(topic);
         }
     }
 
-    virtual void match(MatchResult& r, const std::string& topic, Context& ctx) {
+    void match(MatchResult& r, const std::string& topic, Context& ctx) {
         match(r, 0, split(topic), trie, ctx);
     }
 
-    virtual bool test(const std::string& topic, const Test& val) {
+    bool test(const std::string& topic, const Test& val) {
         return test(val, 0, split(topic), trie);
     }
 
@@ -92,12 +90,12 @@ public:
 
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
     
-    virtual typename coro_t::pull_type visit() {
+    typename coro_t::pull_type visit() {
         return typename coro_t::pull_type(
             std::bind(&QlobberBase::generate, this, std::placeholders::_1));
     }
 
-    virtual typename coro_t::push_type restore(bool cache_adds = false) {
+    typename coro_t::push_type restore(bool cache_adds = false) {
         return typename coro_t::push_type(
             std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
     }
