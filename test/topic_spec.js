@@ -489,6 +489,34 @@ describe(`qlobber (${type})`, function ()
             expect(added).to.eql(Array.from(rtopics).sort());
         });
     }
+
+    it('should support match iterator', function ()
+    {
+        add_bindings(rabbitmq_test_bindings);
+
+        function match(topic)
+        {
+            let r = [];
+
+            for (let v of matcher.match_iter(topic))
+            {
+                r.push(v);
+            }
+
+            return r;
+        }
+
+        rabbitmq_expected_results_before_remove.forEach(function (test)
+        {
+            expect(match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+        });
+
+        matcher.clear();
+        matcher.add('foo.*', 'it matched!');
+        matcher.add('foo.#', 'it matched too!');
+        expect(match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
+        expect(match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
+    });
 });
 
 }

@@ -59,6 +59,8 @@ public:
         return JSOptions::get(info.Env(), options);
     }
 
+    // for tests
+
     friend Napi::Value GetShortcutsT<QlobberTrue, const std::nullptr_t>(
         QlobberTrue*, const Napi::CallbackInfo&, const std::nullptr_t&);
 

@@ -7,6 +7,7 @@
 #include <variant>
 #include <optional>
 #include <functional>
+#include <shared_mutex>
 #include <boost/coroutine2/all.hpp>
 #include "options.h"
 
@@ -68,6 +69,7 @@ public:
 
 protected:
     void add(const std::string& topic, const Value& val) {
+        std::unique_lock lock(mutex);
         if (options.cache_adds) {
             const auto it = shortcuts.find(topic);
             if (it != shortcuts.end()) {
@@ -82,26 +84,31 @@ protected:
 
     void remove(const std::string& topic,
                 const std::optional<const Remove>& val) {
+        std::unique_lock lock(mutex);
         if (remove(val, 0, split(topic), trie) && options.cache_adds) {
             shortcuts.erase(topic);
         }
     }
 
     void match(MatchResult& r, const std::string& topic, Context& ctx) {
+        std::shared_lock lock(mutex);
         match(r, 0, split(topic), trie, ctx);
     }
 
     bool test(const std::string& topic, const Test& val) {
+        std::shared_lock lock(mutex);
         return test(val, 0, split(topic), trie);
     }
 
     virtual void clear() {
+        std::unique_lock lock(mutex);
         shortcuts.clear();
         std::get<0>(trie.v)->clear();
     }
 
     Options options;
     std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
+    std::shared_mutex mutex;
 
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
