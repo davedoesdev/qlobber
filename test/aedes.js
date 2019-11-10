@@ -499,6 +499,39 @@ describe(`qlobber-sub (${type})`, function ()
 
         expect(common.get_trie(matcher)).to.eql({"foo":{"bar2":{".":[{"topic":"foo.bar2","clientId":"test1","qos":1},{"topic":"foo.bar2","clientId":"test2","qos":2}]},"bar":{".":[{"topic":"foo.bar","clientId":"test1","qos":1},{"topic":"foo.bar","clientId":"test2","qos":2}]}}});
     });
+
+    it('should support match iterator', function ()
+    {
+        var matcher = new QlobberSub();
+        matcher.add('foo.bar', { clientId: 'test1', topic: 'foo.bar', qos: 1 });
+        matcher.add('foo.*', { clientId: 'test1', topic: 'foo.*', qos: 2 });
+
+        let expected_matches = [
+            { topic: 'foo.bar', clientId: 'test1', qos: 1 },
+            { topic: 'foo.*', clientId: 'test1', qos: 2 }
+        ];
+
+        let objs = [];
+        for (let v of matcher.match_iter('foo.bar'))
+        {
+            objs.push(v);
+        }
+        if (QlobberSub.is_native)
+        {
+            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(expected_matches));
+        }
+        else
+        {
+            expect(objs).to.eql(expected_matches);
+        }
+
+        objs = [];
+        for (let v of matcher.match_iter('foo.bar', 'foo.bar'))
+        {
+            objs.push(v);
+        }
+        expect(objs).to.eql([ { clientId: 'test1', qos: 1 } ]);
+    });
 });
 
 }

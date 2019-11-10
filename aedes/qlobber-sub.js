@@ -22,11 +22,21 @@ QlobberSub.prototype._initial_value = function (val)
         clientMap: new Map().set(val.clientId, val.qos),
     };
 
-    r[Symbol.iterator] = function* ()
+    r[Symbol.iterator] = function* (topic)
     {
-        for (let [clientId, qos] of r.clientMap)
+        if (topic === undefined)
         {
-            yield { topic: r.topic, clientId, qos };
+            for (let [clientId, qos] of r.clientMap)
+            {
+                yield { topic: r.topic, clientId, qos };
+            }
+        }
+        else if (r.topic === topic)
+        {
+            for (let [clientId, qos] of r.clientMap)
+            {
+                yield { clientId, qos };
+            }
         }
     };
 

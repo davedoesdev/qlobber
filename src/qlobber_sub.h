@@ -42,12 +42,17 @@ public:
         return info.This();
     }
 
+    std::optional<std::string> get_context(const Napi::CallbackInfo& info) {
+        if ((info.Length() > 1) && info[1].IsString()) {
+            return std::optional<std::string>(info[1].As<Napi::String>());
+        }
+        return std::nullopt;
+    }
+
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
         auto r = NewMatchResult(info.Env());
-        match(r, topic, info.Length() == 1 ?
-            std::nullopt :
-            std::optional<std::string>(info[1].As<Napi::String>()));
+        match(r, topic, get_context(info));
         return r;
     }
 
@@ -87,10 +92,7 @@ public:
 
     Napi::Value MatchIter(const Napi::CallbackInfo& info) {
         return MatchIterT<QlobberSub, IterSub, const std::optional<const std::string>>(
-            this, info, info.Length() == 1 ?
-                std::nullopt :
-                std::optional<std::string>(info[1].As<Napi::String>())
-        );
+            this, info, get_context(info));
     }
 
     Napi::Value MatchNext(const Napi::CallbackInfo& info) {
