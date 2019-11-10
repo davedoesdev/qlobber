@@ -134,6 +134,24 @@ describe(`true (${type})`, function ()
         expect(matcher.match('xyzfoo')).to.equal(true);
         expect(matcher.test('xyzfoo')).to.equal(true);
     });
+
+    it('should support match iterator', function ()
+    {
+        var matcher = new QlobberTrue();
+
+        matcher.add('a.b.c.d');
+        matcher.add('a.b.c.*');
+
+        let count = 0;
+
+        for (let v of matcher.match_iter('a.b.c.d'))
+        {
+            expect(v).to.equal(true);
+            ++count;
+        }
+
+        expect(count).to.equal(2);
+    });
 });
 
 }
