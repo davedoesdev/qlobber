@@ -359,6 +359,37 @@ describe(`qlobber-dedup (${type})`, function ()
             expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
+
+    it('should support match iterator', function ()
+    {
+        add_bindings(rabbitmq_test_bindings);
+
+        function match(topic)
+        {
+            let r = new Set();
+
+            for (let v of matcher.match_iter(topic))
+            {
+                r.add(v);
+            }
+
+            return r;
+        }
+
+        rabbitmq_expected_results_before_remove.forEach(function (test)
+        {
+            expect(Array.from(match(test[0])).sort(), test[0]).to.eql(
+                   test[1].sort());
+        });
+
+        matcher.clear();
+        matcher.add('foo.*', 'it matched!');
+        matcher.add('foo.#', 'it matched too!');
+        expect(Array.from(match('foo.*')).sort()).to.eql(
+               ['it matched too!', 'it matched!']);
+        expect(Array.from(match('foo.#')).sort()).to.eql(
+               ['it matched too!', 'it matched!']);
+    });
 });
 
 }
