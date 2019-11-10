@@ -9,14 +9,24 @@ public:
     }
 };
 
-template<typename Value, typename MatchResult, typename Context>
+template<typename Value,
+         typename MatchResult,
+         typename Context>
 class QlobberSetBase :
-    public QlobberContainerBase<Value, SetStorage, MatchResult, Context> {
+    public QlobberContainerBase<Value,
+                                SetStorage,
+                                MatchResult,
+                                Context> {
 public:
+    typedef SetStorage<Value> ValueStorage;
+
     QlobberSetBase() {}
 
     QlobberSetBase(const Options& options) :
-        QlobberContainerBase<Value, SetStorage, MatchResult, Context>(options) {}
+        QlobberContainerBase<Value,
+                             SetStorage,
+                             MatchResult,
+                             Context>(options) {}
 
 private:
     void add_value(SetStorage<Value>& existing, const Value& val) override {

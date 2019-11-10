@@ -3,12 +3,19 @@
 #include "qlobber_js_base.h"
 #include "js_options.h"
 
+struct IterSub {
+    std::string clientId;
+    std::optional<std::string> topic;
+    QoS qos;
+};
+
 class QlobberSub :
-    public QlobberSubBase<Napi::Array, const std::optional<const std::string>>,
+    public QlobberSubBase<Napi::Array, const std::optional<const std::string>, IterSub>,
     public Napi::ObjectWrap<QlobberSub> {
 public:
     QlobberSub(const Napi::CallbackInfo& info) :
-        QlobberSubBase<Napi::Array, const std::optional<const std::string>>(JSOptions(info)), 
+        QlobberSubBase<Napi::Array, const std::optional<const std::string>, IterSub>(
+            JSOptions(info)),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
     virtual ~QlobberSub() {}
@@ -78,6 +85,18 @@ public:
         return JSOptions::get(info.Env(), options);
     }
 
+    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
+        return MatchIterT<QlobberSub, IterSub, const std::optional<const std::string>>(
+            this, info, info.Length() == 1 ?
+                std::nullopt :
+                std::optional<std::string>(info[1].As<Napi::String>())
+        );
+    }
+
+    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
+        return MatchNextT<IterSub, Napi::Object>(info);
+    }
+
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
@@ -88,7 +107,8 @@ public:
         QlobberSub*, const Napi::CallbackInfo&, const std::optional<const std::string>&);
 
     Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
-        return GetShortcutsT<QlobberSub, const std::optional<const std::string>>(this, info, std::nullopt);
+        return GetShortcutsT< QlobberSub, const std::optional<const std::string>>(
+            this, info, std::nullopt);
     }
 
 private:
@@ -126,10 +146,21 @@ std::vector<Napi::ClassPropertyDescriptor<QlobberSub>> Properties() {
 }
 
 template<>
-Napi::Value FromValue<Sub, Napi::Object>(const Napi::Env& env, const Sub& sub) {
+Napi::Object FromValue<Sub, Napi::Object>(const Napi::Env& env, const Sub& sub) {
     Napi::Object obj = Napi::Object::New(env);
     obj.Set("clientId", sub.clientId);
     obj.Set("topic", sub.topic);
+    obj.Set("qos", static_cast<uint32_t>(sub.qos));
+    return obj;
+}
+
+template<>
+Napi::Object FromValue<IterSub, Napi::Object>(const Napi::Env& env, const IterSub& sub) {
+    Napi::Object obj = Napi::Object::New(env);
+    obj.Set("clientId", sub.clientId);
+    if (sub.topic) {
+        obj.Set("topic", sub.topic.value());
+    }
     obj.Set("qos", static_cast<uint32_t>(sub.qos));
     return obj;
 }
@@ -141,4 +172,28 @@ Sub ToValue<Sub, Napi::Object>(const Napi::Object& v) {
         v.Get("topic").As<Napi::String>(),
         static_cast<QoS>(v.Get("qos").As<Napi::Number>().Uint32Value())
     };
+}
+
+template<>
+void IterValues<IterSub, SubStorage, const std::optional<const std::string>>(
+    const SubStorage& storage,
+    const std::optional<const std::string>& topic,
+    typename boost::coroutines2::coroutine<IterSub>::push_type& sink) {
+    if (!topic) {
+        for (const auto& clientIdAndQos : storage.clientMap) {
+            sink(IterSub {
+                clientIdAndQos.first,
+                std::optional<std::string>(storage.topic),
+                clientIdAndQos.second
+            });
+        }
+    } else if (storage.topic == topic.value()) {
+        for (const auto& clientIdAndQos : storage.clientMap) {
+            sink(IterSub {
+                clientIdAndQos.first,
+                std::nullopt,
+                clientIdAndQos.second
+            });
+        }
+    }
 }

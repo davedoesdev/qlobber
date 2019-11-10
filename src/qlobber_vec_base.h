@@ -9,14 +9,24 @@ public:
     }
 };
 
-template<typename Value, typename MatchResult, typename Context>
+template<typename Value,
+         typename MatchResult,
+         typename Context>
 class QlobberVecBase :
-    public QlobberContainerBase<Value, VecStorage, MatchResult, Context> {
+    public QlobberContainerBase<Value,
+                                VecStorage,
+                                MatchResult,
+                                Context> {
 public:
+    typedef VecStorage<Value> ValueStorage;
+
     QlobberVecBase() {}
 
     QlobberVecBase(const Options& options) :
-        QlobberContainerBase<Value, VecStorage, MatchResult, Context>(options) {}
+        QlobberContainerBase<Value,
+                             VecStorage,
+                             MatchResult,
+                             Context>(options) {}
 
 private:
     void add_value(VecStorage<Value>& existing, const Value& val) override {

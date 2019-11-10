@@ -2,14 +2,27 @@
 
 #include "qlobber_base.h"
 
-template<typename Value, template<typename> typename Storage, typename MatchResult, typename Context>
+template<typename Value,
+         template<typename> typename Storage,
+         typename MatchResult,
+         typename Context>
 class QlobberContainerBase :
-    public QlobberBase<Value, Storage<Value>, Value, MatchResult, Context, Value> {
+    public QlobberBase<Value,
+                       Storage<Value>,
+                       Value,
+                       MatchResult,
+                       Context,
+                       Value> {
 public:
     QlobberContainerBase() {}
 
     QlobberContainerBase(const Options& options) :
-        QlobberBase<Value, Storage<Value>, Value, MatchResult, Context, Value>(options) {}
+        QlobberBase<Value,
+                    Storage<Value>,
+                    Value,
+                    MatchResult,
+                    Context,
+                    Value>(options) {}
 
 private:
     bool remove_value(Storage<Value>& existing,

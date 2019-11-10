@@ -41,12 +41,22 @@ void VisitValues(const ValueStorage& storage,
     }
 }
 
+template<typename Value, typename ValueStorage, typename Context>
+void IterValues(const ValueStorage& storage,
+                Context& ctx,
+                typename boost::coroutines2::coroutine<Value>::push_type& sink) {
+    for (const auto& v : storage) {
+        sink(v);
+    }
+}
+
 template<typename Value,
          typename ValueStorage,
          typename Remove,
          typename MatchResult,
          typename Context,
-         typename Test>
+         typename Test,
+         typename IterValue = Value>
 class QlobberBase {
 public:
     QlobberBase() {}
@@ -55,16 +65,28 @@ public:
 
     QlobberBase(const Options& options) : options(options) {}
 
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
 
-    typename coro_t::pull_type visit() {
-        return typename coro_t::pull_type(
-            std::bind(&QlobberBase::generate, this, std::placeholders::_1));
+    typename coro_visit_t::pull_type visit() {
+        return typename coro_visit_t::pull_type(
+            std::bind(&QlobberBase::generate_visits, this, std::placeholders::_1));
     }
 
-    typename coro_t::push_type restore(bool cache_adds = false) {
-        return typename coro_t::push_type(
+    typename coro_visit_t::push_type restore(bool cache_adds = false) {
+        return typename coro_visit_t::push_type(
             std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
+    }
+
+    typedef typename boost::coroutines2::coroutine<IterValue> coro_iter_t;
+
+    typename coro_iter_t::pull_type match_iter(const std::string& topic,
+                                               Context& ctx) {
+        // "The arguments to bind are copied or moved, and are never passed by
+        // reference unless wrapped in std::ref or std::cref."
+        // https://en.cppreference.com/w/cpp/utility/functional/bind
+        // So it doesn't matter if topic and ctx are destroyed later.
+        return typename coro_iter_t::pull_type(
+            std::bind(&QlobberBase::generate_values, this, std::placeholders::_1, topic, ctx));
     }
 
 protected:
@@ -243,6 +265,73 @@ private:
         }
     }
 
+    void match_some_iter(typename coro_iter_t::push_type& sink,
+                         const std::size_t i,
+                         const std::vector<std::string>& words,
+                         const Trie& st,
+                         Context& ctx) {
+        for (const auto& w : *std::get<0>(st.v)) {
+            if (w.first != options.separator) {
+                for (std::size_t j = i; j < words.size(); ++j) {
+                    match_iter(sink, j, words, st, ctx);
+                }
+                break;
+            }
+        }
+    }
+
+    void match_iter(typename coro_iter_t::push_type& sink,
+                    const std::size_t i,
+                    const std::vector<std::string>& words,
+                    const Trie& sub_trie,
+                    Context& ctx) {
+        {
+            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
+
+            if (it != std::get<0>(sub_trie.v)->end()) {
+                // in the common case there will be no more levels...
+                match_some_iter(sink, i, words, it->second, ctx);
+                // and we'll end up matching the rest of the words:
+                match_iter(sink, words.size(), words, it->second, ctx);
+            }
+        }
+
+        if (i == words.size()) {
+            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+
+            if (it != std::get<0>(sub_trie.v)->end()) {
+                IterValues<IterValue, ValueStorage, Context>(
+                    std::get<1>(it->second.v), ctx, sink);
+            }
+        } else {
+            const auto& word = words[i];
+
+            if ((word != options.wildcard_one) &&
+                (word != options.wildcard_some)) {
+                const auto it = std::get<0>(sub_trie.v)->find(word);
+
+                if (it != std::get<0>(sub_trie.v)->end()) {
+                    match_iter(sink, i + 1, words, it->second, ctx);
+                }
+            }
+
+            if (!word.empty()) {
+                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
+
+                if (it != std::get<0>(sub_trie.v)->end()) {
+                    match_iter(sink, i + 1, words, it->second, ctx);
+                }
+            }
+        }
+    }
+
+    void generate_values(typename coro_iter_t::push_type& sink,
+                         const std::string& topic,
+                         Context& ctx) {
+        std::shared_lock lock(mutex);
+        match_iter(sink, 0, split(topic), trie, ctx);
+    }
+
     bool test_some(const Test& v,
                    const std::size_t i,
                    const std::vector<std::string>& words,
@@ -311,7 +400,7 @@ private:
         return false;
     }
 
-    void generate(typename coro_t::push_type& sink) {
+    void generate_visits(typename coro_visit_t::push_type& sink) {
         struct Saved {
             typename Trie::map_type::const_iterator it, end;
             std::size_t i;
@@ -366,7 +455,7 @@ private:
 
     }
 
-    void inject(typename coro_t::pull_type& source, bool cache_adds) {
+    void inject(typename coro_visit_t::pull_type& source, bool cache_adds) {
         struct Saved {
             Saved(std::shared_ptr<Trie> entry,
                   const std::string& key,

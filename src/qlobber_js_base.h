@@ -4,7 +4,7 @@
 #include "js_options.h"
 
 template<typename Value, typename JSValue>
-Napi::Value FromValue(const Napi::Env& env, const Value& v) {
+JSValue FromValue(const Napi::Env& env, const Value& v) {
     return JSValue::New(env, v);
 }
 
@@ -18,17 +18,45 @@ Napi::Value MatchResultValue(MatchResult& r) {
     return r;
 }
 
-template<typename Value>
-struct Visitor {
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
+template<typename T>
+struct Puller {
+    typedef typename boost::coroutines2::coroutine<T> coro_t;
     typedef typename coro_t::pull_type pull_t;
-    Visitor(pull_t source) :
+    Puller(pull_t source) :
         source(std::move(source)),
         it(begin(this->source)),
         it_end(end(this->source)) {}
     pull_t source;
     typename pull_t::iterator it, it_end;
 };
+
+template<typename Value>
+using Iterator = Puller<Value>;
+
+template<typename T, typename Value, typename Context>
+Napi::Value MatchIterT(T* obj, const Napi::CallbackInfo& info, Context& ctx) {
+    return Napi::External<Iterator<Value>>::New(
+        info.Env(),
+        new Iterator<Value>(obj->match_iter(info[0].As<Napi::String>(), ctx)),
+        [](Napi::Env, Iterator<Value>* iterator) {
+            delete iterator;
+        });
+}
+
+template<typename Value, typename JSValue>
+Napi::Value MatchNextT(const Napi::CallbackInfo& info) {
+    const auto iterator = info[0].As<Napi::External<Iterator<Value>>>().Data();
+    if (iterator->it == iterator->it_end) {
+        return info.Env().Undefined();
+    }
+    Napi::Object r = Napi::Object::New(info.Env());
+    r.Set("value", FromValue<Value, JSValue>(info.Env(), *iterator->it));
+    ++iterator->it;
+    return r;
+}
+
+template<typename Value>
+using Visitor = Puller<Visit<Value>>;
 
 template<typename T, typename Value>
 Napi::Value GetVisitorT(T* obj, const Napi::CallbackInfo& info) {
@@ -83,8 +111,8 @@ Napi::Value VisitNextT(const Napi::CallbackInfo& info) {
 
 template<typename Value>
 struct Restorer {
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_t;
-    typedef typename coro_t::push_type push_t;
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
+    typedef typename coro_visit_t::push_type push_t;
     Restorer(push_t sink) :
         sink(std::move(sink)) {}
     push_t sink;
@@ -201,6 +229,14 @@ public:
         return MatchResultValue(r);
     }
 
+    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
+        return MatchIterT<QlobberJSBase, Value, const std::nullptr_t>(this, info, nullptr);
+    }
+
+    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
+        return MatchNextT<Value, JSValue>(info);
+    }
+
     Napi::Value Test(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
         const auto val = info[1].As<JSValue>();
@@ -238,7 +274,8 @@ public:
         QlobberJSBase*, const Napi::CallbackInfo&, const std::nullptr_t&);
 
     Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
-        return GetShortcutsT<QlobberJSBase, const std::nullptr_t>(this, info, nullptr);
+        return GetShortcutsT<QlobberJSBase, const std::nullptr_t>(
+            this, info, nullptr);
     }
 
 private:
@@ -262,6 +299,8 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("visit_next", &T::VisitNext),
         T::InstanceMethod("get_restorer", &T::GetRestorer),
         T::InstanceMethod("restore_next", &T::RestoreNext),
+        T::InstanceMethod("match_iter", &T::MatchIter),
+        T::InstanceMethod("match_next", &T::MatchNext),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
         T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr)
     };

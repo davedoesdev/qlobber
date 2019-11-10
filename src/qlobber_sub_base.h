@@ -22,42 +22,42 @@ struct SubStorage {
     std::unordered_map<std::string, QoS> clientMap;
 };
 
-struct SubResult {
-    SubResult(const std::string& clientId,
-              const std::string& topic,
-              const QoS qos) :
-        clientId(clientId),
-        topic(topic),
-        qos(qos) {}
-
-    SubResult(const std::string& clientId,
-              const QoS qos) :
-        clientId(clientId),
-        qos(qos) {}
-
-    std::string clientId;
-    std::optional<std::string> topic;
-    QoS qos;
-};
-
 struct SubTest {
     std::string clientId;
     std::string topic;
 };
 
-template<typename MatchResult, typename Context>
+template<typename MatchResult, typename Context, typename IterSub>
 class QlobberSubBase :
-    public QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest> {
+    public QlobberBase<Sub,
+                       SubStorage,
+                       std::string,
+                       MatchResult,
+                       Context,
+                       SubTest,
+                       IterSub> {
 public:
     QlobberSubBase() {}
 
     QlobberSubBase(const Options& options) :
-        QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>(options) {}
+        QlobberBase<Sub,
+                    SubStorage,
+                    std::string,
+                    MatchResult,
+                    Context,
+                    SubTest,
+                    IterSub>(options) {}
 
 protected:
     void clear() override {
         subscriptionsCount = 0;
-        QlobberBase<Sub, SubStorage, std::string, MatchResult, Context, SubTest>::clear();
+        QlobberBase<Sub,
+                    SubStorage,
+                    std::string,
+                    MatchResult,
+                    Context,
+                    SubTest,
+                    IterSub>::clear();
     }
 
     std::size_t subscriptionsCount = 0;

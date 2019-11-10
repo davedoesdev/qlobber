@@ -59,6 +59,14 @@ public:
         return JSOptions::get(info.Env(), options);
     }
 
+    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
+        return MatchIterT<QlobberTrue, TrueValue, const std::nullptr_t>(this, info, nullptr);
+    }
+
+    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
+        return MatchNextT<TrueValue, Napi::Boolean>(info);
+    }
+
     // for tests
 
     friend Napi::Value GetShortcutsT<QlobberTrue, const std::nullptr_t>(
@@ -77,7 +85,7 @@ private:
 };
 
 template<>
-Napi::Value FromValue<TrueValue, Napi::Boolean>(const Napi::Env& env, const TrueValue&) {
+Napi::Boolean FromValue<TrueValue, Napi::Boolean>(const Napi::Env& env, const TrueValue&) {
     return Napi::Boolean::New(env, true);
 }
 

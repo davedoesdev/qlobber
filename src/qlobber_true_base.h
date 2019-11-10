@@ -52,3 +52,11 @@ void VisitValues<TrueValue, TrueStorage>(
         }
     });
 }
+
+template<>
+void IterValues<TrueValue, TrueStorage, const std::nullptr_t>(
+    const TrueStorage&,
+    const std::nullptr_t&,
+    typename boost::coroutines2::coroutine<TrueValue>::push_type& sink) {
+    sink(TrueValue());
+}
