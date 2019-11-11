@@ -33,7 +33,7 @@ struct SubTest {
     std::string topic;
 };
 
-template<typename MatchResult, typename Context, typename IterSub>
+template<typename MatchResult, typename Context>
 class QlobberSubBase :
     public QlobberBase<Sub,
                        SubStorage,

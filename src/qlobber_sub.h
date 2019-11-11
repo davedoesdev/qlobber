@@ -4,11 +4,11 @@
 #include "js_options.h"
 
 class QlobberSub :
-    public QlobberSubBase<Napi::Array, const std::optional<const std::string>, IterSub>,
+    public QlobberSubBase<Napi::Array, const std::optional<const std::string>>,
     public Napi::ObjectWrap<QlobberSub> {
 public:
     QlobberSub(const Napi::CallbackInfo& info) :
-        QlobberSubBase<Napi::Array, const std::optional<const std::string>, IterSub>(
+        QlobberSubBase<Napi::Array, const std::optional<const std::string>>(
             JSOptions(info)),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
