@@ -13,6 +13,12 @@ struct Sub {
     QoS qos;
 };
 
+struct IterSub {
+    std::string clientId;
+    std::optional<std::string> topic;
+    QoS qos;
+};
+
 struct SubStorage {
     SubStorage(const Sub& sub) :
         topic(sub.topic) {
@@ -88,24 +94,44 @@ private:
                (existing.clientMap.size() == 1) &&
                (existing.clientMap.count(val.clientId) == 1);
     }
-};
 
-template<>
-void VisitValues<Sub, SubStorage>(
-    const SubStorage& storage,
-    typename boost::coroutines2::coroutine<Visit<Sub>>::push_type& sink) {
-    for (const auto& entry : storage.clientMap) {
-        sink({
-            Visit<Sub>::value,
-            VisitData<Sub> {
-                std::variant<std::string, Sub>(
-                    std::in_place_index<1>,
-                    Sub {
-                        entry.first,
-                        storage.topic,
-                        entry.second
-                    })
+    void iter_values(typename boost::coroutines2::coroutine<IterSub>::push_type& sink,
+                     const SubStorage& storage,
+                     const std::optional<const std::string>& topic) {
+        if (!topic) {
+            for (const auto& clientIdAndQos : storage.clientMap) {
+                sink(IterSub {
+                    clientIdAndQos.first,
+                    std::optional<std::string>(storage.topic),
+                    clientIdAndQos.second
+                });
             }
-        });
+        } else if (storage.topic == topic.value()) {
+            for (const auto& clientIdAndQos : storage.clientMap) {
+                sink(IterSub {
+                    clientIdAndQos.first,
+                    std::nullopt,
+                    clientIdAndQos.second
+                });
+            }
+        }
     }
-}
+
+    void visit_values(typename boost::coroutines2::coroutine<Visit<Sub>>::push_type& sink,
+                      const SubStorage& storage) {
+        for (const auto& entry : storage.clientMap) {
+            sink({
+                Visit<Sub>::value,
+                VisitData<Sub> {
+                    std::variant<std::string, Sub>(
+                        std::in_place_index<1>,
+                        Sub {
+                            entry.first,
+                            storage.topic,
+                            entry.second
+                        })
+                }
+            });
+        }
+    }
+};

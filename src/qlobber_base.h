@@ -27,29 +27,6 @@ struct Visit {
     std::optional<VisitData<Value>> v;
 };
 
-template<typename Value, typename ValueStorage>
-void VisitValues(const ValueStorage& storage,
-                 typename boost::coroutines2::coroutine<Visit<Value>>::push_type& sink) {
-    for (const auto& v : storage) {
-        sink({
-            Visit<Value>::value,
-            VisitData<Value> {
-                std::variant<std::string, Value>(
-                    std::in_place_index<1>, v)
-            }
-        });
-    }
-}
-
-template<typename Value, typename ValueStorage, typename Context>
-void IterValues(const ValueStorage& storage,
-                Context& ctx,
-                typename boost::coroutines2::coroutine<Value>::push_type& sink) {
-    for (const auto& v : storage) {
-        sink(v);
-    }
-}
-
 template<typename Value,
          typename ValueStorage,
          typename Remove,
@@ -60,7 +37,12 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
+        // TODO: can we fold other separate functions into classes?
         // TODO: async
+        //   either pass in fn to match or make a new class which can
+        //   access same store and has non-JS types
+        //   we need this for worker threads anyway
+        //   OR use method template
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}
@@ -143,6 +125,11 @@ private:
                               const std::optional<const Remove>& val) = 0;
     virtual bool test_values(const ValueStorage& vals,
                              const Test& val) = 0;
+    virtual void iter_values(typename coro_iter_t::push_type& sink,
+                             const ValueStorage& vals,
+                             Context& ctx) = 0;
+    virtual void visit_values(typename coro_visit_t::push_type& sink,
+                              const ValueStorage& storage) = 0;
 
     struct Trie {
         typedef std::unordered_map<std::string, Trie> map_type;
@@ -300,8 +287,7 @@ private:
             const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
-                IterValues<IterValue, ValueStorage, Context>(
-                    std::get<1>(it->second.v), ctx, sink);
+                iter_values(sink, std::get<1>(it->second.v), ctx);
             }
         } else {
             const auto& word = words[i];
@@ -440,7 +426,7 @@ private:
 
             if (cur.it->first == options.separator) {
                 sink({ Visit<Value>::start_values, std::nullopt });
-                VisitValues<Value, ValueStorage>(std::get<1>(cur.it->second.v), sink);
+                visit_values(sink, std::get<1>(cur.it->second.v));
                 sink({ Visit<Value>::end_values, std::nullopt });
                 ++cur.it;
                 continue;

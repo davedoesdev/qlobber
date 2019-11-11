@@ -38,25 +38,21 @@ private:
                      const std::nullptr_t&) override {
         return true;
     }
+
+    void iter_values(typename boost::coroutines2::coroutine<TrueValue>::push_type& sink,
+                     const TrueStorage&,
+                     const std::nullptr_t&) {
+        sink(TrueValue());
+    }
+
+    void visit_values(typename boost::coroutines2::coroutine<Visit<TrueValue>>::push_type& sink,
+                      const TrueStorage&) {
+        sink({
+            Visit<TrueValue>::value,
+            VisitData<TrueValue> {
+                std::variant<std::string, TrueValue>(
+                    std::in_place_index<1>, TrueValue())
+            }
+        });
+    }
 };
-
-template<>
-void VisitValues<TrueValue, TrueStorage>(
-    const TrueStorage&,
-    typename boost::coroutines2::coroutine<Visit<TrueValue>>::push_type& sink) {
-    sink({
-        Visit<TrueValue>::value,
-        VisitData<TrueValue> {
-            std::variant<std::string, TrueValue>(
-                std::in_place_index<1>, TrueValue())
-        }
-    });
-}
-
-template<>
-void IterValues<TrueValue, TrueStorage, const std::nullptr_t>(
-    const TrueStorage&,
-    const std::nullptr_t&,
-    typename boost::coroutines2::coroutine<TrueValue>::push_type& sink) {
-    sink(TrueValue());
-}

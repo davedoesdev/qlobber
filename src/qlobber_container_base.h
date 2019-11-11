@@ -44,4 +44,25 @@ private:
                      const Value& val) override {
         return std::find(existing.begin(), existing.end(), val) != existing.end();
     }
+
+    void iter_values(typename boost::coroutines2::coroutine<Value>::push_type& sink,
+                     const Storage<Value>& vals,
+                     Context& ctx) override {
+        for (const auto& v : vals) {
+            sink(v);
+        }
+    }
+
+    void visit_values(typename boost::coroutines2::coroutine<Visit<Value>>::push_type& sink,
+                      const Storage<Value>& vals) override {
+        for (const auto& v : vals) {
+            sink({
+                Visit<Value>::value,
+                VisitData<Value> {
+                    std::variant<std::string, Value>(
+                        std::in_place_index<1>, v)
+                }
+            });
+        }
+    }
 };

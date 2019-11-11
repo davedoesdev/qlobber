@@ -3,12 +3,6 @@
 #include "qlobber_js_base.h"
 #include "js_options.h"
 
-struct IterSub {
-    std::string clientId;
-    std::optional<std::string> topic;
-    QoS qos;
-};
-
 class QlobberSub :
     public QlobberSubBase<Napi::Array, const std::optional<const std::string>, IterSub>,
     public Napi::ObjectWrap<QlobberSub> {
@@ -174,28 +168,4 @@ Sub ToValue<Sub, Napi::Object>(const Napi::Object& v) {
         v.Get("topic").As<Napi::String>(),
         static_cast<QoS>(v.Get("qos").As<Napi::Number>().Uint32Value())
     };
-}
-
-template<>
-void IterValues<IterSub, SubStorage, const std::optional<const std::string>>(
-    const SubStorage& storage,
-    const std::optional<const std::string>& topic,
-    typename boost::coroutines2::coroutine<IterSub>::push_type& sink) {
-    if (!topic) {
-        for (const auto& clientIdAndQos : storage.clientMap) {
-            sink(IterSub {
-                clientIdAndQos.first,
-                std::optional<std::string>(storage.topic),
-                clientIdAndQos.second
-            });
-        }
-    } else if (storage.topic == topic.value()) {
-        for (const auto& clientIdAndQos : storage.clientMap) {
-            sink(IterSub {
-                clientIdAndQos.first,
-                std::nullopt,
-                clientIdAndQos.second
-            });
-        }
-    }
 }
