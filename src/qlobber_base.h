@@ -49,11 +49,6 @@ public:
 
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
 
-    typename coro_visit_t::pull_type visit() {
-        return typename coro_visit_t::pull_type(
-            std::bind(&QlobberBase::generate_visits, this, std::placeholders::_1));
-    }
-
     typename coro_visit_t::push_type restore(bool cache_adds = false) {
         return typename coro_visit_t::push_type(
             std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
@@ -108,6 +103,11 @@ protected:
         std::unique_lock lock(mutex);
         shortcuts.clear();
         std::get<0>(trie.v)->clear();
+    }
+
+    typename coro_visit_t::pull_type visit() {
+        return typename coro_visit_t::pull_type(
+            std::bind(&QlobberBase::generate_visits, this, std::placeholders::_1));
     }
 
     Options options;

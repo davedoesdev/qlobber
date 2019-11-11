@@ -18,8 +18,6 @@ class QlobberSetBase :
                                 MatchResult,
                                 Context> {
 public:
-    typedef SetStorage<Value> ValueStorage;
-
     QlobberSetBase() {}
 
     QlobberSetBase(const Options& options) :

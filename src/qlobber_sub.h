@@ -1,15 +1,21 @@
 #include <napi.h>
 #include "qlobber_sub_base.h"
 #include "qlobber_js_base.h"
-#include "js_options.h"
 
 class QlobberSub :
-    public QlobberSubBase<Napi::Array, const std::optional<const std::string>>,
+    public QlobberJSCommon<Sub,
+                           Napi::Object, 
+                           Napi::Array,
+                           const std::optional<const std::string>,
+                           QlobberSubBase>,
     public Napi::ObjectWrap<QlobberSub> {
 public:
     QlobberSub(const Napi::CallbackInfo& info) :
-        QlobberSubBase<Napi::Array, const std::optional<const std::string>>(
-            JSOptions(info)),
+        QlobberJSCommon<Sub,
+                        Napi::Object,
+                        Napi::Array,
+                        const std::optional<const std::string>,
+                        QlobberSubBase>(info),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
     virtual ~QlobberSub() {}
@@ -62,14 +68,6 @@ public:
     Napi::Value Clear(const Napi::CallbackInfo& info) {
         clear();
         return info.This();
-    }
-
-    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
-        return GetVisitorT<QlobberSub, Sub>(this, info);
-    }
-
-    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
-        return VisitNextT<Sub, Napi::Object>(info);
     }
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {

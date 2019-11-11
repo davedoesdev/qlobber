@@ -56,60 +56,6 @@ Napi::Value MatchNextT(const Napi::CallbackInfo& info) {
 }
 
 template<typename Value>
-using Visitor = Puller<Visit<Value>>;
-
-template<typename T, typename Value>
-Napi::Value GetVisitorT(T* obj, const Napi::CallbackInfo& info) {
-    return Napi::External<Visitor<Value>>::New(
-        info.Env(),
-        new Visitor<Value>(obj->visit()),
-        [](Napi::Env, Visitor<Value>* visitor) {
-            delete visitor;
-        });
-}
-
-template<typename Value, typename JSValue>
-Napi::Value VisitNextT(const Napi::CallbackInfo& info) {
-    const auto visitor = info[0].As<Napi::External<Visitor<Value>>>().Data();
-    if (visitor->it == visitor->it_end) {
-        return info.Env().Undefined();
-    }
-
-    Napi::Object r = Napi::Object::New(info.Env());
-    switch (visitor->it->type) {
-        case Visit<Value>::start_entries:
-            r.Set("type", "start_entries");
-            break;
-
-        case Visit<Value>::entry:
-            r.Set("type", "entry");
-            r.Set("key", Napi::String::New(info.Env(), std::get<0>(*visitor->it->v)));
-            break;
-
-        case Visit<Value>::end_entries:
-            r.Set("type", "end_entries");
-            break;
-
-        case Visit<Value>::start_values:
-            r.Set("type", "start_values");
-            break;
-
-        case Visit<Value>::value:
-            r.Set("type", "value");
-            r.Set("value", FromValue<Value, JSValue>(
-                info.Env(), std::get<1>(*visitor->it->v)));
-            break;
-
-        case Visit<Value>::end_values:
-            r.Set("type", "end_values");
-            break;
-    }
-
-    ++visitor->it;
-    return r;
-}
-
-template<typename Value>
 struct Restorer {
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
     typedef typename coro_visit_t::push_type push_t;
@@ -195,13 +141,76 @@ Napi::Value GetShortcutsT(T* obj, const Napi::CallbackInfo& info, Context& ctx) 
 template<typename Value,
          typename JSValue,
          typename MatchResult,
+         typename Context,
+         template<typename, typename, typename> typename Base>
+class QlobberJSCommon :
+    public Base<Value, MatchResult, Context> {
+public:
+    QlobberJSCommon(const Napi::CallbackInfo& info) :
+        Base<Value, MatchResult, Context>(JSOptions(info)) {}
+
+    using Visitor = Puller<Visit<Value>>;
+
+    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
+        return Napi::External<Visitor>::New(
+            info.Env(),
+            new Visitor(this->visit()),
+            [](Napi::Env, Visitor* visitor) {
+                delete visitor;
+            });
+    }
+
+    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
+        const auto visitor = info[0].As<Napi::External<Visitor>>().Data();
+        if (visitor->it == visitor->it_end) {
+            return info.Env().Undefined();
+        }
+
+        Napi::Object r = Napi::Object::New(info.Env());
+        switch (visitor->it->type) {
+            case Visit<Value>::start_entries:
+                r.Set("type", "start_entries");
+                break;
+
+            case Visit<Value>::entry:
+                r.Set("type", "entry");
+                r.Set("key", Napi::String::New(info.Env(), std::get<0>(*visitor->it->v)));
+                break;
+
+            case Visit<Value>::end_entries:
+                r.Set("type", "end_entries");
+                break;
+
+            case Visit<Value>::start_values:
+                r.Set("type", "start_values");
+                break;
+
+            case Visit<Value>::value:
+                r.Set("type", "value");
+                r.Set("value", FromValue<Value, JSValue>(
+                    info.Env(), std::get<1>(*visitor->it->v)));
+                break;
+
+            case Visit<Value>::end_values:
+                r.Set("type", "end_values");
+                break;
+        }
+
+        ++visitor->it;
+        return r;
+    }
+};
+
+template<typename Value,
+         typename JSValue,
+         typename MatchResult,
          template<typename, typename, typename> typename Base>
 class QlobberJSBase :
-    public Base<Value, MatchResult, const std::nullptr_t> {
+    public QlobberJSCommon<Value, JSValue, MatchResult, const std::nullptr_t, Base> {
 public:
     QlobberJSBase(const Napi::CallbackInfo& info) :
-        Base<Value, MatchResult, const std::nullptr_t>(JSOptions(info)) {}
-
+        QlobberJSCommon<Value, JSValue, MatchResult, const std::nullptr_t, Base>(info) {}
+                        
     virtual ~QlobberJSBase() {}
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
@@ -246,14 +255,6 @@ public:
     Napi::Value Clear(const Napi::CallbackInfo& info) {
         this->clear();
         return info.This();
-    }
-
-    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
-        return GetVisitorT<QlobberJSBase, Value>(this, info);
-    }
-
-    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
-        return VisitNextT<Value, JSValue>(info);
     }
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {

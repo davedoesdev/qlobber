@@ -1,14 +1,21 @@
 #include <napi.h>
 #include "qlobber_true_base.h"
 #include "qlobber_js_base.h"
-#include "js_options.h"
 
 class QlobberTrue :
-    public QlobberTrueBase,
+    public QlobberJSCommon<TrueValue,
+                           Napi::Boolean, 
+                           std::nullptr_t,
+                           const std::nullptr_t,
+                           QlobberTrueBase>,
     public Napi::ObjectWrap<QlobberTrue> {
 public:
     QlobberTrue(const Napi::CallbackInfo& info) :
-        QlobberTrueBase(JSOptions(info)),
+        QlobberJSCommon<TrueValue,
+                        Napi::Boolean,
+                        std::nullptr_t,
+                        const std::nullptr_t,
+                        QlobberTrueBase>(info),
         Napi::ObjectWrap<QlobberTrue>(info) {}
 
     virtual ~QlobberTrue() {}
@@ -37,14 +44,6 @@ public:
     Napi::Value Clear(const Napi::CallbackInfo& info) {
         this->clear();
         return info.This();
-    }
-
-    Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
-        return GetVisitorT<QlobberTrue, TrueValue>(this, info);
-    }
-
-    Napi::Value VisitNext(const Napi::CallbackInfo& info) {
-        return VisitNextT<TrueValue, Napi::Boolean>(info);
     }
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {

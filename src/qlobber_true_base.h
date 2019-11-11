@@ -6,7 +6,11 @@ struct TrueStorage {
     TrueStorage(const TrueValue&) {}
 };
 
-class QlobberTrueBase :
+template<typename Value, typename MatchResult, typename Context>
+class QlobberTrueBase;
+
+template<>
+class QlobberTrueBase<TrueValue, std::nullptr_t, const std::nullptr_t> :
     public QlobberBase<TrueValue,
                        TrueStorage,
                        std::nullptr_t,

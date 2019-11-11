@@ -18,8 +18,6 @@ class QlobberVecBase :
                                 MatchResult,
                                 Context> {
 public:
-    typedef VecStorage<Value> ValueStorage;
-
     QlobberVecBase() {}
 
     QlobberVecBase(const Options& options) :
