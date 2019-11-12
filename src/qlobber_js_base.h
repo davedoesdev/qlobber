@@ -3,6 +3,11 @@
 #include <vector>
 #include "js_options.h"
 
+template<typename T>
+Napi::Value MatchResultValue(const Napi::Env&, T& r) {
+    return r;
+}
+
 template<typename Value, typename JSValue>
 JSValue FromValue(const Napi::Env& env, const Value& v) {
     return JSValue::New(env, v);
@@ -13,141 +18,38 @@ Value ToValue(const JSValue& v) {
     return v;
 }
 
-template<typename MatchResult>
-Napi::Value MatchResultValue(MatchResult& r) {
-    return r;
-}
-
-template<typename T>
-struct Puller {
-    typedef typename boost::coroutines2::coroutine<T> coro_t;
-    typedef typename coro_t::pull_type pull_t;
-    Puller(pull_t source) :
-        source(std::move(source)),
-        it(begin(this->source)),
-        it_end(end(this->source)) {}
-    pull_t source;
-    typename pull_t::iterator it, it_end;
-};
-
-template<typename Value>
-using Iterator = Puller<Value>;
-
-template<typename T, typename Value, typename Context>
-Napi::Value MatchIterT(T* obj, const Napi::CallbackInfo& info, Context& ctx) {
-    return Napi::External<Iterator<Value>>::New(
-        info.Env(),
-        new Iterator<Value>(obj->match_iter(info[0].As<Napi::String>(), ctx)),
-        [](Napi::Env, Iterator<Value>* iterator) {
-            delete iterator;
-        });
-}
-
-template<typename Value, typename JSValue>
-Napi::Value MatchNextT(const Napi::CallbackInfo& info) {
-    const auto iterator = info[0].As<Napi::External<Iterator<Value>>>().Data();
-    if (iterator->it == iterator->it_end) {
-        return info.Env().Undefined();
-    }
-    Napi::Object r = Napi::Object::New(info.Env());
-    r.Set("value", FromValue<Value, JSValue>(info.Env(), *iterator->it));
-    ++iterator->it;
-    return r;
-}
-
-template<typename Value>
-struct Restorer {
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
-    typedef typename coro_visit_t::push_type push_t;
-    Restorer(push_t sink) :
-        sink(std::move(sink)) {}
-    push_t sink;
-};
-
-template<typename T, typename Value>
-Napi::Value GetRestorerT(T* obj, const Napi::CallbackInfo& info) {
-    bool cache_adds = false;
-    if ((info.Length() > 0) && info[0].IsObject()) {
-        auto options = info[0].As<Napi::Object>();
-        if (options.Has("cache_adds")) {
-            cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
-        }
-    }
-    return Napi::External<Restorer<Value>>::New(
-        info.Env(),
-        new Restorer<Value>(obj->restore(cache_adds)),
-        [](Napi::Env, Restorer<Value>* restorer) {
-            delete restorer;
-        });
-}
-
-template<typename Value, typename JSValue>
-Napi::Value RestoreNextT(const Napi::CallbackInfo& info) {
-    const auto restorer = info[0].As<Napi::External<Restorer<Value>>>().Data();
-    const auto obj = info[1].As<Napi::Object>();
-    const std::string type = obj.Get("type").As<Napi::String>();
-
-    if (type == "start_entries") {
-        restorer->sink({ Visit<Value>::start_entries, std::nullopt });
-    } else if (type == "entry") {
-        restorer->sink({
-            Visit<Value>::entry, 
-            VisitData<Value> {
-                std::variant<std::string, Value>(
-                    std::in_place_index<0>,
-                    obj.Get("key").As<Napi::String>())
-            }
-        });
-    } else if (type == "end_entries") {
-        restorer->sink({ Visit<Value>::end_entries, std::nullopt });
-    } else if (type == "start_values") {
-        restorer->sink({ Visit<Value>::start_values, std::nullopt });
-    } else if (type == "value") {
-        restorer->sink({
-            Visit<Value>::value,
-            VisitData<Value> {
-                std::variant<std::string, Value>(
-                    std::in_place_index<1>,
-                    ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
-            }
-        });
-    } else if (type == "end_values") {
-        restorer->sink({ Visit<Value>::end_values, std::nullopt });
-    }
-
-    return info.Env().Undefined();
-}
-
-template<typename T, typename Context>
-Napi::Value GetShortcutsT(T* obj, const Napi::CallbackInfo& info, Context& ctx) {
-    const auto env = info.Env();
-    const auto Map = env.Global().Get("Map").As<Napi::Function>();
-    const auto proto = Map.Get("prototype").As<Napi::Object>();
-    const auto set = proto.Get("set").As<Napi::Function>();
-    Napi::Object r = Map.New({});
-
-    for (const auto& topic_and_values : obj->shortcuts) {
-        auto entry = obj->NewMatchResult(env);
-        obj->add_values(entry, topic_and_values.second, ctx);
-        set.Call(r, {
-            Napi::String::New(env, topic_and_values.first),
-            MatchResultValue(entry)
-        });
-    }
-
-    return r;
-}
-
 template<typename Value,
          typename JSValue,
          typename MatchResult,
          typename Context,
-         template<typename, typename, typename> typename Base>
+         template<typename, typename, typename> typename Base,
+         typename IterValue = Value>
 class QlobberJSCommon :
     public Base<Value, MatchResult, Context> {
 public:
     QlobberJSCommon(const Napi::CallbackInfo& info) :
         Base<Value, MatchResult, Context>(JSOptions(info)) {}
+
+    Napi::Value Clear(const Napi::CallbackInfo& info) {
+        this->clear();
+        return info.This();
+    }
+
+    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
+        return JSOptions::get(info.Env(), this->options);
+    }
+
+    template<typename T>
+    struct Puller {
+        typedef typename boost::coroutines2::coroutine<T> coro_t;
+        typedef typename coro_t::pull_type pull_t;
+        Puller(pull_t source) :
+            source(std::move(source)),
+            it(begin(this->source)),
+            it_end(end(this->source)) {}
+        pull_t source;
+        typename pull_t::iterator it, it_end;
+    };
 
     using Visitor = Puller<Visit<Value>>;
 
@@ -199,6 +101,115 @@ public:
         ++visitor->it;
         return r;
     }
+
+    struct Restorer {
+        typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
+        typedef typename coro_visit_t::push_type push_t;
+        Restorer(push_t sink) :
+            sink(std::move(sink)) {}
+        push_t sink;
+    };
+
+    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
+        bool cache_adds = false;
+        if ((info.Length() > 0) && info[0].IsObject()) {
+            auto options = info[0].As<Napi::Object>();
+            if (options.Has("cache_adds")) {
+                cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
+            }
+        }
+        return Napi::External<Restorer>::New(
+            info.Env(),
+            new Restorer(this->restore(cache_adds)),
+            [](Napi::Env, Restorer* restorer) {
+                delete restorer;
+            });
+    }
+
+    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
+        const auto restorer = info[0].As<Napi::External<Restorer>>().Data();
+        const auto obj = info[1].As<Napi::Object>();
+        const std::string type = obj.Get("type").As<Napi::String>();
+
+        if (type == "start_entries") {
+            restorer->sink({ Visit<Value>::start_entries, std::nullopt });
+        } else if (type == "entry") {
+            restorer->sink({
+                Visit<Value>::entry, 
+                VisitData<Value> {
+                    std::variant<std::string, Value>(
+                        std::in_place_index<0>,
+                        obj.Get("key").As<Napi::String>())
+                }
+            });
+        } else if (type == "end_entries") {
+            restorer->sink({ Visit<Value>::end_entries, std::nullopt });
+        } else if (type == "start_values") {
+            restorer->sink({ Visit<Value>::start_values, std::nullopt });
+        } else if (type == "value") {
+            restorer->sink({
+                Visit<Value>::value,
+                VisitData<Value> {
+                    std::variant<std::string, Value>(
+                        std::in_place_index<1>,
+                        ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
+                }
+            });
+        } else if (type == "end_values") {
+            restorer->sink({ Visit<Value>::end_values, std::nullopt });
+        }
+
+        return info.Env().Undefined();
+    }
+
+    using Iterator = Puller<IterValue>;
+
+    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
+        return Napi::External<Iterator>::New(
+            info.Env(),
+            new Iterator(this->match_iter(
+                info[0].As<Napi::String>(), this->get_context(info))),
+            [](Napi::Env, Iterator* iterator) {
+                delete iterator;
+            });
+    }
+
+    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
+        const auto iterator = info[0].As<Napi::External<Iterator>>().Data();
+        if (iterator->it == iterator->it_end) {
+            return info.Env().Undefined();
+        }
+        Napi::Object r = Napi::Object::New(info.Env());
+        r.Set("value", FromValue<IterValue, JSValue>(info.Env(), *iterator->it));
+        ++iterator->it;
+        return r;
+    }
+
+
+    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
+        const auto env = info.Env();
+        const auto Map = env.Global().Get("Map").As<Napi::Function>();
+        const auto proto = Map.Get("prototype").As<Napi::Object>();
+        const auto set = proto.Get("set").As<Napi::Function>();
+        const auto ctx = this->get_context(info);
+        Napi::Object r = Map.New({});
+
+        for (const auto& topic_and_values : this->shortcuts) {
+            auto entry = this->NewMatchResult(env);
+            this->add_values(entry, topic_and_values.second, ctx);
+            set.Call(r, {
+                Napi::String::New(env, topic_and_values.first),
+                MatchResultValue(env, entry)
+            });
+        }
+
+        return r;
+    }
+
+protected:
+    virtual typename std::remove_const<Context>::type get_context(const Napi::CallbackInfo& info) = 0;
+
+    virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 };
 
 template<typename Value,
@@ -232,18 +243,11 @@ public:
     }
 
     Napi::Value Match(const Napi::CallbackInfo& info) {
+        const auto env = info.Env();
         const auto topic = info[0].As<Napi::String>();
-        auto r = NewMatchResult(info.Env());
+        auto r = this->NewMatchResult(env);
         this->match(r, topic, nullptr);
-        return MatchResultValue(r);
-    }
-
-    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
-        return MatchIterT<QlobberJSBase, Value, const std::nullptr_t>(this, info, nullptr);
-    }
-
-    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
-        return MatchNextT<Value, JSValue>(info);
+        return MatchResultValue(env, r);
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
@@ -252,35 +256,9 @@ public:
         return Napi::Boolean::New(info.Env(), this->test(topic, val));
     }
 
-    Napi::Value Clear(const Napi::CallbackInfo& info) {
-        this->clear();
-        return info.This();
+    std::nullptr_t get_context(const Napi::CallbackInfo& info) override {
+        return nullptr;
     }
-
-    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
-        return GetRestorerT<QlobberJSBase, Value>(this, info);
-    }
-
-    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
-        return RestoreNextT<Value, JSValue>(info);
-    }
-
-    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
-        return JSOptions::get(info.Env(), this->options);
-    }
-
-    // for tests
-
-    friend Napi::Value GetShortcutsT<QlobberJSBase, const std::nullptr_t>(
-        QlobberJSBase*, const Napi::CallbackInfo&, const std::nullptr_t&);
-
-    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
-        return GetShortcutsT<QlobberJSBase, const std::nullptr_t>(
-            this, info, nullptr);
-    }
-
-private:
-    virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 };
 
 template<typename T>

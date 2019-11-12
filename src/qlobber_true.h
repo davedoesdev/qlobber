@@ -5,7 +5,7 @@
 class QlobberTrue :
     public QlobberJSCommon<TrueValue,
                            Napi::Boolean, 
-                           std::nullptr_t,
+                           bool,
                            const std::nullptr_t,
                            QlobberTrueBase>,
     public Napi::ObjectWrap<QlobberTrue> {
@@ -13,7 +13,7 @@ public:
     QlobberTrue(const Napi::CallbackInfo& info) :
         QlobberJSCommon<TrueValue,
                         Napi::Boolean,
-                        std::nullptr_t,
+                        bool,
                         const std::nullptr_t,
                         QlobberTrueBase>(info),
         Napi::ObjectWrap<QlobberTrue>(info) {}
@@ -41,47 +41,20 @@ public:
         return Napi::Boolean::New(info.Env(), this->test(topic, nullptr));
     }
 
-    Napi::Value Clear(const Napi::CallbackInfo& info) {
-        this->clear();
-        return info.This();
-    }
-
-    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
-        return GetRestorerT<QlobberTrue, TrueValue>(this, info);
-    }
-
-    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
-        return RestoreNextT<TrueValue, Napi::Boolean>(info);
-    }
-
-    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
-        return JSOptions::get(info.Env(), options);
-    }
-
-    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
-        return MatchIterT<QlobberTrue, TrueValue, const std::nullptr_t>(this, info, nullptr);
-    }
-
-    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
-        return MatchNextT<TrueValue, Napi::Boolean>(info);
-    }
-
-    // for tests
-
-    friend Napi::Value GetShortcutsT<QlobberTrue, const std::nullptr_t>(
-        QlobberTrue*, const Napi::CallbackInfo&, const std::nullptr_t&);
-
-    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
-        return GetShortcutsT<QlobberTrue, const std::nullptr_t>(this, info, nullptr);
+    std::nullptr_t get_context(const Napi::CallbackInfo& info) override {
+        return nullptr;
     }
 
 private:
-    Napi::Boolean NewMatchResult(const Napi::Env& env) {
-        return Napi::Boolean::New(env, true);
+    bool NewMatchResult(const Napi::Env&) override {
+        return false;
     }
-
-    void add_values(Napi::Boolean&, const TrueStorage&, const std::nullptr_t&) {}
 };
+
+template<>
+Napi::Value MatchResultValue<bool>(const Napi::Env& env, bool& r) {
+    return Napi::Boolean::New(env, r);
+}
 
 template<>
 Napi::Boolean FromValue<TrueValue, Napi::Boolean>(const Napi::Env& env, const TrueValue&) {

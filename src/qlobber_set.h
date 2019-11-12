@@ -36,6 +36,8 @@ private:
 };
 
 template<>
-Napi::Value MatchResultValue(std::pair<Napi::Object, Napi::Function>& r) {
+Napi::Value MatchResultValue<std::pair<Napi::Object, Napi::Function>>(
+    const Napi::Env&,
+    std::pair<Napi::Object, Napi::Function>& r) {
     return r.first;
 }

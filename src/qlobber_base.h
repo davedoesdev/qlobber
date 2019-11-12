@@ -37,7 +37,6 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        // TODO: can we fold other separate functions into classes?
         // TODO: async
         //   either pass in fn to match or make a new class which can
         //   access same store and has non-JS types
@@ -46,25 +45,6 @@ public:
         // TODO: worker threads
 
     QlobberBase(const Options& options) : options(options) {}
-
-    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
-
-    typename coro_visit_t::push_type restore(bool cache_adds = false) {
-        return typename coro_visit_t::push_type(
-            std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
-    }
-
-    typedef typename boost::coroutines2::coroutine<IterValue> coro_iter_t;
-
-    typename coro_iter_t::pull_type match_iter(const std::string& topic,
-                                               Context& ctx) {
-        // "The arguments to bind are copied or moved, and are never passed by
-        // reference unless wrapped in std::ref or std::cref."
-        // https://en.cppreference.com/w/cpp/utility/functional/bind
-        // So it doesn't matter if topic and ctx are destroyed later.
-        return typename coro_iter_t::pull_type(
-            std::bind(&QlobberBase::generate_values, this, std::placeholders::_1, topic, ctx));
-    }
 
 protected:
     void add(const std::string& topic, const Value& val) {
@@ -105,9 +85,28 @@ protected:
         std::get<0>(trie.v)->clear();
     }
 
+    typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
+
     typename coro_visit_t::pull_type visit() {
         return typename coro_visit_t::pull_type(
             std::bind(&QlobberBase::generate_visits, this, std::placeholders::_1));
+    }
+
+    typename coro_visit_t::push_type restore(bool cache_adds = false) {
+        return typename coro_visit_t::push_type(
+            std::bind(&QlobberBase::inject, this, std::placeholders::_1, cache_adds));
+    }
+
+    typedef typename boost::coroutines2::coroutine<IterValue> coro_iter_t;
+
+    typename coro_iter_t::pull_type match_iter(const std::string& topic,
+                                               Context& ctx) {
+        // "The arguments to bind are copied or moved, and are never passed by
+        // reference unless wrapped in std::ref or std::cref."
+        // https://en.cppreference.com/w/cpp/utility/functional/bind
+        // So it doesn't matter if topic and ctx are destroyed later.
+        return typename coro_iter_t::pull_type(
+            std::bind(&QlobberBase::generate_values, this, std::placeholders::_1, topic, ctx));
     }
 
     Options options;
@@ -530,10 +529,10 @@ private:
             if (next == std::string::npos) {
                 break;
             }
-            words.push_back(std::move(topic.substr(last, next - last)));
+            words.push_back(topic.substr(last, next - last));
             last = next + 1;
         }
-        words.push_back(std::move(topic.substr(last)));
+        words.push_back(topic.substr(last));
         return words;
     }
 };

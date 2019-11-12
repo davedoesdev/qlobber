@@ -7,7 +7,8 @@ class QlobberSub :
                            Napi::Object, 
                            Napi::Array,
                            const std::optional<const std::string>,
-                           QlobberSubBase>,
+                           QlobberSubBase,
+                           IterSub>,
     public Napi::ObjectWrap<QlobberSub> {
 public:
     QlobberSub(const Napi::CallbackInfo& info) :
@@ -15,7 +16,8 @@ public:
                         Napi::Object,
                         Napi::Array,
                         const std::optional<const std::string>,
-                        QlobberSubBase>(info),
+                        QlobberSubBase,
+                        IterSub>(info),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
     virtual ~QlobberSub() {}
@@ -42,7 +44,7 @@ public:
         return info.This();
     }
 
-    std::optional<std::string> get_context(const Napi::CallbackInfo& info) {
+    std::optional<const std::string> get_context(const Napi::CallbackInfo& info) override {
         if ((info.Length() > 1) && info[1].IsString()) {
             return std::optional<std::string>(info[1].As<Napi::String>());
         }
@@ -65,48 +67,12 @@ public:
         }));
     }
 
-    Napi::Value Clear(const Napi::CallbackInfo& info) {
-        clear();
-        return info.This();
-    }
-
-    Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
-        return GetRestorerT<QlobberSub, Sub>(this, info);
-    }
-
-    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
-        return RestoreNextT<Sub, Napi::Object>(info);
-    }
-
-    Napi::Value GetOptions(const Napi::CallbackInfo& info) {
-        return JSOptions::get(info.Env(), options);
-    }
-
-    Napi::Value MatchIter(const Napi::CallbackInfo& info) {
-        return MatchIterT<QlobberSub, IterSub, const std::optional<const std::string>>(
-            this, info, get_context(info));
-    }
-
-    Napi::Value MatchNext(const Napi::CallbackInfo& info) {
-        return MatchNextT<IterSub, Napi::Object>(info);
-    }
-
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
         return Napi::Number::New(info.Env(), subscriptionsCount);
     }
 
-    // for tests
-
-    friend Napi::Value GetShortcutsT<QlobberSub, const std::optional<const std::string>>(
-        QlobberSub*, const Napi::CallbackInfo&, const std::optional<const std::string>&);
-
-    Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
-        return GetShortcutsT< QlobberSub, const std::optional<const std::string>>(
-            this, info, std::nullopt);
-    }
-
 private:
-    Napi::Array NewMatchResult(const Napi::Env& env) {
+    Napi::Array NewMatchResult(const Napi::Env& env) override {
         return Napi::Array::New(env);
     }
 

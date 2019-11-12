@@ -100,7 +100,7 @@ private:
 
     void iter_values(typename boost::coroutines2::coroutine<IterSub>::push_type& sink,
                      const SubStorage& storage,
-                     const std::optional<const std::string>& topic) {
+                     const std::optional<const std::string>& topic) override {
         if (!topic) {
             for (const auto& clientIdAndQos : storage.clientMap) {
                 sink(IterSub {
@@ -121,7 +121,7 @@ private:
     }
 
     void visit_values(typename boost::coroutines2::coroutine<Visit<Sub>>::push_type& sink,
-                      const SubStorage& storage) {
+                      const SubStorage& storage) override {
         for (const auto& entry : storage.clientMap) {
             sink({
                 Visit<Sub>::value,

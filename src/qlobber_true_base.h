@@ -10,11 +10,11 @@ template<typename Value, typename MatchResult, typename Context>
 class QlobberTrueBase;
 
 template<>
-class QlobberTrueBase<TrueValue, std::nullptr_t, const std::nullptr_t> :
+class QlobberTrueBase<TrueValue, bool, const std::nullptr_t> :
     public QlobberBase<TrueValue,
                        TrueStorage,
                        std::nullptr_t,
-                       std::nullptr_t,
+                       bool,
                        const std::nullptr_t,
                        std::nullptr_t> {
 public:
@@ -24,9 +24,14 @@ public:
         QlobberBase<TrueValue,
                     TrueStorage,
                     std::nullptr_t, 
-                    std::nullptr_t,
+                    bool,
                     const std::nullptr_t,
                     std::nullptr_t>(options) {}
+
+protected:
+    void add_values(bool& r, const TrueStorage&, const std::nullptr_t&) override {
+        r = true;
+    }
 
 private:
     void add_value(TrueStorage&, const TrueValue&) override {}
@@ -36,8 +41,6 @@ private:
         return true;
     }
 
-    void add_values(std::nullptr_t&, const TrueStorage&, const std::nullptr_t&) {}
-
     bool test_values(const TrueStorage& existing,
                      const std::nullptr_t&) override {
         return true;
@@ -45,12 +48,12 @@ private:
 
     void iter_values(typename boost::coroutines2::coroutine<TrueValue>::push_type& sink,
                      const TrueStorage&,
-                     const std::nullptr_t&) {
+                     const std::nullptr_t&) override {
         sink(TrueValue());
     }
 
     void visit_values(typename boost::coroutines2::coroutine<Visit<TrueValue>>::push_type& sink,
-                      const TrueStorage&) {
+                      const TrueStorage&) override {
         sink({
             Visit<TrueValue>::value,
             VisitData<TrueValue> {
