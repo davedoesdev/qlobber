@@ -32,7 +32,7 @@ template<typename Value,
          typename Remove,
          typename MatchResult,
          typename Context,
-         typename Test,
+         typename TestValue,
          typename IterValue = Value>
 class QlobberBase {
 public:
@@ -74,7 +74,7 @@ protected:
         match(r, 0, split(topic), trie, ctx);
     }
 
-    bool test(const std::string& topic, const Test& val) {
+    bool test(const std::string& topic, const TestValue& val) {
         std::shared_lock lock(mutex);
         return test(val, 0, split(topic), trie);
     }
@@ -123,7 +123,7 @@ private:
     virtual bool remove_value(ValueStorage& vals,
                               const std::optional<const Remove>& val) = 0;
     virtual bool test_values(const ValueStorage& vals,
-                             const Test& val) = 0;
+                             const TestValue& val) = 0;
     virtual void iter_values(typename coro_iter_t::push_type& sink,
                              const ValueStorage& vals,
                              Context& ctx) = 0;
@@ -317,7 +317,7 @@ private:
         match_iter(sink, 0, split(topic), trie, ctx);
     }
 
-    bool test_some(const Test& v,
+    bool test_some(const TestValue& v,
                    const std::size_t i,
                    const std::vector<std::string>& words,
                    const Trie& st) {
@@ -335,7 +335,7 @@ private:
         return false;
     }
 
-    bool test(const Test& v,
+    bool test(const TestValue& v,
               const std::size_t i,
               const std::vector<std::string>& words,
               const Trie& sub_trie) {

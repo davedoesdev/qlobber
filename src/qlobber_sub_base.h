@@ -33,11 +33,15 @@ struct SubTest {
     std::string topic;
 };
 
-template<typename Value, typename MatchResult, typename Context>
+template<typename Value,
+         typename MatchResult,
+         typename Context,
+         typename TestValue,
+         typename IterValue>
 class QlobberSubBase;
 
 template<typename MatchResult, typename Context>
-class QlobberSubBase<Sub, MatchResult, Context> :
+class QlobberSubBase<Sub, MatchResult, Context, SubTest, IterSub> :
     public QlobberBase<Sub,
                        SubStorage,
                        std::string,

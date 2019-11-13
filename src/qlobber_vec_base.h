@@ -11,8 +11,15 @@ public:
 
 template<typename Value,
          typename MatchResult,
+         typename Context,
+         typename TestValue,
+         typename IterValue>
+class QlobberVecBase;
+
+template<typename Value,
+         typename MatchResult,
          typename Context>
-class QlobberVecBase :
+class QlobberVecBase<Value, MatchResult, Context, Value, Value> :
     public QlobberContainerBase<Value,
                                 VecStorage,
                                 MatchResult,

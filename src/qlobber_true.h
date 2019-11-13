@@ -7,7 +7,8 @@ class QlobberTrue :
                            Napi::Boolean, 
                            bool,
                            const std::nullptr_t,
-                           QlobberTrueBase>,
+                           QlobberTrueBase,
+                           std::nullptr_t>,
     public Napi::ObjectWrap<QlobberTrue> {
 public:
     QlobberTrue(const Napi::CallbackInfo& info) :
@@ -15,7 +16,8 @@ public:
                         Napi::Boolean,
                         bool,
                         const std::nullptr_t,
-                        QlobberTrueBase>(info),
+                        QlobberTrueBase,
+                        std::nullptr_t>(info),
         Napi::ObjectWrap<QlobberTrue>(info) {}
 
     virtual ~QlobberTrue() {}
@@ -32,22 +34,17 @@ public:
         return info.This();
     }
 
-    Napi::Value Match(const Napi::CallbackInfo& info) {
-        return Test(info);
-    }
-
-    Napi::Value Test(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        return Napi::Boolean::New(info.Env(), this->test(topic, nullptr));
-    }
-
-    std::nullptr_t get_context(const Napi::CallbackInfo& info) override {
+private:
+    std::nullptr_t get_context(const Napi::CallbackInfo&) override {
         return nullptr;
     }
 
-private:
     bool NewMatchResult(const Napi::Env&) override {
         return false;
+    }
+
+    std::nullptr_t get_test(const Napi::CallbackInfo&) override {
+        return nullptr;
     }
 };
 

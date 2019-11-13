@@ -8,6 +8,7 @@ class QlobberSub :
                            Napi::Array,
                            const std::optional<const std::string>,
                            QlobberSubBase,
+                           SubTest,
                            IterSub>,
     public Napi::ObjectWrap<QlobberSub> {
 public:
@@ -17,6 +18,7 @@ public:
                         Napi::Array,
                         const std::optional<const std::string>,
                         QlobberSubBase,
+                        SubTest,
                         IterSub>(info),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
@@ -44,6 +46,11 @@ public:
         return info.This();
     }
 
+    Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), subscriptionsCount);
+    }
+
+private:
     std::optional<const std::string> get_context(const Napi::CallbackInfo& info) override {
         if ((info.Length() > 1) && info[1].IsString()) {
             return std::optional<std::string>(info[1].As<Napi::String>());
@@ -51,29 +58,16 @@ public:
         return std::nullopt;
     }
 
-    Napi::Value Match(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        auto r = NewMatchResult(info.Env());
-        match(r, topic, get_context(info));
-        return r;
-    }
-
-    Napi::Value Test(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        const auto val = info[1].As<Napi::Object>();
-        return Napi::Boolean::New(info.Env(), test(topic, {
-            val.Get("clientId").As<Napi::String>(),
-            val.Get("topic").As<Napi::String>()
-        }));
-    }
-
-    Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
-        return Napi::Number::New(info.Env(), subscriptionsCount);
-    }
-
-private:
     Napi::Array NewMatchResult(const Napi::Env& env) override {
         return Napi::Array::New(env);
+    }
+
+    SubTest get_test(const Napi::CallbackInfo& info) override {
+        const auto val = info[1].As<Napi::Object>();
+        return {
+            val.Get("clientId").As<Napi::String>(),
+            val.Get("topic").As<Napi::String>()
+        };
     }
 
     void add_values(Napi::Array& dest,
