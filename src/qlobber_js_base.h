@@ -18,6 +18,17 @@ Value ToValue(const JSValue& v) {
     return v;
 }
 
+Napi::Function GetCallback(const Napi::CallbackInfo& info) {
+    const auto len = info.Length();
+    if (len > 0) {
+        Napi::Value cb = info[len - 1];
+        if (cb.IsFunction()) {
+            return cb.As<Napi::Function>();
+        }
+    }
+    return Napi::Function::New(info.Env(), [](const Napi::CallbackInfo&) {});
+}
+
 template<typename Value,
          typename JSValue,
          typename MatchResult,
@@ -36,6 +47,10 @@ public:
         const auto topic = info[0].As<Napi::String>();
         this->add(topic, get_add_value(info));
         return info.This();
+    }
+    
+    void AddAsync(const Napi::CallbackInfo& info) {
+        (new AddAsyncWorker(this, info))->Queue();
     }
 
     Napi::Value Remove(const Napi::CallbackInfo& info) {
@@ -213,6 +228,8 @@ protected:
 
     virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 
+    virtual Napi::Object get_object() = 0;
+
     virtual Value get_add_value(const Napi::CallbackInfo& info) = 0;
 
     virtual std::optional<const RemoveValue> get_remove_value(const Napi::CallbackInfo& info) = 0;
@@ -241,6 +258,27 @@ private:
         Restorer(push_t sink) :
             sink(std::move(sink)) {}
         push_t sink;
+    };
+
+    class AddAsyncWorker : public Napi::AsyncWorker {
+    public:
+        AddAsyncWorker(QlobberJSCommon* qlobber,
+                       const Napi::CallbackInfo& info) :
+            Napi::AsyncWorker(GetCallback(info)),
+            qlobber(qlobber),
+            qlobber_ref(Napi::Persistent(qlobber->get_object())),
+            topic(info[0].As<Napi::String>()),
+            value(qlobber->get_add_value(info)) {}
+
+        void Execute() override {
+            qlobber->add(topic, value);
+        }
+
+    private:
+        QlobberJSCommon* qlobber;
+        Napi::ObjectReference qlobber_ref;
+        std::string topic;
+        Value value;
     };
 };
 
@@ -286,6 +324,7 @@ template<typename T>
 void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
     std::vector<Napi::ClassPropertyDescriptor<T>> props {
         T::InstanceMethod("add", &T::Add),
+        T::InstanceMethod("add_async", &T::AddAsync),
         T::InstanceMethod("remove", &T::Remove),
         T::InstanceMethod("match", &T::Match),
         T::InstanceMethod("test", &T::Test),

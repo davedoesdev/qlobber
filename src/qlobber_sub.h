@@ -87,6 +87,11 @@ private:
             }
         }
     }
+
+    Napi::Object get_object() override {
+        return Value();
+    }
+
 };
 
 template<>

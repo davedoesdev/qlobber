@@ -44,6 +44,10 @@ private:
     std::nullptr_t get_test_value(const Napi::CallbackInfo&) override {
         return nullptr;
     }
+
+    Napi::Object get_object() override {
+        return Value();
+    }
 };
 
 template<>

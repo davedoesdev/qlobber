@@ -23,4 +23,8 @@ private:
             dest.Set(dest.Length(), FromValue<Value, JSValue>(env, v));
         }
     }
+
+    Napi::Object get_object() override {
+        return Napi::ObjectWrap<QlobberVec<Value, JSValue>>::Value();
+    }
 };

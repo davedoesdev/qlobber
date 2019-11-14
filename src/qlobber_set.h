@@ -33,6 +33,10 @@ private:
             r.second.Call(r.first, { FromValue<Value, JSValue>(env, v) });
         }
     }
+
+    Napi::Object get_object() override {
+        return Napi::ObjectWrap<QlobberSet<Value, JSValue>>::Value();
+    }
 };
 
 template<>
