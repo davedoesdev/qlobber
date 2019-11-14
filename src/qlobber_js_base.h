@@ -66,20 +66,6 @@ public:
         return JSOptions::get(info.Env(), this->options);
     }
 
-    template<typename T>
-    struct Puller {
-        typedef typename boost::coroutines2::coroutine<T> coro_t;
-        typedef typename coro_t::pull_type pull_t;
-        Puller(pull_t source) :
-            source(std::move(source)),
-            it(begin(this->source)),
-            it_end(end(this->source)) {}
-        pull_t source;
-        typename pull_t::iterator it, it_end;
-    };
-
-    using Visitor = Puller<Visit<Value>>;
-
     Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
         return Napi::External<Visitor>::New(
             info.Env(),
@@ -128,14 +114,6 @@ public:
         ++visitor->it;
         return r;
     }
-
-    struct Restorer {
-        typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
-        typedef typename coro_visit_t::push_type push_t;
-        Restorer(push_t sink) :
-            sink(std::move(sink)) {}
-        push_t sink;
-    };
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
         bool cache_adds = false;
@@ -189,8 +167,6 @@ public:
         return info.Env().Undefined();
     }
 
-    using Iterator = Puller<IterValue>;
-
     Napi::Value MatchIter(const Napi::CallbackInfo& info) {
         return Napi::External<Iterator>::New(
             info.Env(),
@@ -242,6 +218,30 @@ protected:
     virtual std::optional<const RemoveValue> get_remove_value(const Napi::CallbackInfo& info) = 0;
 
     virtual TestValue get_test_value(const Napi::CallbackInfo& info) = 0;
+
+private:
+    template<typename T>
+    struct Puller {
+        typedef typename boost::coroutines2::coroutine<T> coro_t;
+        typedef typename coro_t::pull_type pull_t;
+        Puller(pull_t source) :
+            source(std::move(source)),
+            it(begin(this->source)),
+            it_end(end(this->source)) {}
+        pull_t source;
+        typename pull_t::iterator it, it_end;
+    };
+
+    using Visitor = Puller<Visit<Value>>;
+    using Iterator = Puller<IterValue>;
+
+    struct Restorer {
+        typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
+        typedef typename coro_visit_t::push_type push_t;
+        Restorer(push_t sink) :
+            sink(std::move(sink)) {}
+        push_t sink;
+    };
 };
 
 template<typename Value,

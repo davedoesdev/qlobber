@@ -111,7 +111,6 @@ protected:
 
     Options options;
     std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
-    std::shared_mutex mutex;
 
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
@@ -138,6 +137,8 @@ private:
         Trie(std::shared_ptr<Trie>& t) : v(std::move(t->v)) {}
         std::variant<map_ptr, ValueStorage> v;
     } trie;
+
+    std::shared_mutex mutex;
 
     ValueStorage& add(const Value& val,
                       const std::size_t i,
