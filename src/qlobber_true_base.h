@@ -9,12 +9,13 @@ struct TrueStorage {
 template<typename Value,
          typename MatchResult,
          typename Context,
+         typename RemoveValue,
          typename TestValue,
          typename IterValue>
 class QlobberTrueBase;
 
 template<>
-class QlobberTrueBase<TrueValue, bool, const std::nullptr_t, std::nullptr_t, TrueValue> :
+class QlobberTrueBase<TrueValue, bool, const std::nullptr_t, std::nullptr_t, std::nullptr_t, TrueValue> :
     public QlobberBase<TrueValue,
                        TrueStorage,
                        std::nullptr_t,

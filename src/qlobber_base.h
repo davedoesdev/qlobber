@@ -29,7 +29,7 @@ struct Visit {
 
 template<typename Value,
          typename ValueStorage,
-         typename Remove,
+         typename RemoveValue,
          typename MatchResult,
          typename Context,
          typename TestValue,
@@ -62,7 +62,7 @@ protected:
     }
 
     void remove(const std::string& topic,
-                const std::optional<const Remove>& val) {
+                const std::optional<const RemoveValue>& val) {
         std::unique_lock lock(mutex);
         if (remove(val, 0, split(topic), trie) && options.cache_adds) {
             shortcuts.erase(topic);
@@ -121,7 +121,7 @@ private:
     virtual void initial_value_inserted(const Value& val) {}
     virtual void add_value(ValueStorage& vals, const Value& val) = 0;
     virtual bool remove_value(ValueStorage& vals,
-                              const std::optional<const Remove>& val) = 0;
+                              const std::optional<const RemoveValue>& val) = 0;
     virtual bool test_values(const ValueStorage& vals,
                              const TestValue& val) = 0;
     virtual void iter_values(typename coro_iter_t::push_type& sink,
@@ -160,7 +160,7 @@ private:
         return add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
     }
 
-    bool remove(const std::optional<const Remove>& val,
+    bool remove(const std::optional<const RemoveValue>& val,
                 const std::size_t i,
                 const std::vector<std::string>& words,
                 const Trie& sub_trie) {

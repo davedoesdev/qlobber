@@ -12,6 +12,7 @@ public:
 template<typename Value,
          typename MatchResult,
          typename Context,
+         typename RemoveValue,
          typename TestValue,
          typename IterValue>
 class QlobberVecBase;
@@ -19,7 +20,7 @@ class QlobberVecBase;
 template<typename Value,
          typename MatchResult,
          typename Context>
-class QlobberVecBase<Value, MatchResult, Context, Value, Value> :
+class QlobberVecBase<Value, MatchResult, Context, Value, Value, Value> :
     public QlobberContainerBase<Value,
                                 VecStorage,
                                 MatchResult,

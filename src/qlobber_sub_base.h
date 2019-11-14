@@ -36,12 +36,13 @@ struct SubTest {
 template<typename Value,
          typename MatchResult,
          typename Context,
+         typename RemoveValue,
          typename TestValue,
          typename IterValue>
 class QlobberSubBase;
 
 template<typename MatchResult, typename Context>
-class QlobberSubBase<Sub, MatchResult, Context, SubTest, IterSub> :
+class QlobberSubBase<Sub, MatchResult, Context, std::string, SubTest, IterSub> :
     public QlobberBase<Sub,
                        SubStorage,
                        std::string,

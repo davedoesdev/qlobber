@@ -8,6 +8,7 @@ class QlobberSub :
                            Napi::Array,
                            const std::optional<const std::string>,
                            QlobberSubBase,
+                           std::string,
                            SubTest,
                            IterSub>,
     public Napi::ObjectWrap<QlobberSub> {
@@ -18,33 +19,12 @@ public:
                         Napi::Array,
                         const std::optional<const std::string>,
                         QlobberSubBase,
+                        std::string,
                         SubTest,
                         IterSub>(info),
         Napi::ObjectWrap<QlobberSub>(info) {}
 
     virtual ~QlobberSub() {}
-
-    Napi::Value Add(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        const auto val = info[1].As<Napi::Object>();
-        add(topic, {
-            val.Get("clientId").As<Napi::String>(),
-            val.Get("topic").As<Napi::String>(),
-            static_cast<QoS>(val.Get("qos").As<Napi::Number>().Uint32Value())
-        });
-        return info.This();
-    }
-
-    Napi::Value Remove(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        if (info.Length() == 1) {
-            remove(topic, std::nullopt);
-        } else {
-            const auto val = info[1].As<Napi::Object>();
-            remove(topic, val.Get("clientId").As<Napi::String>());
-        }
-        return info.This();
-    }
 
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
         return Napi::Number::New(info.Env(), subscriptionsCount);
@@ -62,7 +42,24 @@ private:
         return Napi::Array::New(env);
     }
 
-    SubTest get_test(const Napi::CallbackInfo& info) override {
+    Sub get_add_value(const Napi::CallbackInfo& info) override {
+        const auto val = info[1].As<Napi::Object>();
+        return {
+            val.Get("clientId").As<Napi::String>(),
+            val.Get("topic").As<Napi::String>(),
+            static_cast<QoS>(val.Get("qos").As<Napi::Number>().Uint32Value())
+        };
+    }
+
+    std::optional<const std::string> get_remove_value(const Napi::CallbackInfo& info) override {
+        if (info.Length() == 1) {
+            return std::nullopt;
+        }
+        const auto val = info[1].As<Napi::Object>();
+        return val.Get("clientId").As<Napi::String>();
+    }
+
+    SubTest get_test_value(const Napi::CallbackInfo& info) override {
         const auto val = info[1].As<Napi::Object>();
         return {
             val.Get("clientId").As<Napi::String>(),

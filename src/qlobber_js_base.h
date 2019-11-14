@@ -22,14 +22,27 @@ template<typename Value,
          typename JSValue,
          typename MatchResult,
          typename Context,
-         template<typename, typename, typename, typename, typename> typename Base,
+         template<typename, typename, typename, typename, typename, typename> typename Base,
+         typename RemoveValue = Value,
          typename TestValue = Value,
          typename IterValue = Value>
 class QlobberJSCommon :
-    public Base<Value, MatchResult, Context, TestValue, IterValue> {
+    public Base<Value, MatchResult, Context, RemoveValue, TestValue, IterValue> {
 public:
     QlobberJSCommon(const Napi::CallbackInfo& info) :
-        Base<Value, MatchResult, Context, TestValue, IterValue>(JSOptions(info)) {}
+        Base<Value, MatchResult, Context, RemoveValue, TestValue, IterValue>(JSOptions(info)) {}
+
+    Napi::Value Add(const Napi::CallbackInfo& info) {
+        const auto topic = info[0].As<Napi::String>();
+        this->add(topic, get_add_value(info));
+        return info.This();
+    }
+
+    Napi::Value Remove(const Napi::CallbackInfo& info) {
+        const auto topic = info[0].As<Napi::String>();
+        this->remove(topic, get_remove_value(info));
+        return info.This();
+    }
 
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto env = info.Env();
@@ -41,7 +54,7 @@ public:
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        return Napi::Boolean::New(info.Env(), this->test(topic, get_test(info)));
+        return Napi::Boolean::New(info.Env(), this->test(topic, get_test_value(info)));
     }
 
     Napi::Value Clear(const Napi::CallbackInfo& info) {
@@ -199,7 +212,6 @@ public:
         return r;
     }
 
-
     Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
         const auto env = info.Env();
         const auto Map = env.Global().Get("Map").As<Napi::Function>();
@@ -225,13 +237,17 @@ protected:
 
     virtual MatchResult NewMatchResult(const Napi::Env& env) = 0;
 
-    virtual TestValue get_test(const Napi::CallbackInfo& info) = 0;
+    virtual Value get_add_value(const Napi::CallbackInfo& info) = 0;
+
+    virtual std::optional<const RemoveValue> get_remove_value(const Napi::CallbackInfo& info) = 0;
+
+    virtual TestValue get_test_value(const Napi::CallbackInfo& info) = 0;
 };
 
 template<typename Value,
          typename JSValue,
          typename MatchResult,
-         template<typename, typename, typename, typename, typename> typename Base>
+         template<typename, typename, typename, typename, typename, typename> typename Base>
 class QlobberJSBase :
     public QlobberJSCommon<Value, JSValue, MatchResult, const std::nullptr_t, Base> {
 public:
@@ -240,30 +256,23 @@ public:
                         
     virtual ~QlobberJSBase() {}
 
-    Napi::Value Add(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        const auto val = info[1].As<JSValue>();
-        this->add(topic, val);
-        return info.This();
-    }
-
-    Napi::Value Remove(const Napi::CallbackInfo& info) {
-        const auto topic = info[0].As<Napi::String>();
-        if (info.Length() == 1) {
-            this->remove(topic, std::nullopt);
-        } else {
-            const auto val = info[1].As<JSValue>();
-            this->remove(topic, val);
-        }
-        return info.This();
-    }
-
 private:
     std::nullptr_t get_context(const Napi::CallbackInfo& info) override {
         return nullptr;
     }
 
-    Value get_test(const Napi::CallbackInfo& info) override {
+    Value get_add_value(const Napi::CallbackInfo& info) override {
+        return info[1].As<JSValue>();
+    }
+
+    std::optional<const Value> get_remove_value(const Napi::CallbackInfo& info) override {
+        if (info.Length() == 1) {
+            return std::nullopt;
+        }
+        return info[1].As<JSValue>();
+    }
+
+    Value get_test_value(const Napi::CallbackInfo& info) override {
         return info[1].As<JSValue>();
     }
 };

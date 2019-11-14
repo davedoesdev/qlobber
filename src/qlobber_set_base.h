@@ -12,6 +12,7 @@ public:
 template<typename Value,
          typename MatchResult,
          typename Context,
+         typename RemoveValue,
          typename TestValue,
          typename IterValue>
 class QlobberSetBase;
@@ -19,7 +20,7 @@ class QlobberSetBase;
 template<typename Value,
          typename MatchResult,
          typename Context>
-class QlobberSetBase<Value, MatchResult, Context, Value, Value> :
+class QlobberSetBase<Value, MatchResult, Context, Value, Value, Value> :
     public QlobberContainerBase<Value,
                                 SetStorage,
                                 MatchResult,
