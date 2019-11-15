@@ -59,6 +59,10 @@ public:
         return info.This();
     }
 
+    void RemoveAsync(const Napi::CallbackInfo& info) {
+        (new RemoveAsyncWorker(this, info))->Queue();
+    }
+
     Napi::Value Match(const Napi::CallbackInfo& info) {
         const auto env = info.Env();
         const auto topic = info[0].As<Napi::String>();
@@ -203,6 +207,7 @@ public:
         return r;
     }
 
+    // For testing
     Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
         const auto env = info.Env();
         const auto Map = env.Global().Get("Map").As<Napi::Function>();
@@ -260,25 +265,49 @@ private:
         push_t sink;
     };
 
-    class AddAsyncWorker : public Napi::AsyncWorker {
+    class TopicAsyncWorker : public Napi::AsyncWorker {
     public:
-        AddAsyncWorker(QlobberJSCommon* qlobber,
-                       const Napi::CallbackInfo& info) :
+        TopicAsyncWorker(QlobberJSCommon* qlobber,
+                         const Napi::CallbackInfo& info) :
             Napi::AsyncWorker(GetCallback(info)),
             qlobber(qlobber),
             qlobber_ref(Napi::Persistent(qlobber->get_object())),
-            topic(info[0].As<Napi::String>()),
-            value(qlobber->get_add_value(info)) {}
+            topic(info[0].As<Napi::String>()) {}
 
-        void Execute() override {
-            qlobber->add(topic, value);
-        }
-
-    private:
+    protected:
         QlobberJSCommon* qlobber;
         Napi::ObjectReference qlobber_ref;
         std::string topic;
+    };
+
+    class AddAsyncWorker : public TopicAsyncWorker {
+    public:
+        AddAsyncWorker(QlobberJSCommon* qlobber,
+                       const Napi::CallbackInfo& info) :
+            TopicAsyncWorker(qlobber, info),
+            value(qlobber->get_add_value(info)) {}
+
+        void Execute() override {
+            this->qlobber->add(this->topic, value);
+        }
+
+    private:
         Value value;
+    };
+
+    class RemoveAsyncWorker : public TopicAsyncWorker {
+    public:
+        RemoveAsyncWorker(QlobberJSCommon* qlobber,
+                          const Napi::CallbackInfo& info) :
+            TopicAsyncWorker(qlobber, info),
+            value(qlobber->get_remove_value(info)) {}
+
+        void Execute() override {
+            this->qlobber->remove(this->topic, value);
+        }
+
+    private:
+        std::optional<const RemoveValue> value;
     };
 };
 
@@ -326,6 +355,7 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("add", &T::Add),
         T::InstanceMethod("add_async", &T::AddAsync),
         T::InstanceMethod("remove", &T::Remove),
+        T::InstanceMethod("remove_async", &T::RemoveAsync),
         T::InstanceMethod("match", &T::Match),
         T::InstanceMethod("test", &T::Test),
         T::InstanceMethod("clear", &T::Clear),
