@@ -74,6 +74,13 @@ protected:
         match(r, 0, split(topic), trie, ctx);
     }
 
+    std::vector<std::reference_wrapper<const ValueStorage>> match(const std::string& topic, Context& ctx) {
+        std::shared_lock lock(mutex);
+        std::vector<std::reference_wrapper<const ValueStorage>> r;
+        match(r, 0, split(topic), trie, ctx);
+        return r;
+    }
+
     bool test(const std::string& topic, const TestValue& val) {
         std::shared_lock lock(mutex);
         return test(val, 0, split(topic), trie);
@@ -193,7 +200,8 @@ private:
         return r;
     }
 
-    void match_some(MatchResult& r,
+    template<typename MR>
+    void match_some(MR& r,
                     const std::size_t i,
                     const std::vector<std::string>& words,
                     const Trie& st,
@@ -208,7 +216,8 @@ private:
         }
     }
 
-    void match(MatchResult& r,
+    template<typename MR>
+    void match(MR& r,
                const std::size_t i,
                const std::vector<std::string>& words,
                const Trie& sub_trie,
@@ -520,6 +529,12 @@ private:
                     break;
             }
         }
+    }
+
+    void add_values(std::vector<std::reference_wrapper<const ValueStorage>>& r,
+                    const ValueStorage& vals,
+                    Context& ctx) {
+        r.emplace_back(vals);
     }
 
     std::vector<std::string> split(const std::string& topic) {

@@ -71,6 +71,12 @@ public:
         return MatchResultValue(env, r);
     }
 
+    void MatchAsync(const Napi::CallbackInfo& info) {
+        (new MatchAsyncWorker<
+            decltype(this->match(info[0].As<Napi::String>(),
+                     this->get_context(info)))>(this, info))->Queue();
+    }
+
     Napi::Value Test(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
         return Napi::Boolean::New(info.Env(), this->test(topic, get_test_value(info)));
@@ -207,7 +213,9 @@ public:
         return r;
     }
 
-    // For testing
+    // For testing. Note this doesn't return shortcuts to ValueStorages but
+    // instead to MatchResults. This is good enough for testing container
+    // (vector and set) shortcuts.
     Napi::Value GetShortcuts(const Napi::CallbackInfo& info) {
         const auto env = info.Env();
         const auto Map = env.Global().Get("Map").As<Napi::Function>();
@@ -309,6 +317,31 @@ private:
     private:
         std::optional<const RemoveValue> value;
     };
+
+    template<typename Storages>
+    class MatchAsyncWorker : public TopicAsyncWorker {
+    public:
+        MatchAsyncWorker(QlobberJSCommon* qlobber,
+                         const Napi::CallbackInfo& info) :
+            TopicAsyncWorker(qlobber, info),
+            context(qlobber->get_context(info)) {}
+
+        void Execute() override {
+            storages = this->qlobber->match(this->topic, this->context);
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            auto r = this->qlobber->NewMatchResult(env);
+            for (const auto& s : storages) {
+                this->qlobber->add_values(r, s, this->context);
+            }
+            return { env.Null(), MatchResultValue(env, r) };
+        }
+
+    private:
+        typename std::remove_const<Context>::type context;
+        Storages storages;
+    };
 };
 
 template<typename Value,
@@ -357,6 +390,7 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("remove", &T::Remove),
         T::InstanceMethod("remove_async", &T::RemoveAsync),
         T::InstanceMethod("match", &T::Match),
+        T::InstanceMethod("match_async", &T::MatchAsync),
         T::InstanceMethod("test", &T::Test),
         T::InstanceMethod("clear", &T::Clear),
         T::InstanceMethod("get_visitor", &T::GetVisitor),
