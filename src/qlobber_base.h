@@ -396,6 +396,7 @@ private:
     }
 
     void generate_visits(typename coro_visit_t::push_type& sink) {
+        std::shared_lock lock(mutex);
         struct Saved {
             typename Trie::map_type::const_iterator it, end;
             std::size_t i;
@@ -451,6 +452,7 @@ private:
     }
 
     void inject(typename coro_visit_t::pull_type& source, bool cache_adds) {
+        std::unique_lock lock(mutex);
         struct Saved {
             Saved(std::shared_ptr<Trie> entry,
                   const std::string& key,
@@ -505,23 +507,21 @@ private:
 
                 case Visit<Value>::end_values:
                     if (saved.empty()) {
-                        entry.reset();
-                        path.clear();
-                    } else {
-                        if (entry) {
-                            const auto it = std::get<0>(saved.back().entry->v)->emplace(
-                                saved.back().key, entry);
-                            if (cache_adds &&
-                                options.cache_adds &&
-                                (v.type == Visit<Value>::end_values)) {
-                                shortcuts.emplace(saved.back().path,
-                                                  std::get<1>(it.first->second.v));
-                            }
-                        }
-                        entry = saved.back().entry;
-                        path = saved.back().path;
-                        saved.pop_back();
+                        return;
                     }
+                    if (entry) {
+                        const auto it = std::get<0>(saved.back().entry->v)->emplace(
+                            saved.back().key, entry);
+                        if (cache_adds &&
+                            options.cache_adds &&
+                            (v.type == Visit<Value>::end_values)) {
+                            shortcuts.emplace(saved.back().path,
+                                              std::get<1>(it.first->second.v));
+                        }
+                    }
+                    entry = saved.back().entry;
+                    path = saved.back().path;
+                    saved.pop_back();
                     break;
 
                 case Visit<Value>::start_entries:

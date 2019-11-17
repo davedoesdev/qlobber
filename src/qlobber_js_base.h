@@ -82,6 +82,10 @@ public:
         return Napi::Boolean::New(info.Env(), this->test(topic, get_test_value(info)));
     }
 
+    void TestAsync(const Napi::CallbackInfo& info) {
+        (new TestAsyncWorker(this, info))->Queue();
+    }
+
     Napi::Value Clear(const Napi::CallbackInfo& info) {
         this->clear();
         return info.This();
@@ -342,6 +346,26 @@ private:
         typename std::remove_const<Context>::type context;
         Storages storages;
     };
+
+    class TestAsyncWorker : public TopicAsyncWorker {
+    public:
+        TestAsyncWorker(QlobberJSCommon* qlobber,
+                        const Napi::CallbackInfo& info) :
+            TopicAsyncWorker(qlobber, info),
+            value(qlobber->get_test_value(info)) {}
+
+        void Execute() override {
+            this->qlobber->test(this->topic, value);
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            return { env.Null(), Napi::Boolean::New(env, result) };
+        }
+
+    private:
+        TestValue value;
+        bool result;
+    };
 };
 
 template<typename Value,
@@ -392,6 +416,7 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("match", &T::Match),
         T::InstanceMethod("match_async", &T::MatchAsync),
         T::InstanceMethod("test", &T::Test),
+        T::InstanceMethod("test_async", &T::TestAsync),
         T::InstanceMethod("clear", &T::Clear),
         T::InstanceMethod("get_visitor", &T::GetVisitor),
         T::InstanceMethod("visit_next", &T::VisitNext),
