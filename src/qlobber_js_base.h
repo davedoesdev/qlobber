@@ -91,6 +91,10 @@ public:
         return info.This();
     }
 
+    void ClearAsync(const Napi::CallbackInfo& info) {
+        (new ClearAsyncWorker(this, info))->Queue();
+    }
+
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), this->options);
     }
@@ -104,44 +108,24 @@ public:
             });
     }
 
+    void GetVisitorAsync(const Napi::CallbackInfo& info) {
+        (new GetVisitorAsyncWorker(this, info))->Queue();
+    }
+
     Napi::Value VisitNext(const Napi::CallbackInfo& info) {
         const auto visitor = info[0].As<Napi::External<Visitor>>().Data();
+
         if (visitor->it == visitor->it_end) {
             return info.Env().Undefined();
         }
 
-        Napi::Object r = Napi::Object::New(info.Env());
-        switch (visitor->it->type) {
-            case Visit<Value>::start_entries:
-                r.Set("type", "start_entries");
-                break;
-
-            case Visit<Value>::entry:
-                r.Set("type", "entry");
-                r.Set("key", Napi::String::New(info.Env(), std::get<0>(*visitor->it->v)));
-                break;
-
-            case Visit<Value>::end_entries:
-                r.Set("type", "end_entries");
-                break;
-
-            case Visit<Value>::start_values:
-                r.Set("type", "start_values");
-                break;
-
-            case Visit<Value>::value:
-                r.Set("type", "value");
-                r.Set("value", FromValue<Value, JSValue>(
-                    info.Env(), std::get<1>(*visitor->it->v)));
-                break;
-
-            case Visit<Value>::end_values:
-                r.Set("type", "end_values");
-                break;
-        }
-
+        const auto r = VisitNext(info.Env(), visitor);
         ++visitor->it;
         return r;
+    }
+
+    void VisitNextAsync(const Napi::CallbackInfo& info) {
+        (new VisitNextAsyncWorker(this, info))->Queue();
     }
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
@@ -269,6 +253,42 @@ private:
     using Visitor = Puller<Visit<Value>>;
     using Iterator = Puller<IterValue>;
 
+    Napi::Value VisitNext(const Napi::Env& env, const Visitor* visitor) {
+        Napi::Object r = Napi::Object::New(env);
+
+        switch (visitor->it->type) {
+            case Visit<Value>::start_entries:
+                r.Set("type", "start_entries");
+                break;
+
+            case Visit<Value>::entry:
+                r.Set("type", "entry");
+                r.Set("key", Napi::String::New(
+                    env, std::get<0>(*visitor->it->v)));
+                break;
+
+            case Visit<Value>::end_entries:
+                r.Set("type", "end_entries");
+                break;
+
+            case Visit<Value>::start_values:
+                r.Set("type", "start_values");
+                break;
+
+            case Visit<Value>::value:
+                r.Set("type", "value");
+                r.Set("value", FromValue<Value, JSValue>(
+                    env, std::get<1>(*visitor->it->v)));
+                break;
+
+            case Visit<Value>::end_values:
+                r.Set("type", "end_values");
+                break;
+        }
+
+        return r;
+    }
+
     struct Restorer {
         typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
         typedef typename coro_visit_t::push_type push_t;
@@ -277,18 +297,27 @@ private:
         push_t sink;
     };
 
-    class TopicAsyncWorker : public Napi::AsyncWorker {
+    class QlobberAsyncWorker : public Napi::AsyncWorker {
     public:
-        TopicAsyncWorker(QlobberJSCommon* qlobber,
-                         const Napi::CallbackInfo& info) :
+        QlobberAsyncWorker(QlobberJSCommon* qlobber,
+                           const Napi::CallbackInfo& info) :
             Napi::AsyncWorker(GetCallback(info)),
             qlobber(qlobber),
-            qlobber_ref(Napi::Persistent(qlobber->get_object())),
-            topic(info[0].As<Napi::String>()) {}
+            qlobber_ref(Napi::Persistent(qlobber->get_object())) {}
 
     protected:
         QlobberJSCommon* qlobber;
         Napi::ObjectReference qlobber_ref;
+    };
+
+    class TopicAsyncWorker : public QlobberAsyncWorker {
+    public:
+        TopicAsyncWorker(QlobberJSCommon* qlobber,
+                         const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info),
+            topic(info[0].As<Napi::String>()) {}
+
+    protected:
         std::string topic;
     };
 
@@ -366,6 +395,71 @@ private:
         TestValue value;
         bool result;
     };
+
+    class ClearAsyncWorker : public QlobberAsyncWorker {
+    public:
+        ClearAsyncWorker(QlobberJSCommon* qlobber,
+                         const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info) {}
+
+        void Execute() override {
+            this->qlobber->clear();
+        }
+    };
+
+    class GetVisitorAsyncWorker : public QlobberAsyncWorker {
+    public:
+        GetVisitorAsyncWorker(QlobberJSCommon* qlobber,
+                              const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info) {}
+
+        void Execute() override {
+            visitor = new Visitor(this->qlobber->visit());
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            return {
+                env.Null(), 
+                Napi::External<Visitor>::New(
+                    env,
+                    visitor,
+                    [](Napi::Env, Visitor* visitor) {
+                        delete visitor;
+                    })
+            };
+        }
+
+    private:
+        Visitor* visitor;
+    };
+
+    class VisitNextAsyncWorker : public QlobberAsyncWorker {
+    public:
+        VisitNextAsyncWorker(QlobberJSCommon* qlobber,
+                             const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info),
+            visitor(info[0].As<Napi::External<Visitor>>().Data()),
+            prev_it(visitor->it),
+            ended(visitor->it == visitor->it_end) {}
+
+        void Execute() override {
+            if (!ended) {
+                ++visitor->it;
+            }
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            return {
+                env.Null(), 
+                ended ? env.Undefined() : this->qlobber->VisitNext(env, visitor)
+            };
+        }
+
+    private:
+        Visitor* visitor;
+        typename Visitor::pull_t::iterator prev_it;
+        bool ended;
+    };
 };
 
 template<typename Value,
@@ -418,8 +512,11 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("test", &T::Test),
         T::InstanceMethod("test_async", &T::TestAsync),
         T::InstanceMethod("clear", &T::Clear),
+        T::InstanceMethod("clear_async", &T::ClearAsync),
         T::InstanceMethod("get_visitor", &T::GetVisitor),
+        T::InstanceMethod("get_visitor_async", &T::GetVisitorAsync),
         T::InstanceMethod("visit_next", &T::VisitNext),
+        T::InstanceMethod("visit_next_async", &T::VisitNextAsync),
         T::InstanceMethod("get_restorer", &T::GetRestorer),
         T::InstanceMethod("restore_next", &T::RestoreNext),
         T::InstanceMethod("match_iter", &T::MatchIter),
