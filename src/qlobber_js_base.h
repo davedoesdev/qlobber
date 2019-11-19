@@ -226,13 +226,17 @@ public:
 
     Napi::Value MatchNext(const Napi::CallbackInfo& info) {
         const auto iterator = info[0].As<Napi::External<Iterator>>().Data();
+        const auto env = info.Env();
         if (iterator->it == iterator->it_end) {
-            return info.Env().Undefined();
+            return env.Undefined();
         }
-        Napi::Object r = Napi::Object::New(info.Env());
-        r.Set("value", FromValue<IterValue, JSValue>(info.Env(), *iterator->it));
+        const auto r = MatchNext(env, iterator);
         ++iterator->it;
         return r;
+    }
+
+    void MatchNextAsync(const Napi::CallbackInfo& info) {
+        (new MatchNextAsyncWorker(this, info))->Queue();
     }
 
     // For testing. Note this doesn't return shortcuts to ValueStorages but
@@ -287,7 +291,7 @@ private:
     using Visitor = Puller<Visit<Value>>;
     using Iterator = Puller<IterValue>;
 
-    Napi::Value VisitNext(const Napi::Env& env, const Visitor* visitor) {
+    Napi::Object VisitNext(const Napi::Env& env, const Visitor* visitor) {
         Napi::Object r = Napi::Object::New(env);
 
         switch (visitor->it->type) {
@@ -320,6 +324,12 @@ private:
                 break;
         }
 
+        return r;
+    }
+
+    Napi::Object MatchNext(const Napi::Env& env, const Iterator* iterator) {
+        Napi::Object r = Napi::Object::New(env);
+        r.Set("value", FromValue<IterValue, JSValue>(env, *iterator->it));
         return r;
     }
 
@@ -504,10 +514,10 @@ private:
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
-            return {
-                env.Null(), 
-                ended ? env.Undefined() : this->qlobber->VisitNext(env, visitor)
-            };
+            if (ended) {
+                return {};
+            }
+            return { env.Null(), this->qlobber->VisitNext(env, visitor) };
         }
 
     private:
@@ -567,6 +577,12 @@ private:
         std::unique_ptr<Visit<Value>> v;
     };
 
+    struct AsyncIterator : Iterator {
+        AsyncIterator(typename Iterator::pull_t&& source) :
+            Iterator(std::forward<typename Iterator::pull_t>(source)) {}
+        bool first = true;
+    };
+
     class MatchIterAsyncWorker : public TopicAsyncWorker {
     public:
         MatchIterAsyncWorker(QlobberJSCommon* qlobber,
@@ -575,17 +591,17 @@ private:
             context(qlobber->get_context(info)) {}
 
         void Execute() override {
-            iterator = new Iterator(this->qlobber->match_iter(
+            iterator = new AsyncIterator(this->qlobber->match_iter(
                 this->topic, this->context));
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
             return {
                 env.Null(), 
-                Napi::External<Iterator>::New(
+                Napi::External<AsyncIterator>::New(
                     env,
                     iterator,
-                    [](Napi::Env, Iterator* iterator) {
+                    [](Napi::Env, AsyncIterator* iterator) {
                         delete iterator;
                     })
             };
@@ -597,8 +613,35 @@ private:
         }
 
     private:
-        Iterator* iterator;
+        AsyncIterator* iterator;
         typename std::remove_const<Context>::type context;
+    };
+
+    class MatchNextAsyncWorker : public QlobberAsyncWorker {
+    public:
+        MatchNextAsyncWorker(QlobberJSCommon* qlobber,
+                             const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info),
+            iterator(info[0].As<Napi::External<AsyncIterator>>().Data()),
+            ended(iterator->it == iterator->it_end) {}
+
+        void Execute() override {
+            if (!ended && !iterator->first) {
+                ++iterator->it;
+            }
+            iterator->first = false;
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            if (ended) {
+                return {};
+            }
+            return { env.Null(), this->qlobber->MatchNext(env, iterator) };
+        }
+
+    private:
+        AsyncIterator* iterator;
+        bool ended;
     };
 };
 
@@ -664,6 +707,7 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("match_iter", &T::MatchIter),
         T::InstanceMethod("match_iter_async", &T::MatchIterAsync),
         T::InstanceMethod("match_next", &T::MatchNext),
+        T::InstanceMethod("match_next_async", &T::MatchNextAsync),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
         T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr)
     };
