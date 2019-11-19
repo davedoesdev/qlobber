@@ -16,14 +16,17 @@ using VisitData = std::variant<std::string, Value>;
 
 template<typename Value>
 struct Visit {
-    enum {
+    enum Type {
         start_entries,
         entry,
         end_entries,
         start_values,
         value,
         end_values
-    } type;
+    };
+    Visit(Type type, std::optional<VisitData<Value>>&& v) :
+        type(type), v(v) {};
+    Type type;
     std::optional<VisitData<Value>> v;
 };
 

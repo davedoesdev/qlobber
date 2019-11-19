@@ -72,9 +72,9 @@ public:
     }
 
     void MatchAsync(const Napi::CallbackInfo& info) {
-        (new MatchAsyncWorker<
-            decltype(this->match(info[0].As<Napi::String>(),
-                     this->get_context(info)))>(this, info))->Queue();
+        (new MatchAsyncWorker<decltype(
+            this->match(info[0].As<Napi::String>(),
+                        this->get_context(info)))>(this, info))->Queue();
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
@@ -129,55 +129,85 @@ public:
     }
 
     Napi::Value GetRestorer(const Napi::CallbackInfo& info) {
-        bool cache_adds = false;
-        if ((info.Length() > 0) && info[0].IsObject()) {
-            auto options = info[0].As<Napi::Object>();
-            if (options.Has("cache_adds")) {
-                cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
-            }
-        }
         return Napi::External<Restorer>::New(
             info.Env(),
-            new Restorer(this->restore(cache_adds)),
+            new Restorer(this->restore(GetRestorerOptions(info))),
             [](Napi::Env, Restorer* restorer) {
                 delete restorer;
             });
     }
 
-    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
-        const auto restorer = info[0].As<Napi::External<Restorer>>().Data();
-        const auto obj = info[1].As<Napi::Object>();
+    void GetRestorerAsync(const Napi::CallbackInfo& info) {
+        (new GetRestorerAsyncWorker(this, info))->Queue();
+    }
+
+    std::unique_ptr<Visit<Value>> RestoreNext(const Napi::Object& obj) {
         const std::string type = obj.Get("type").As<Napi::String>();
 
         if (type == "start_entries") {
-            restorer->sink({ Visit<Value>::start_entries, std::nullopt });
-        } else if (type == "entry") {
-            restorer->sink({
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::start_entries,
+                std::nullopt
+            );
+        }
+        
+        if (type == "entry") {
+            return std::make_unique<Visit<Value>>(
                 Visit<Value>::entry, 
                 VisitData<Value> {
                     std::variant<std::string, Value>(
                         std::in_place_index<0>,
                         obj.Get("key").As<Napi::String>())
                 }
-            });
-        } else if (type == "end_entries") {
-            restorer->sink({ Visit<Value>::end_entries, std::nullopt });
-        } else if (type == "start_values") {
-            restorer->sink({ Visit<Value>::start_values, std::nullopt });
-        } else if (type == "value") {
-            restorer->sink({
+            );
+        }
+
+        if (type == "end_entries") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::end_entries,
+                std::nullopt
+            );
+        }
+        
+        if (type == "start_values") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::start_values,
+                std::nullopt
+            );
+        }
+
+        if (type == "value") {
+            return std::make_unique<Visit<Value>>(
                 Visit<Value>::value,
                 VisitData<Value> {
                     std::variant<std::string, Value>(
                         std::in_place_index<1>,
                         ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
                 }
-            });
-        } else if (type == "end_values") {
-            restorer->sink({ Visit<Value>::end_values, std::nullopt });
+            );
         }
 
+        if (type == "end_values") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::end_values, std::nullopt
+            );
+        }
+
+        return nullptr;
+    }
+
+    Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
+        const auto restorer = info[0].As<Napi::External<Restorer>>().Data();
+        const auto obj = info[1].As<Napi::Object>();
+        const auto v = RestoreNext(obj);
+        if (v) {
+            restorer->sink(*v);
+        }
         return info.Env().Undefined();
+    }
+
+    void RestoreNextAsync(const Napi::CallbackInfo& info) {
+        (new RestoreNextAsyncWorker(this, info))->Queue();
     }
 
     Napi::Value MatchIter(const Napi::CallbackInfo& info) {
@@ -188,6 +218,10 @@ public:
             [](Napi::Env, Iterator* iterator) {
                 delete iterator;
             });
+    }
+
+    void MatchIterAsync(const Napi::CallbackInfo& info) {
+        (new MatchIterAsyncWorker(this, info))->Queue();
     }
 
     Napi::Value MatchNext(const Napi::CallbackInfo& info) {
@@ -242,7 +276,7 @@ private:
     struct Puller {
         typedef typename boost::coroutines2::coroutine<T> coro_t;
         typedef typename coro_t::pull_type pull_t;
-        Puller(pull_t source) :
+        Puller(pull_t&& source) :
             source(std::move(source)),
             it(begin(this->source)),
             it_end(end(this->source)) {}
@@ -287,6 +321,16 @@ private:
         }
 
         return r;
+    }
+
+    bool GetRestorerOptions(const Napi::CallbackInfo& info) {
+        if ((info.Length() > 0) && info[0].IsObject()) {
+            auto options = info[0].As<Napi::Object>();
+            if (options.Has("cache_adds")) {
+                return options.Get("cache_adds").As<Napi::Boolean>();
+            }
+        }
+        return false;
     }
 
     struct Restorer {
@@ -407,6 +451,12 @@ private:
         }
     };
 
+    struct AsyncVisitor : Visitor {
+        AsyncVisitor(typename Visitor::pull_t&& source) :
+            Visitor(std::forward<typename Visitor::pull_t>(source)) {}
+        bool first = true;
+    };
+
     class GetVisitorAsyncWorker : public QlobberAsyncWorker {
     public:
         GetVisitorAsyncWorker(QlobberJSCommon* qlobber,
@@ -414,23 +464,28 @@ private:
             QlobberAsyncWorker(qlobber, info) {}
 
         void Execute() override {
-            visitor = new Visitor(this->qlobber->visit());
+            visitor = new AsyncVisitor(this->qlobber->visit());
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
             return {
                 env.Null(), 
-                Napi::External<Visitor>::New(
+                Napi::External<AsyncVisitor>::New(
                     env,
                     visitor,
-                    [](Napi::Env, Visitor* visitor) {
+                    [](Napi::Env, AsyncVisitor* visitor) {
                         delete visitor;
                     })
             };
         }
 
+        void OnError(const Napi::Error& e) override {
+            delete visitor;
+            QlobberAsyncWorker::OnError(e);
+        }
+
     private:
-        Visitor* visitor;
+        AsyncVisitor* visitor;
     };
 
     class VisitNextAsyncWorker : public QlobberAsyncWorker {
@@ -438,14 +493,14 @@ private:
         VisitNextAsyncWorker(QlobberJSCommon* qlobber,
                              const Napi::CallbackInfo& info) :
             QlobberAsyncWorker(qlobber, info),
-            visitor(info[0].As<Napi::External<Visitor>>().Data()),
-            prev_it(visitor->it),
+            visitor(info[0].As<Napi::External<AsyncVisitor>>().Data()),
             ended(visitor->it == visitor->it_end) {}
 
         void Execute() override {
-            if (!ended) {
+            if (!ended && !visitor->first) {
                 ++visitor->it;
             }
+            visitor->first = false;
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
@@ -456,9 +511,94 @@ private:
         }
 
     private:
-        Visitor* visitor;
-        typename Visitor::pull_t::iterator prev_it;
+        AsyncVisitor* visitor;
         bool ended;
+    };
+
+    class GetRestorerAsyncWorker : public QlobberAsyncWorker {
+    public:
+        GetRestorerAsyncWorker(QlobberJSCommon* qlobber,
+                               const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info),
+            cache_adds(qlobber->GetRestorerOptions(info)) {}
+
+        void Execute() override {
+            restorer = new Restorer(this->qlobber->restore(cache_adds));
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            return {
+                env.Null(), 
+                Napi::External<Restorer>::New(
+                    env,
+                    restorer,
+                    [](Napi::Env, Restorer* restorer) {
+                        delete restorer;
+                    })
+            };
+        }
+
+        void OnError(const Napi::Error& e) override {
+            delete restorer;
+            QlobberAsyncWorker::OnError(e);
+        }
+
+    private:
+        Restorer* restorer;
+        bool cache_adds;
+    };
+
+    class RestoreNextAsyncWorker : public QlobberAsyncWorker {
+    public:
+        RestoreNextAsyncWorker(QlobberJSCommon* qlobber,
+                               const Napi::CallbackInfo& info) :
+            QlobberAsyncWorker(qlobber, info),
+            restorer(info[0].As<Napi::External<Restorer>>().Data()),
+            v(this->qlobber->RestoreNext(info[1].As<Napi::Object>())) {}
+
+        void Execute() override {
+            if (v) {
+                restorer->sink(*v);
+            }
+        }
+
+    private:
+        Restorer* restorer;
+        std::unique_ptr<Visit<Value>> v;
+    };
+
+    class MatchIterAsyncWorker : public TopicAsyncWorker {
+    public:
+        MatchIterAsyncWorker(QlobberJSCommon* qlobber,
+                             const Napi::CallbackInfo& info) :
+            TopicAsyncWorker(qlobber, info),
+            context(qlobber->get_context(info)) {}
+
+        void Execute() override {
+            iterator = new Iterator(this->qlobber->match_iter(
+                this->topic, this->context));
+        }
+
+        std::vector<napi_value> GetResult(Napi::Env env) override {
+            return {
+                env.Null(), 
+                Napi::External<Iterator>::New(
+                    env,
+                    iterator,
+                    [](Napi::Env, Iterator* iterator) {
+                        delete iterator;
+                    })
+            };
+        }
+
+        void OnError(const Napi::Error& e) override {
+            delete iterator;
+            TopicAsyncWorker::OnError(e);
+        }
+
+    private:
+        Iterator* iterator;
+        typename std::remove_const<Context>::type context;
     };
 };
 
@@ -518,8 +658,11 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("visit_next", &T::VisitNext),
         T::InstanceMethod("visit_next_async", &T::VisitNextAsync),
         T::InstanceMethod("get_restorer", &T::GetRestorer),
+        T::InstanceMethod("get_restorer_async", &T::GetRestorerAsync),
         T::InstanceMethod("restore_next", &T::RestoreNext),
+        T::InstanceMethod("restore_next_async", &T::RestoreNextAsync),
         T::InstanceMethod("match_iter", &T::MatchIter),
+        T::InstanceMethod("match_iter_async", &T::MatchIterAsync),
         T::InstanceMethod("match_next", &T::MatchNext),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
         T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr)
