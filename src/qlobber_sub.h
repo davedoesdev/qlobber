@@ -51,12 +51,8 @@ private:
         };
     }
 
-    std::optional<const std::string> get_remove_value(const Napi::CallbackInfo& info) override {
-        if (info.Length() == 1) {
-            return std::nullopt;
-        }
-        const auto val = info[1].As<Napi::Object>();
-        return val.Get("clientId").As<Napi::String>();
+    std::optional<const std::string> get_remove_value(const Napi::Value& v) override {
+        return v.As<Napi::Object>().Get("clientId").As<Napi::String>();
     }
 
     SubTest get_test_value(const Napi::CallbackInfo& info) override {

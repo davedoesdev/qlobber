@@ -37,7 +37,7 @@ private:
         return TrueValue();
     }
 
-    std::optional<const std::nullptr_t> get_remove_value(const Napi::CallbackInfo&) override {
+    std::optional<const std::nullptr_t> get_remove_value(const Napi::Value&) override {
         return std::nullopt;
     }
 

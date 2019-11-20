@@ -21,7 +21,7 @@ Value ToValue(const JSValue& v) {
 Napi::Function GetCallback(const Napi::CallbackInfo& info) {
     const auto len = info.Length();
     if (len > 0) {
-        Napi::Value cb = info[len - 1];
+        const auto cb = info[len - 1];
         if (cb.IsFunction()) {
             return cb.As<Napi::Function>();
         }
@@ -55,7 +55,7 @@ public:
 
     Napi::Value Remove(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        this->remove(topic, get_remove_value(info));
+        this->remove(topic, get_remove_value(info, 2));
         return info.This();
     }
 
@@ -271,11 +271,22 @@ protected:
 
     virtual Value get_add_value(const Napi::CallbackInfo& info) = 0;
 
-    virtual std::optional<const RemoveValue> get_remove_value(const Napi::CallbackInfo& info) = 0;
+    virtual std::optional<const RemoveValue> get_remove_value(const Napi::Value& v) = 0;
 
     virtual TestValue get_test_value(const Napi::CallbackInfo& info) = 0;
 
 private:
+    std::optional<const RemoveValue> get_remove_value(const Napi::CallbackInfo& info, const size_t n) {
+        if (info.Length() < n) {
+            return std::nullopt;
+        }
+        const auto v = info[1];
+        if (v.IsUndefined() || v.IsNull()) {
+            return std::nullopt;
+        }
+        return get_remove_value(v);
+    }
+
     template<typename T>
     struct Puller {
         typedef typename boost::coroutines2::coroutine<T> coro_t;
@@ -395,7 +406,7 @@ private:
         RemoveAsyncWorker(QlobberJSCommon* qlobber,
                           const Napi::CallbackInfo& info) :
             TopicAsyncWorker(qlobber, info),
-            value(qlobber->get_remove_value(info)) {}
+            value(qlobber->get_remove_value(info, 3)) {}
 
         void Execute() override {
             this->qlobber->remove(this->topic, value);
@@ -438,7 +449,7 @@ private:
             value(qlobber->get_test_value(info)) {}
 
         void Execute() override {
-            this->qlobber->test(this->topic, value);
+            result = this->qlobber->test(this->topic, value);
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
@@ -666,11 +677,8 @@ private:
         return info[1].As<JSValue>();
     }
 
-    std::optional<const Value> get_remove_value(const Napi::CallbackInfo& info) override {
-        if (info.Length() == 1) {
-            return std::nullopt;
-        }
-        return info[1].As<JSValue>();
+    std::optional<const Value> get_remove_value(const Napi::Value& v) override {
+        return v.As<JSValue>();
     }
 
     Value get_test_value(const Napi::CallbackInfo& info) override {
