@@ -514,18 +514,17 @@ private:
         VisitNextAsyncWorker(QlobberJSCommon* qlobber,
                              const Napi::CallbackInfo& info) :
             QlobberAsyncWorker(qlobber, info),
-            visitor(info[0].As<Napi::External<AsyncVisitor>>().Data()),
-            ended(visitor->it == visitor->it_end) {}
+            visitor(info[0].As<Napi::External<AsyncVisitor>>().Data()) {}
 
         void Execute() override {
-            if (!ended && !visitor->first) {
+            if ((visitor->it != visitor->it_end) && !visitor->first) {
                 ++visitor->it;
             }
             visitor->first = false;
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
-            if (ended) {
+            if (visitor->it == visitor->it_end) {
                 return {};
             }
             return { env.Null(), this->qlobber->VisitNext(env, visitor) };
@@ -533,7 +532,6 @@ private:
 
     private:
         AsyncVisitor* visitor;
-        bool ended;
     };
 
     class GetRestorerAsyncWorker : public QlobberAsyncWorker {
@@ -633,18 +631,17 @@ private:
         MatchNextAsyncWorker(QlobberJSCommon* qlobber,
                              const Napi::CallbackInfo& info) :
             QlobberAsyncWorker(qlobber, info),
-            iterator(info[0].As<Napi::External<AsyncIterator>>().Data()),
-            ended(iterator->it == iterator->it_end) {}
+            iterator(info[0].As<Napi::External<AsyncIterator>>().Data()) {}
 
         void Execute() override {
-            if (!ended && !iterator->first) {
+            if ((iterator->it != iterator->it_end) && !iterator->first) {
                 ++iterator->it;
             }
             iterator->first = false;
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {
-            if (ended) {
+            if (iterator->it == iterator->it_end) {
                 return {};
             }
             return { env.Null(), this->qlobber->MatchNext(env, iterator) };

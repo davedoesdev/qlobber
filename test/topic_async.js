@@ -186,9 +186,9 @@ describe('qlobber-async', function ()
             'orange',
             'quick.orange.male.rabbit',
             'lazy.orange.male.rabbit']) {
-            r.push([(await matcher.match(topic)).sort(),
-                    await matcher.test(topic, 'Q1'),
-                    await matcher.test(topic, 'Q2')]);
+            r.push([(await matcher.matchP(topic)).sort(),
+                    await matcher.testP(topic, 'Q1'),
+                    await matcher.testP(topic, 'Q2')]);
         }
 
         expect(r).to.eql([
@@ -203,31 +203,29 @@ describe('qlobber-async', function ()
             [['Q2'], false, true]]);
     });
 
-    return;
-
-    it('should not remove anything if not previously added', function ()
+    it('should not remove anything if not previously added', async function ()
     {
-        matcher.add('foo.*', 'it matched!');
-        matcher.remove('foo');
-        matcher.remove('foo.*', 'something');
-        matcher.remove('bar.*');
-        expect(matcher.match('foo.bar')).to.eql(['it matched!']);
-        expect(matcher.test('foo.bar', 'it matched!')).to.equal(true);
+        await matcher.addP('foo.*', 'it matched!');
+        await matcher.removeP('foo');
+        await matcher.removeP('foo.*', 'something');
+        await matcher.removeP('bar.*');
+        expect(await matcher.matchP('foo.bar')).to.eql(['it matched!']);
+        expect(await matcher.testP('foo.bar', 'it matched!')).to.equal(true);
     });
 
-    it('should accept wildcards in match topics', function ()
+    it('should accept wildcards in match topics', async function ()
     {
-        matcher.add('foo.*', 'it matched!');
-        matcher.add('foo.#', 'it matched too!');
-        expect(matcher.match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
-        expect(matcher.match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
-        expect(matcher.test('foo.*', 'it matched!')).to.equal(true);
-        expect(matcher.test('foo.*', 'it matched too!')).to.equal(true);
-        expect(matcher.test('foo.#', 'it matched!')).to.equal(true);
-        expect(matcher.test('foo.#', 'it matched too!')).to.equal(true);
+        await matcher.addP('foo.*', 'it matched!');
+        await matcher.addP('foo.#', 'it matched too!');
+        expect((await matcher.matchP('foo.*')).sort()).to.eql(['it matched too!', 'it matched!']);
+        expect((await matcher.matchP('foo.#')).sort()).to.eql(['it matched too!', 'it matched!']);
+        expect(await matcher.testP('foo.*', 'it matched!')).to.equal(true);
+        expect(await matcher.testP('foo.*', 'it matched too!')).to.equal(true);
+        expect(await matcher.testP('foo.#', 'it matched!')).to.equal(true);
+        expect(await matcher.testP('foo.#', 'it matched too!')).to.equal(true);
     });
 
-    it('should be configurable', function ()
+    it('should be configurable', async function ()
     {
         matcher = new Qlobber({
             separator: '/',
@@ -235,21 +233,18 @@ describe('qlobber-async', function ()
             wildcard_some: 'M'
         });
 
-        matcher.add('foo/+', 'it matched!');
-        matcher.add('foo/M', 'it matched too!');
-        expect(matcher.match('foo/bar').sort()).to.eql(['it matched too!', 'it matched!']);
-        expect(matcher.match('foo/bar/end').sort()).to.eql(['it matched too!']);
-        expect(matcher.test('foo/bar', 'it matched!')).to.equal(true);
-        expect(matcher.test('foo/bar', 'it matched too!')).to.equal(true);
-        expect(matcher.test('foo/bar/end', 'it matched too!')).to.equal(true);
+        await matcher.addP('foo/+', 'it matched!');
+        await matcher.addP('foo/M', 'it matched too!');
+        expect((await matcher.matchP('foo/bar')).sort()).to.eql(['it matched too!', 'it matched!']);
+        expect((await matcher.matchP('foo/bar/end')).sort()).to.eql(['it matched too!']);
+        expect(await matcher.testP('foo/bar', 'it matched!')).to.equal(true);
+        expect(await matcher.testP('foo/bar', 'it matched too!')).to.equal(true);
+        expect(await matcher.testP('foo/bar/end', 'it matched too!')).to.equal(true);
     });
 
-    it('should match expected number of topics', function ()
+    it('should match expected number of topics', async function ()
     {
-        if (Qlobber.is_native)
-        {
-            matcher = new Qlobber.nonNative.nativeNumber();
-        }
+        matcher = new Qlobber.nonNative.nativeNumber();
 
         // under coverage this takes longer
         this.timeout(60000);
@@ -260,62 +255,57 @@ describe('qlobber-async', function ()
         {
             for (j = 0; j < 5; j += 1)
             {
-                matcher.add('app.test.user.behrad.testTopic-' + j, i);
+                await matcher.addP('app.test.user.behrad.testTopic-' + j, i);
             }
-            matcher.add('app.test.user.behrad.*', i);
+            await matcher.addP('app.test.user.behrad.*', i);
         }
 
-        vals = matcher.match('app.test.user.behrad.testTopic-0');
+        vals = await matcher.matchP('app.test.user.behrad.testTopic-0');
         expect(vals.length).to.equal(120000);
         expect(vals.remove_duplicates().length).to.equal(60000);
 
-        expect(matcher.test('app.test.user.behrad.testTopic-0', 0)).to.equal(true);
-        expect(matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
-        expect(matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
+        expect(await matcher.test('app.test.user.behrad.testTopic-0', 0)).to.equal(true);
+        expect(await matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
+        expect(await matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
     });
 
-    it('should visit trie', function ()
+    it('should visit trie', async function ()
     {
-        add_bindings(rabbitmq_test_bindings);
+        await add_bindings(rabbitmq_test_bindings);
 
         let objs = [];
 
-        for (let v of matcher.visit())
+        for await (let v of matcher.visitP())
         {
             objs.push(v);
         }
         
-        if (Qlobber.is_native)
-        {
-            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
-        }
-        else
-        {
-            expect(objs).to.eql(common.expected_visits);
-        }
+        expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
     });
 
-    it('should restore trie', function ()
+    it.only('should restore trie', async function ()
     {
-        let restorer = matcher.get_restorer();
+        let restorer = await matcher.get_restorerP();
 
         for (let v of common.expected_visits)
         {
-            restorer(v);
+            await restorer(v);
         }
 
         expect(common.get_trie(matcher)).to.eql(common.expected_trie);
 
-        rabbitmq_expected_results_before_remove.forEach(function (test)
+        for (const test of rabbitmq_expected_results_before_remove)
         {
-            expect(matcher.match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            expect((await matcher.matchP(test[0])).remove_duplicates(), test[0]).to.eql(test[1].sort());
             for (var v of test[1])
             {
-                expect(matcher.test(test[0], v)).to.equal(true);
+                expect(await matcher.testP(test[0], v)).to.equal(true);
             }
-            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
-        });
+            expect(await matcher.testP(test[0], 'xyzfoo')).to.equal(false);
+        }
     });
+
+    return;
 
     it('should not restore empty entries', function ()
     {
