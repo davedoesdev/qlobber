@@ -8,7 +8,7 @@ module.exports = function (grunt)
         jshint: {
             all: [ 'Gruntfile.js', 'index.js', 'lib/*.js', 'aedes/**/*.js', 'test/*.js', 'bench/**/*.js' ],
             options: {
-                esversion: 6,
+                esversion: 9,
                 node: true
             }
         },
