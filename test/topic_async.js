@@ -283,7 +283,7 @@ describe('qlobber-async', function ()
         expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
     });
 
-    it.only('should restore trie', async function ()
+    it('should restore trie', async function ()
     {
         let restorer = await matcher.get_restorerP();
 
@@ -305,58 +305,10 @@ describe('qlobber-async', function ()
         }
     });
 
-    return;
-
-    it('should not restore empty entries', function ()
-    {
-        const expected_visits = [
-            { type: 'start_entries' },
-            { type: 'entry', key: 'foo' },
-            { type: 'start_entries' },
-            { type: 'entry', key: 'bar' },
-            { type: 'start_entries' },
-            { type: 'entry', key: '.' },
-            { type: 'start_values' },
-            { type: 'end_values' },
-            { type: 'end_entries' },
-            { type: 'end_entries' },
-            { type: 'end_entries' }
-        ];
-
-        if (!Qlobber.is_native)
-        {
-            matcher.add('foo.bar', 90);
-
-            matcher._trie.get('foo').get('bar').get('.').shift();
-
-            let objs = [];
-
-            for (let v of matcher.visit())
-            {
-                objs.push(v);
-            }
-
-            expect(objs).to.eql(expected_visits);
-        }
-
-        let Matcher = Qlobber.is_native ? Qlobber.nonNative.nativeNumber : Qlobber,
-            matcher2 = new Matcher(),
-            restorer = matcher2.get_restorer();
-
-        for (let v of expected_visits)
-        {
-            restorer(v);
-        }
-
-        expect(common.get_trie(matcher2)).to.eql({});
-        expect(matcher2.match('foo.bar')).to.eql([]);
-        expect(matcher2.test('foo.bar', 90)).to.equal(false);
-    });
-
-    it('should restore shortcuts', function ()
+    it('should restore shortcuts', async function ()
     {
         matcher = new Qlobber({ cache_adds: true });
-        add_bindings(rabbitmq_test_bindings);
+        await add_bindings(rabbitmq_test_bindings);
 
         let shortcuts = get_shortcuts(matcher);
         expect(shortcuts).to.eql({
@@ -388,58 +340,38 @@ describe('qlobber-async', function ()
         });
 
         let objs = [];
-        for (let v of matcher.visit())
+        for await (let v of matcher.visitP())
         {
             objs.push(v);
         }
-        if (Qlobber.is_native)
-        {
-            expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
-        }
-        else
-        {
-            expect(objs).to.eql(common.expected_visits);
-        }
+        expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
 
         let matcher2 = new Qlobber({ cache_adds: true }),
-            restorer = matcher2.get_restorer();
+            restorer = await matcher2.get_restorerP();
         for (let v of common.expected_visits)
         {
-            restorer(v);
+            await restorer(v);
         }
         expect(get_shortcuts(matcher2)).to.eql({});
 
         matcher2 = new Qlobber({ cache_adds: true });
-        restorer = matcher2.get_restorer({ cache_adds: true });
+        restorer = await matcher2.get_restorerP({ cache_adds: true });
         for (let v of common.expected_visits)
         {
-            restorer(v);
+            await restorer(v);
         }
         expect(get_shortcuts(matcher2)).to.eql(shortcuts);
     });
 
-    if (!Qlobber.is_native)
+    it('should support match iterator', async function ()
     {
-        it('should add shortcuts to passed in Map', function ()
-        {
-            var topics = new Map();
-            matcher = new Qlobber({ cache_adds: topics });
-            add_bindings(rabbitmq_test_bindings);
-            var added = Array.from(topics.keys()).sort();
-            var rtopics = new Set(rabbitmq_test_bindings.map(v => v[0]));
-            expect(added).to.eql(Array.from(rtopics).sort());
-        });
-    }
+        await add_bindings(rabbitmq_test_bindings);
 
-    it('should support match iterator', function ()
-    {
-        add_bindings(rabbitmq_test_bindings);
-
-        function match(topic)
+        async function match(topic)
         {
             let r = [];
 
-            for (let v of matcher.match_iter(topic))
+            for await (let v of matcher.match_iterP(topic))
             {
                 r.push(v);
             }
@@ -447,15 +379,15 @@ describe('qlobber-async', function ()
             return r;
         }
 
-        rabbitmq_expected_results_before_remove.forEach(function (test)
+        for (const test of rabbitmq_expected_results_before_remove)
         {
-            expect(match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
-        });
+            expect((await match(test[0])).remove_duplicates(), test[0]).to.eql(test[1].sort());
+        }
 
-        matcher.clear();
-        matcher.add('foo.*', 'it matched!');
-        matcher.add('foo.#', 'it matched too!');
-        expect(match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
-        expect(match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
+        await matcher.clearP();
+        await matcher.addP('foo.*', 'it matched!');
+        await matcher.addP('foo.#', 'it matched too!');
+        expect((await match('foo.*')).sort()).to.eql(['it matched too!', 'it matched!']);
+        expect((await match('foo.#')).sort()).to.eql(['it matched too!', 'it matched!']);
     });
 });

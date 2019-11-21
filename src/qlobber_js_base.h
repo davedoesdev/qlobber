@@ -141,61 +141,6 @@ public:
         (new GetRestorerAsyncWorker(this, info))->Queue();
     }
 
-    std::unique_ptr<Visit<Value>> RestoreNext(const Napi::Object& obj) {
-        const std::string type = obj.Get("type").As<Napi::String>();
-
-        if (type == "start_entries") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::start_entries,
-                std::nullopt
-            );
-        }
-        
-        if (type == "entry") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::entry, 
-                VisitData<Value> {
-                    std::variant<std::string, Value>(
-                        std::in_place_index<0>,
-                        obj.Get("key").As<Napi::String>())
-                }
-            );
-        }
-
-        if (type == "end_entries") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::end_entries,
-                std::nullopt
-            );
-        }
-        
-        if (type == "start_values") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::start_values,
-                std::nullopt
-            );
-        }
-
-        if (type == "value") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::value,
-                VisitData<Value> {
-                    std::variant<std::string, Value>(
-                        std::in_place_index<1>,
-                        ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
-                }
-            );
-        }
-
-        if (type == "end_values") {
-            return std::make_unique<Visit<Value>>(
-                Visit<Value>::end_values, std::nullopt
-            );
-        }
-
-        return nullptr;
-    }
-
     Napi::Value RestoreNext(const Napi::CallbackInfo& info) {
         const auto restorer = info[0].As<Napi::External<Restorer>>().Data();
         const auto obj = info[1].As<Napi::Object>();
@@ -213,8 +158,8 @@ public:
     Napi::Value MatchIter(const Napi::CallbackInfo& info) {
         return Napi::External<Iterator>::New(
             info.Env(),
-            new Iterator(this->match_iter(
-                info[0].As<Napi::String>(), this->get_context(info))),
+            new Iterator(this->match_iter(info[0].As<Napi::String>(),
+                                          this->get_context(info))),
             [](Napi::Env, Iterator* iterator) {
                 delete iterator;
             });
@@ -336,6 +281,61 @@ private:
         }
 
         return r;
+    }
+
+    std::unique_ptr<Visit<Value>> RestoreNext(const Napi::Object& obj) {
+        const std::string type = obj.Get("type").As<Napi::String>();
+
+        if (type == "start_entries") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::start_entries,
+                std::nullopt
+            );
+        }
+        
+        if (type == "entry") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::entry, 
+                VisitData<Value> {
+                    std::variant<std::string, Value>(
+                        std::in_place_index<0>,
+                        obj.Get("key").As<Napi::String>())
+                }
+            );
+        }
+
+        if (type == "end_entries") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::end_entries,
+                std::nullopt
+            );
+        }
+        
+        if (type == "start_values") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::start_values,
+                std::nullopt
+            );
+        }
+
+        if (type == "value") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::value,
+                VisitData<Value> {
+                    std::variant<std::string, Value>(
+                        std::in_place_index<1>,
+                        ToValue<Value, JSValue>(obj.Get("value").As<JSValue>()))
+                }
+            );
+        }
+
+        if (type == "end_values") {
+            return std::make_unique<Visit<Value>>(
+                Visit<Value>::end_values, std::nullopt
+            );
+        }
+
+        return nullptr;
     }
 
     Napi::Object MatchNext(const Napi::Env& env, const Iterator* iterator) {
@@ -600,8 +600,8 @@ private:
             context(qlobber->get_context(info)) {}
 
         void Execute() override {
-            iterator = new AsyncIterator(this->qlobber->match_iter(
-                this->topic, this->context));
+            iterator = new AsyncIterator(
+                this->qlobber->match_iter(this->topic, this->context));
         }
 
         std::vector<napi_value> GetResult(Napi::Env env) override {

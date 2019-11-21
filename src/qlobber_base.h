@@ -7,9 +7,70 @@
 #include <variant>
 #include <optional>
 #include <functional>
-#include <shared_mutex>
 #include <boost/coroutine2/all.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include "options.h"
+
+class RWLock {
+public:
+    RWLock() : sem(1), wsem(1) {}
+
+    void read_lock() {
+        sem.wait();
+        if (++readers == 1) {
+            wsem.wait();
+        }
+        sem.post();
+    }
+
+    void read_unlock() {
+        sem.wait();
+        if (--readers == 0) {
+            wsem.post();
+        }
+        sem.post();
+    }
+
+    void write_lock() {
+        wsem.wait();
+    }
+
+    void write_unlock() {
+        wsem.post();
+    }
+
+private:
+    boost::interprocess::interprocess_semaphore sem, wsem;
+    uint64_t readers = 0;
+};
+
+class ReadLock {
+public:
+    ReadLock(RWLock& rwlock) : rwlock(&rwlock) {
+        rwlock.read_lock();
+    }
+
+    ~ReadLock() {
+        rwlock->read_unlock();
+    }
+
+private:
+    RWLock* rwlock;
+};
+
+class WriteLock {
+public:
+    WriteLock(RWLock& rwlock) : rwlock(&rwlock) {
+        rwlock.write_lock();
+    }
+
+    ~WriteLock() {
+        rwlock->write_unlock();
+    }
+
+private:
+    RWLock* rwlock;
+};
 
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
@@ -41,17 +102,14 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO: async
-        //   either pass in fn to match or make a new class which can
-        //   access same store and has non-JS types
-        //   we need this for worker threads anyway
-        //   OR use method template
         // TODO: worker threads
+        // TODO: prevent stack overflow - can we detect it?
 
     QlobberBase(const Options& options) : options(options) {}
 
 protected:
     void add(const std::string& topic, const Value& val) {
-        std::unique_lock lock(mutex);
+        WriteLock lock(rwlock);
         if (options.cache_adds) {
             const auto it = shortcuts.find(topic);
             if (it != shortcuts.end()) {
@@ -66,31 +124,31 @@ protected:
 
     void remove(const std::string& topic,
                 const std::optional<const RemoveValue>& val) {
-        std::unique_lock lock(mutex);
+        WriteLock lock(rwlock);
         if (remove(val, 0, split(topic), trie) && options.cache_adds) {
             shortcuts.erase(topic);
         }
     }
 
     void match(MatchResult& r, const std::string& topic, Context& ctx) {
-        std::shared_lock lock(mutex);
+        ReadLock lock(rwlock);
         match(r, 0, split(topic), trie, ctx);
     }
 
     std::vector<std::reference_wrapper<const ValueStorage>> match(const std::string& topic, Context& ctx) {
-        std::shared_lock lock(mutex);
+        ReadLock lock(rwlock);
         std::vector<std::reference_wrapper<const ValueStorage>> r;
         match(r, 0, split(topic), trie, ctx);
         return r;
     }
 
     bool test(const std::string& topic, const TestValue& val) {
-        std::shared_lock lock(mutex);
+        ReadLock lock(rwlock);
         return test(val, 0, split(topic), trie);
     }
 
     virtual void clear() {
-        std::unique_lock lock(mutex);
+        WriteLock lock(rwlock);
         shortcuts.clear();
         std::get<0>(trie.v)->clear();
     }
@@ -109,8 +167,7 @@ protected:
 
     typedef typename boost::coroutines2::coroutine<IterValue> coro_iter_t;
 
-    typename coro_iter_t::pull_type match_iter(const std::string& topic,
-                                               Context& ctx) {
+    typename coro_iter_t::pull_type match_iter(const std::string& topic, Context& ctx) {
         // "The arguments to bind are copied or moved, and are never passed by
         // reference unless wrapped in std::ref or std::cref."
         // https://en.cppreference.com/w/cpp/utility/functional/bind
@@ -125,6 +182,8 @@ protected:
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
                             Context& ctx) = 0;
+
+    RWLock rwlock;
 
 private:
     virtual void initial_value_inserted(const Value& val) {}
@@ -147,8 +206,6 @@ private:
         Trie(std::shared_ptr<Trie>& t) : v(std::move(t->v)) {}
         std::variant<map_ptr, ValueStorage> v;
     } trie;
-
-    std::shared_mutex mutex;
 
     ValueStorage& add(const Value& val,
                       const std::size_t i,
@@ -326,7 +383,7 @@ private:
     void generate_values(typename coro_iter_t::push_type& sink,
                          const std::string& topic,
                          Context& ctx) {
-        std::shared_lock lock(mutex);
+        ReadLock lock(rwlock);
         match_iter(sink, 0, split(topic), trie, ctx);
     }
 
@@ -399,7 +456,7 @@ private:
     }
 
     void generate_visits(typename coro_visit_t::push_type& sink) {
-        std::shared_lock lock(mutex);
+        ReadLock lock(rwlock);
         struct Saved {
             typename Trie::map_type::const_iterator it, end;
             std::size_t i;
@@ -455,7 +512,7 @@ private:
     }
 
     void inject(typename coro_visit_t::pull_type& source, bool cache_adds) {
-        std::unique_lock lock(mutex);
+        WriteLock lock(rwlock);
         struct Saved {
             Saved(std::shared_ptr<Trie> entry,
                   const std::string& key,
