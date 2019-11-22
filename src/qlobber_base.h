@@ -101,9 +101,12 @@ template<typename Value,
 class QlobberBase {
 public:
     QlobberBase() {}
-        // TODO: async
-        // TODO: worker threads
-        // TODO: prevent stack overflow - can we detect it?
+        // TODO:
+        // test match some to check how many recursions we get
+        // move rwlock into separate file
+        // test multiple operations at once
+        // worker threads
+        // centro should allow max_words and check it itself
 
     QlobberBase(const Options& options) : options(options) {}
 
@@ -609,6 +612,9 @@ private:
             last = next + 1;
         }
         words.push_back(topic.substr(last));
+        if (words.size() > options.max_words) {
+            throw std::length_error("too many words");
+        }
         return words;
     }
 };

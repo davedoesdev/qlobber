@@ -517,6 +517,17 @@ describe(`qlobber (${type})`, function ()
         expect(match('foo.*').sort()).to.eql(['it matched too!', 'it matched!']);
         expect(match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
     });
+
+    it('should throw exception for topics with many words', function () {
+        const topic = new Array(1000000).join('.');
+        expect(() => matcher.add(topic, 'foo')).to.throw('too many words');
+        expect(() => matcher.remove(topic, 'foo')).to.throw('too many words');
+        expect(() => matcher.match(topic)).to.throw('too many words');
+        expect(() => {
+            for (let v of matcher.match_iter(topic)) {}
+        }).to.throw('too many words');
+        expect(() => matcher.test(topic, 'foo')).to.throw('too many words');
+    });
 });
 
 }

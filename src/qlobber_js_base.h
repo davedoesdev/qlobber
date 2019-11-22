@@ -45,7 +45,11 @@ public:
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        this->add(topic, get_add_value(info));
+        try {
+            this->add(topic, get_add_value(info));
+        } catch (std::exception& e) {
+            throw Napi::Error::New(info.Env(), e.what());
+        }
         return info.This();
     }
     
@@ -55,7 +59,11 @@ public:
 
     Napi::Value Remove(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
-        this->remove(topic, get_remove_value(info, 2));
+        try {
+            this->remove(topic, get_remove_value(info, 2));
+        } catch (std::exception& e) {
+            throw Napi::Error::New(info.Env(), e.what());
+        }
         return info.This();
     }
 
@@ -67,7 +75,11 @@ public:
         const auto env = info.Env();
         const auto topic = info[0].As<Napi::String>();
         auto r = this->NewMatchResult(env);
-        this->match(r, topic, this->get_context(info));
+        try {
+            this->match(r, topic, this->get_context(info));
+        } catch (std::exception& e) {
+            throw Napi::Error::New(env, e.what());
+        }
         return MatchResultValue(env, r);
     }
 
@@ -78,8 +90,13 @@ public:
     }
 
     Napi::Value Test(const Napi::CallbackInfo& info) {
+        const auto env = info.Env();
         const auto topic = info[0].As<Napi::String>();
-        return Napi::Boolean::New(info.Env(), this->test(topic, get_test_value(info)));
+        try {
+            return Napi::Boolean::New(env, this->test(topic, get_test_value(info)));
+        } catch (std::exception& e) {
+            throw Napi::Error::New(env, e.what());
+        }
     }
 
     void TestAsync(const Napi::CallbackInfo& info) {
@@ -156,13 +173,18 @@ public:
     }
 
     Napi::Value MatchIter(const Napi::CallbackInfo& info) {
-        return Napi::External<Iterator>::New(
-            info.Env(),
-            new Iterator(this->match_iter(info[0].As<Napi::String>(),
-                                          this->get_context(info))),
-            [](Napi::Env, Iterator* iterator) {
-                delete iterator;
-            });
+        const auto env = info.Env();
+        try {
+            return Napi::External<Iterator>::New(
+                env,
+                new Iterator(this->match_iter(info[0].As<Napi::String>(),
+                                              this->get_context(info))),
+                [](Napi::Env, Iterator* iterator) {
+                    delete iterator;
+                });
+        } catch (std::exception& e) {
+            throw Napi::Error::New(env, e.what());
+        }
     }
 
     void MatchIterAsync(const Napi::CallbackInfo& info) {

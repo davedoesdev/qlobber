@@ -264,9 +264,9 @@ describe('qlobber-async', function ()
         expect(vals.length).to.equal(120000);
         expect(vals.remove_duplicates().length).to.equal(60000);
 
-        expect(await matcher.test('app.test.user.behrad.testTopic-0', 0)).to.equal(true);
-        expect(await matcher.test('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
-        expect(await matcher.test('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
+        expect(await matcher.testP('app.test.user.behrad.testTopic-0', 0)).to.equal(true);
+        expect(await matcher.testP('app.test.user.behrad.testTopic-0', 59999)).to.equal(true);
+        expect(await matcher.testP('app.test.user.behrad.testTopic-0', 60000)).to.equal(false);
     });
 
     it('should visit trie', async function ()
@@ -389,5 +389,26 @@ describe('qlobber-async', function ()
         await matcher.addP('foo.#', 'it matched too!');
         expect((await match('foo.*')).sort()).to.eql(['it matched too!', 'it matched!']);
         expect((await match('foo.#')).sort()).to.eql(['it matched too!', 'it matched!']);
+    });
+
+    async function expect_throw(f, msg) {
+        let ex;
+        try {
+            await f();
+        } catch (e) {
+            ex = e;
+        }
+        expect(ex.message).to.equal(msg);
+    }
+
+    it('should throw exception for topics with many words', async function () {
+        const topic = new Array(1000000).join('.');
+        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words');
+        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words');
+        await expect_throw(async () => await matcher.matchP(topic), 'too many words');
+        await expect_throw(async () => {
+            for await (let v of matcher.match_iterP(topic)) {}
+        }, 'too many words');
+        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words');
     });
 });

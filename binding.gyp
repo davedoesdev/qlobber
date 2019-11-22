@@ -17,16 +17,7 @@
       },
       'msvs_settings': {
         'VCCLCompilerTool': { 'ExceptionHandling': 1 },
-      },
-      'conditions': [
-        [
-          'coverage == "true"',
-          {
-            'cflags+': [ '--coverage' ],
-            'ldflags+': [ '--coverage' ]
-          }
-        ]
-      ]
+      }
     }
   ]
 }
