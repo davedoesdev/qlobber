@@ -411,4 +411,22 @@ describe('qlobber-async', function ()
         }, 'too many words');
         await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words');
     });
+
+    it('should be able to change max words', async function () {
+        const topic = new Array(101).join('.');
+        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words');
+        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words');
+        await expect_throw(async () => await matcher.matchP(topic), 'too many words');
+        await expect_throw(async () => {
+            for await (let v of matcher.match_iterP(topic)) {}
+        }, 'too many words');
+        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words');
+
+        matcher = new Qlobber({ max_words: 101 });
+        await matcher.addP(topic, 'foo');
+        await matcher.removeP(topic, 'foo');
+        await matcher.matchP(topic);
+        for await (let v of matcher.match_iterP(topic)) {}
+        await matcher.testP(topic, 'foo');
+    });
 });

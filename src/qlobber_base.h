@@ -119,7 +119,7 @@ protected:
                 return add_value(it->second, val);
             }
         }
-        auto& storage = add(val, 0, split(topic), trie);
+        auto& storage = add(val, 0, split(topic, true), trie);
         if (options.cache_adds) {
             shortcuts.emplace(topic, storage);
         }
@@ -128,26 +128,26 @@ protected:
     void remove(const std::string& topic,
                 const std::optional<const RemoveValue>& val) {
         WriteLock lock(rwlock);
-        if (remove(val, 0, split(topic), trie) && options.cache_adds) {
+        if (remove(val, 0, split(topic, false), trie) && options.cache_adds) {
             shortcuts.erase(topic);
         }
     }
 
     void match(MatchResult& r, const std::string& topic, Context& ctx) {
         ReadLock lock(rwlock);
-        match(r, 0, split(topic), trie, ctx);
+        match(r, 0, split(topic, false), trie, ctx);
     }
 
     std::vector<std::reference_wrapper<const ValueStorage>> match(const std::string& topic, Context& ctx) {
         ReadLock lock(rwlock);
         std::vector<std::reference_wrapper<const ValueStorage>> r;
-        match(r, 0, split(topic), trie, ctx);
+        match(r, 0, split(topic, false), trie, ctx);
         return r;
     }
 
     bool test(const std::string& topic, const TestValue& val) {
         ReadLock lock(rwlock);
-        return test(val, 0, split(topic), trie);
+        return test(val, 0, split(topic, false), trie);
     }
 
     virtual void clear() {
@@ -387,7 +387,7 @@ private:
                          const std::string& topic,
                          Context& ctx) {
         ReadLock lock(rwlock);
-        match_iter(sink, 0, split(topic), trie, ctx);
+        match_iter(sink, 0, split(topic, false), trie, ctx);
     }
 
     bool test_some(const TestValue& v,
@@ -600,21 +600,35 @@ private:
         r.emplace_back(vals);
     }
 
-    std::vector<std::string> split(const std::string& topic) {
+    void add_word(std::vector<std::string>& words,
+                  const std::string& word,
+                  const bool adding,
+                  std::size_t& wildcard_somes) {
+        if (adding &&
+            (word == options.wildcard_some) &&
+            (++wildcard_somes > options.max_wildcard_somes)) {
+            throw std::length_error("too many wildcard somes");
+        }
+        words.push_back(word);
+        if (words.size() > options.max_words) {
+            throw std::length_error("too many words");
+        }
+    }
+
+    std::vector<std::string> split(const std::string& topic,
+                                   const bool adding) {
         std::vector<std::string> words;
         std::size_t last = 0;
+        std::size_t wildcard_somes = 0;
         while (true) {
             std::size_t next = topic.find(options.separator, last);
             if (next == std::string::npos) {
                 break;
             }
-            words.push_back(topic.substr(last, next - last));
+            add_word(words, topic.substr(last, next - last), adding, wildcard_somes);
             last = next + 1;
         }
-        words.push_back(topic.substr(last));
-        if (words.size() > options.max_words) {
-            throw std::length_error("too many words");
-        }
+        add_word(words, topic.substr(last), adding, wildcard_somes);
         return words;
     }
 };

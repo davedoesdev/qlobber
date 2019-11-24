@@ -22,6 +22,9 @@ struct JSOptions : Options {
             if (options.Has("max_words")) {
                 max_words = static_cast<uint32_t>(options.Get("max_words").As<Napi::Number>());
             }
+            if (options.Has("max_wildcard_somes")) {
+                max_wildcard_somes = static_cast<uint32_t>(options.Get("max_wildcard_somes").As<Napi::Number>());
+            }
         }
     }
 
@@ -32,6 +35,7 @@ struct JSOptions : Options {
         r.Set("wildcard_some", options.wildcard_some);
         r.Set("cache_adds", options.cache_adds);
         r.Set("max_words", options.max_words);
+        r.Set("max_wildcard_somes", options.max_wildcard_somes);
         return r;
     }
 };

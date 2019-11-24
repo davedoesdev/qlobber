@@ -528,6 +528,165 @@ describe(`qlobber (${type})`, function ()
         }).to.throw('too many words');
         expect(() => matcher.test(topic, 'foo')).to.throw('too many words');
     });
+
+    it('should be able to change max words', function () {
+        let topic = new Array(101).join('.');
+        expect(() => matcher.add(topic, 'foo')).to.throw('too many words');
+        expect(() => matcher.remove(topic, 'foo')).to.throw('too many words');
+        expect(() => matcher.match(topic)).to.throw('too many words');
+        expect(() => {
+            for (let v of matcher.match_iter(topic)) {}
+        }).to.throw('too many words');
+        expect(() => matcher.test(topic, 'foo')).to.throw('too many words');
+
+        matcher = new Qlobber({ max_words: 101 });
+        matcher.add(topic, 'foo');
+        matcher.remove(topic, 'foo');
+        matcher.match(topic);
+        for (let v of matcher.match_iter(topic)) {}
+        matcher.test(topic, 'foo');
+    });
+
+    it('should throw exception for topics with many wildcard somes', function () {
+        const topic = new Array(6).fill('#').join('.');
+        expect(() => matcher.add(topic, 'foo')).to.throw('too many wildcard somes');
+        matcher.remove(topic, 'foo');
+        matcher.match(topic);
+        for (let v of matcher.match_iter(topic)) {};
+        matcher.test(topic, 'foo');
+    });
+
+    it('should be able to change max wildcard somes', function () {
+        matcher = new Qlobber({ max_wildcard_somes: 6 });
+        const topic = new Array(6).fill('#').join('.');
+        matcher.add(topic, 'foo');
+    });
+
+    it.only('should recurse expected number of times', function () {
+        this.timeout(60000);
+
+        let nadd,
+            nremove,
+            nmatch,
+            nmatch_some,
+            nmatch_iter,
+            nmatch_some_iter,
+            ntest,
+            ntest_some;
+
+        const _add = matcher._add;
+        matcher._add = function (...args) {
+            ++nadd;
+            return _add.call(this, ...args);
+        };
+
+        const _remove = matcher._remove;
+        matcher._remove = function (...args) {
+            ++nremove;
+            return _remove.call(this, ...args);
+        };
+
+        const _match = matcher._match;
+        matcher._match = function (...args) {
+            ++nmatch;
+            return _match.call(this, ...args);
+        };
+
+        const _match_some = matcher._match_some;
+        matcher._match_some = function (...args) {
+            ++nmatch_some;
+            return _match_some.call(this, ...args);
+        };
+
+        const _match_iter = matcher._match_iter;
+        matcher._match_iter = function (...args) {
+            ++nmatch_iter;
+            return _match_iter.call(this, ...args);
+        };
+
+        const _match_some_iter = matcher._match_some_iter;
+        matcher._match_some_iter = function (...args) {
+            ++nmatch_some_iter;
+            return _match_some_iter.call(this, ...args);
+        };
+
+        const _test = matcher._test;
+        matcher._test = function (...args) {
+            ++ntest;
+            return _test.call(this, ...args);
+        };
+
+        const _test_some = matcher._test_some;
+        matcher._test_some = function (...args) {
+            ++ntest_some;
+            return _test_some.call(this, ...args);
+        };
+
+        function check(pattern,
+                       topic,
+                       eadd,
+                       ematch, 
+                       ematch_some,
+                       etest,
+                       etest_some,
+                       eremove) {
+            pattern = pattern.join('.');
+            topic = topic.join('.');
+
+            nadd = 0;
+            nremove = 0;
+            nmatch = 0;
+            nmatch_some = 0;
+            nmatch_iter = 0;
+            nmatch_some_iter = 0;
+            ntest = 0;
+            ntest_some = 0;
+
+            matcher.clear();
+
+            matcher.add(pattern, 'foo');
+            expect(nadd).to.equal(eadd); // remember extra one for values at end
+
+            matcher.match(topic);
+            expect(nmatch).to.equal(ematch);
+            expect(nmatch_some).to.equal(ematch_some);
+
+            for (let v of matcher.match_iter(topic)) {}
+            expect(nmatch_iter).to.equal(ematch);
+            expect(nmatch_some_iter).to.equal(ematch_some);
+
+            matcher.test(topic, 'foo');
+            expect(ntest).to.equal(etest);
+            expect(ntest_some).to.equal(etest_some);
+
+            matcher.remove(pattern, 'foo');
+            expect(nremove).to.equal(eremove);
+        }
+
+        check(new Array(100),
+              new Array(100),
+              101, 101, 0, 101, 0, 101);
+
+        check(new Array(100).fill('*'),
+              new Array(100),
+              101, 1, 0, 1, 0, 101);
+
+        check(new Array(100).fill('*'),
+              new Array(100).fill('xyz'),
+              101, 101, 0, 101, 0, 101);
+
+        check(new Array(1).fill('#'),
+              new Array(100).fill('xyz'),
+              2, 2, 1, 2, 1, 2);
+              
+        check(new Array(5).fill('#'),
+              new Array(100).fill('xyz'),
+              6, 9378356, 4780230, 6, 5, 6);
+
+        check(new Array(5).fill('#').concat('xyz'),
+              new Array(100).fill('xyz'),
+              7, 193303396, 4780230, 205, 5, 7);
+    });
 });
 
 }
