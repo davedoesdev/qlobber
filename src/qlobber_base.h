@@ -106,8 +106,9 @@ public:
         // move rwlock into separate file
         // test multiple operations at once
         // worker threads
-        // centro should allow max_words and check it itself
-
+        // centro and mqlobber-access-control should check max_words
+        //   and max_wildcard_somes to prevent runtime exceptions
+        
     QlobberBase(const Options& options) : options(options) {}
 
 protected:

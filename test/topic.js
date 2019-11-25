@@ -548,23 +548,21 @@ describe(`qlobber (${type})`, function ()
     });
 
     it('should throw exception for topics with many wildcard somes', function () {
-        const topic = new Array(6).fill('#').join('.');
+        const topic = new Array(4).fill('#').join('.');
         expect(() => matcher.add(topic, 'foo')).to.throw('too many wildcard somes');
         matcher.remove(topic, 'foo');
         matcher.match(topic);
-        for (let v of matcher.match_iter(topic)) {};
+        for (let v of matcher.match_iter(topic)) {}
         matcher.test(topic, 'foo');
     });
 
     it('should be able to change max wildcard somes', function () {
-        matcher = new Qlobber({ max_wildcard_somes: 6 });
-        const topic = new Array(6).fill('#').join('.');
+        matcher = new Qlobber({ max_wildcard_somes: 4 });
+        const topic = new Array(4).fill('#').join('.');
         matcher.add(topic, 'foo');
     });
 
     it.only('should recurse expected number of times', function () {
-        this.timeout(60000);
-
         let nadd,
             nremove,
             nmatch,
@@ -630,8 +628,12 @@ describe(`qlobber (${type})`, function ()
                        etest,
                        etest_some,
                        eremove) {
-            pattern = pattern.join('.');
-            topic = topic.join('.');
+            if (Array.isArray(pattern)) {
+                pattern = pattern.join('.');
+            }
+            if (Array.isArray(topic)) {
+                topic = topic.join('.');
+            }
 
             nadd = 0;
             nremove = 0;
@@ -679,13 +681,17 @@ describe(`qlobber (${type})`, function ()
               new Array(100).fill('xyz'),
               2, 2, 1, 2, 1, 2);
               
-        check(new Array(5).fill('#'),
+        check(new Array(3).fill('#'),
               new Array(100).fill('xyz'),
-              6, 9378356, 4780230, 6, 5, 6);
+              4, 10404, 5253, 4, 3, 4);
 
-        check(new Array(5).fill('#').concat('xyz'),
+        check(new Array(3).fill('#').concat('xyz'),
               new Array(100).fill('xyz'),
-              7, 193303396, 4780230, 205, 5, 7);
+              5, 353804, 5253, 203, 3, 5);
+
+        check('xyz.#.xyz.#.xyz.#.xyz',
+              new Array(100).fill('xyz'),
+              8, 328551, 4951, 200, 3, 8);
     });
 });
 
