@@ -115,7 +115,24 @@ public:
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
         return JSOptions::get(info.Env(), this->options);
     }
+#ifdef DEBUG
+    Napi::Value GetCounters(const Napi::CallbackInfo& info) {
+        auto r = Napi::Object::New(info.Env());
+        r.Set("add", this->counters.add);
+        r.Set("remove", this->counters.remove);
+        r.Set("match", this->counters.match);
+        r.Set("match_some", this->counters.match_some);
+        r.Set("match_iter", this->counters.match_iter);
+        r.Set("match_some_iter", this->counters.match_some_iter);
+        r.Set("test", this->counters.test);
+        r.Set("test_some", this->counters.test_some);
+        return r;
+    }
 
+    void ResetCounters(const Napi::CallbackInfo& info) {
+        this->counters = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    }
+#endif
     Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
         return Napi::External<Visitor>::New(
             info.Env(),
@@ -736,7 +753,11 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("match_next", &T::MatchNext),
         T::InstanceMethod("match_next_async", &T::MatchNextAsync),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
-        T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr)
+        T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr),
+#ifdef DEBUG
+        T::InstanceAccessor("_counters", &T::GetCounters, nullptr),
+        T::InstanceMethod("_reset_counters", &T::ResetCounters),
+#endif
     };
 
     const auto props2 = Properties<T>();

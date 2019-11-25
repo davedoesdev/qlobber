@@ -562,66 +562,65 @@ describe(`qlobber (${type})`, function ()
         matcher.add(topic, 'foo');
     });
 
-    it.only('should recurse expected number of times', function () {
-        let nadd,
-            nremove,
-            nmatch,
-            nmatch_some,
-            nmatch_iter,
-            nmatch_some_iter,
-            ntest,
-            ntest_some;
+    it('should recurse expected number of times', function () {
+        if (!Qlobber.is_native) {
+            matcher = new class extends Qlobber {
+                _reset_counters() {
+                    this._counters = {
+                        add: 0,
+                        remove: 0,
+                        match: 0,
+                        match_some: 0,
+                        match_iter: 0,
+                        match_some_iter: 0,
+                        test: 0,
+                        test_some: 0
+                    };
+                }
 
-        const _add = matcher._add;
-        matcher._add = function (...args) {
-            ++nadd;
-            return _add.call(this, ...args);
-        };
+                _add(...args) {
+                    ++this._counters.add;
+                    return super._add(...args);
+                }
 
-        const _remove = matcher._remove;
-        matcher._remove = function (...args) {
-            ++nremove;
-            return _remove.call(this, ...args);
-        };
+                _remove(...args) {
+                    ++this._counters.remove;
+                    return super._remove(...args);
+                }
 
-        const _match = matcher._match;
-        matcher._match = function (...args) {
-            ++nmatch;
-            return _match.call(this, ...args);
-        };
+                _match(...args) {
+                    ++this._counters.match;
+                    return super._match(...args);
+                }
 
-        const _match_some = matcher._match_some;
-        matcher._match_some = function (...args) {
-            ++nmatch_some;
-            return _match_some.call(this, ...args);
-        };
+                _match_some(...args) {
+                    ++this._counters.match_some;
+                    return super._match_some(...args);
+                }
 
-        const _match_iter = matcher._match_iter;
-        matcher._match_iter = function (...args) {
-            ++nmatch_iter;
-            return _match_iter.call(this, ...args);
-        };
+                _match_iter(...args) {
+                    ++this._counters.match_iter;
+                    return super._match_iter(...args);
+                }
 
-        const _match_some_iter = matcher._match_some_iter;
-        matcher._match_some_iter = function (...args) {
-            ++nmatch_some_iter;
-            return _match_some_iter.call(this, ...args);
-        };
+                _match_some_iter(...args) {
+                    ++this._counters.match_some_iter;
+                    return super._match_some_iter(...args);
+                }
 
-        const _test = matcher._test;
-        matcher._test = function (...args) {
-            ++ntest;
-            return _test.call(this, ...args);
-        };
+                _test(...args) {
+                    ++this._counters.test;
+                    return super._test(...args);
+                }
 
-        const _test_some = matcher._test_some;
-        matcher._test_some = function (...args) {
-            ++ntest_some;
-            return _test_some.call(this, ...args);
-        };
+                _test_some(...args) {
+                    ++this._counters.test_some;
+                    return super._test_some(...args);
+                }
+            }();
+        }
 
-        function check(pattern,
-                       topic,
+        function check(pattern, topic,
                        eadd,
                        ematch, 
                        ematch_some,
@@ -635,34 +634,26 @@ describe(`qlobber (${type})`, function ()
                 topic = topic.join('.');
             }
 
-            nadd = 0;
-            nremove = 0;
-            nmatch = 0;
-            nmatch_some = 0;
-            nmatch_iter = 0;
-            nmatch_some_iter = 0;
-            ntest = 0;
-            ntest_some = 0;
-
             matcher.clear();
+            matcher._reset_counters();
 
             matcher.add(pattern, 'foo');
-            expect(nadd).to.equal(eadd); // remember extra one for values at end
+            expect(matcher._counters.add).to.equal(eadd);
 
             matcher.match(topic);
-            expect(nmatch).to.equal(ematch);
-            expect(nmatch_some).to.equal(ematch_some);
+            expect(matcher._counters.match).to.equal(ematch);
+            expect(matcher._counters.match_some).to.equal(ematch_some);
 
             for (let v of matcher.match_iter(topic)) {}
-            expect(nmatch_iter).to.equal(ematch);
-            expect(nmatch_some_iter).to.equal(ematch_some);
+            expect(matcher._counters.match_iter).to.equal(ematch);
+            expect(matcher._counters.match_some_iter).to.equal(ematch_some);
 
             matcher.test(topic, 'foo');
-            expect(ntest).to.equal(etest);
-            expect(ntest_some).to.equal(etest_some);
+            expect(matcher._counters.test).to.equal(etest);
+            expect(matcher._counters.test_some).to.equal(etest_some);
 
             matcher.remove(pattern, 'foo');
-            expect(nremove).to.equal(eremove);
+            expect(matcher._counters.remove).to.equal(eremove);
         }
 
         check(new Array(100),

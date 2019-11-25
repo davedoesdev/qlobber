@@ -102,7 +102,6 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO:
-        // test match some to check how many recursions we get
         // move rwlock into separate file
         // test multiple operations at once
         // worker threads
@@ -187,7 +186,14 @@ protected:
                             const ValueStorage& vals,
                             Context& ctx) = 0;
 
-    RWLock rwlock;
+#ifdef DEBUG
+    struct {
+        uint32_t add, remove,
+                 match, match_some,
+                 match_iter, match_some_iter,
+                 test, test_some;
+    } counters;
+#endif
 
 private:
     virtual void initial_value_inserted(const Value& val) {}
@@ -211,10 +217,15 @@ private:
         std::variant<map_ptr, ValueStorage> v;
     } trie;
 
+    RWLock rwlock;
+
     ValueStorage& add(const Value& val,
                       const std::size_t i,
                       const std::vector<std::string>& words,
                       const Trie& sub_trie) {
+#ifdef DEBUG
+        ++counters.add;
+#endif
         if (i == words.size()) {
             const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
@@ -236,6 +247,9 @@ private:
                 const std::size_t i,
                 const std::vector<std::string>& words,
                 const Trie& sub_trie) {
+#ifdef DEBUG
+        ++counters.remove;
+#endif
         if (i == words.size()) {
             const auto it = std::get<0>(sub_trie.v)->find(options.separator);
 
@@ -270,6 +284,9 @@ private:
                     const std::vector<std::string>& words,
                     const Trie& st,
                     Context& ctx) {
+#ifdef DEBUG
+        ++counters.match_some;
+#endif
         for (const auto& w : *std::get<0>(st.v)) {
             if (w.first != options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
@@ -286,6 +303,9 @@ private:
                const std::vector<std::string>& words,
                const Trie& sub_trie,
                Context& ctx) {
+#ifdef DEBUG
+        ++counters.match;
+#endif
         {
             const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
 
@@ -330,6 +350,9 @@ private:
                          const std::vector<std::string>& words,
                          const Trie& st,
                          Context& ctx) {
+#ifdef DEBUG
+        ++counters.match_some_iter;
+#endif
         for (const auto& w : *std::get<0>(st.v)) {
             if (w.first != options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
@@ -345,6 +368,9 @@ private:
                     const std::vector<std::string>& words,
                     const Trie& sub_trie,
                     Context& ctx) {
+#ifdef DEBUG
+        ++counters.match_iter;
+#endif
         {
             const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
 
@@ -395,6 +421,9 @@ private:
                    const std::size_t i,
                    const std::vector<std::string>& words,
                    const Trie& st) {
+#ifdef DEBUG
+        ++counters.test_some;
+#endif
         for (const auto& w : *std::get<0>(st.v)) {
             if (w.first != options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
@@ -413,6 +442,9 @@ private:
               const std::size_t i,
               const std::vector<std::string>& words,
               const Trie& sub_trie) {
+#ifdef DEBUG
+        ++counters.test;
+#endif
         {
             const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
 

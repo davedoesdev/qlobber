@@ -429,4 +429,85 @@ describe('qlobber-async', function ()
         for await (let v of matcher.match_iterP(topic)) {}
         await matcher.testP(topic, 'foo');
     });
+
+    it('should throw exception for topics with many wildcard somes', async function () {
+        const topic = new Array(4).fill('#').join('.');
+        expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many wildcard somes');
+        await matcher.removeP(topic, 'foo');
+        await matcher.matchP(topic);
+        for await (let v of matcher.match_iterP(topic)) {}
+        await matcher.testP(topic, 'foo');
+    });
+
+    it('should be able to change max wildcard somes', async function () {
+        matcher = new Qlobber({ max_wildcard_somes: 4 });
+        const topic = new Array(4).fill('#').join('.');
+        await matcher.addP(topic, 'foo');
+    });
+
+   it('should recurse expected number of times', async function () {
+        async function check(pattern, topic,
+                             eadd,
+                             ematch,
+                             ematch_some,
+                             etest,
+                             etest_some,
+                             eremove) {
+            if (Array.isArray(pattern)) {
+                pattern = pattern.join('.');
+            }
+            if (Array.isArray(topic)) {
+                topic = topic.join('.');
+            }
+
+            await matcher.clearP();
+            matcher._reset_counters();
+
+            await matcher.addP(pattern, 'foo');
+            expect(matcher._counters.add).to.equal(eadd);
+
+            await matcher.matchP(topic);
+            expect(matcher._counters.match).to.equal(ematch);
+            expect(matcher._counters.match_some).to.equal(ematch_some);
+
+            for await (let v of matcher.match_iterP(topic)) {}
+            expect(matcher._counters.match_iter).to.equal(ematch);
+            expect(matcher._counters.match_some_iter).to.equal(ematch_some);
+
+            await matcher.testP(topic, 'foo');
+            expect(matcher._counters.test).to.equal(etest);
+            expect(matcher._counters.test_some).to.equal(etest_some);
+
+            await matcher.removeP(pattern, 'foo');
+            expect(matcher._counters.remove).to.equal(eremove);
+        }
+
+        await check(new Array(100),
+                    new Array(100),
+                    101, 101, 0, 101, 0, 101);
+
+        await check(new Array(100).fill('*'),
+                    new Array(100),
+                    101, 1, 0, 1, 0, 101);
+
+        await check(new Array(100).fill('*'),
+                    new Array(100).fill('xyz'),
+                    101, 101, 0, 101, 0, 101);
+
+        await check(new Array(1).fill('#'),
+                    new Array(100).fill('xyz'),
+                    2, 2, 1, 2, 1, 2);
+
+        await check(new Array(3).fill('#'),
+                    new Array(100).fill('xyz'),
+                    4, 10404, 5253, 4, 3, 4);
+
+        await check(new Array(3).fill('#').concat('xyz'),
+                    new Array(100).fill('xyz'),
+                    5, 353804, 5253, 203, 3, 5);
+
+        await check('xyz.#.xyz.#.xyz.#.xyz',
+                    new Array(100).fill('xyz'),
+                    8, 328551, 4951, 200, 3, 8);
+    });
 });
