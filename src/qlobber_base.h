@@ -8,69 +8,8 @@
 #include <optional>
 #include <functional>
 #include <boost/coroutine2/all.hpp>
-#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include "options.h"
-
-class RWLock {
-public:
-    RWLock() : sem(1), wsem(1) {}
-
-    void read_lock() {
-        sem.wait();
-        if (++readers == 1) {
-            wsem.wait();
-        }
-        sem.post();
-    }
-
-    void read_unlock() {
-        sem.wait();
-        if (--readers == 0) {
-            wsem.post();
-        }
-        sem.post();
-    }
-
-    void write_lock() {
-        wsem.wait();
-    }
-
-    void write_unlock() {
-        wsem.post();
-    }
-
-private:
-    boost::interprocess::interprocess_semaphore sem, wsem;
-    uint64_t readers = 0;
-};
-
-class ReadLock {
-public:
-    ReadLock(RWLock& rwlock) : rwlock(&rwlock) {
-        rwlock.read_lock();
-    }
-
-    ~ReadLock() {
-        rwlock->read_unlock();
-    }
-
-private:
-    RWLock* rwlock;
-};
-
-class WriteLock {
-public:
-    WriteLock(RWLock& rwlock) : rwlock(&rwlock) {
-        rwlock.write_lock();
-    }
-
-    ~WriteLock() {
-        rwlock->write_unlock();
-    }
-
-private:
-    RWLock* rwlock;
-};
+#include "rwlock.h"
 
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
@@ -102,7 +41,6 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO:
-        // move rwlock into separate file
         // test multiple operations at once
         // worker threads
         // centro and mqlobber-access-control should check max_words
