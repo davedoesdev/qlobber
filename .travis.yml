@@ -2,10 +2,12 @@ dist: bionic
 language: node_js
 node_js:
   - 12
+env:
+  - CXX=g++-9    
 before_install:
   - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt update
   - sudo apt -y install libboost-dev libboost-context-dev g++-9
-  - g++ --version
 script:
+  - g++ --version
   - if [ $TRAVIS_NODE_VERSION = 12 ]; then npm run coverage; else npm run test; fi
