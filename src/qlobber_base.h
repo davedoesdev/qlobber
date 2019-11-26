@@ -583,7 +583,6 @@ private:
             throw std::length_error("too many wildcard somes");
         }
         words.push_back(word);
-        std::cerr << "ADD_WORD: " << words.size() << std::endl;
         if (words.size() > options.max_words) {
             std::cerr << "THROWING" << std::endl;
             throw std::length_error("too many words");
