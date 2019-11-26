@@ -11,6 +11,8 @@
 #include "options.h"
 #include "rwlock.h"
 
+#include <iostream>
+
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
 
