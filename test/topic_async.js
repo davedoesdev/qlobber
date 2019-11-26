@@ -391,36 +391,39 @@ describe('qlobber-async', function ()
         expect((await match('foo.#')).sort()).to.eql(['it matched too!', 'it matched!']);
     });
 
-    async function expect_throw(f, msg) {
-        let ex;
+    async function expect_throw(f, msg, name) {
+        let ex = null;
         try {
             await f();
         } catch (e) {
             ex = e;
+        }
+        if (ex === null) {
+            throw new Error(`expected ${name} to throw`);
         }
         expect(ex.message).to.equal(msg);
     }
 
     it('should throw exception for topics with many words', async function () {
         const topic = new Array(1000000).join('.');
-        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words');
-        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words');
-        await expect_throw(async () => await matcher.matchP(topic), 'too many words');
+        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words', 'addP');
+        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words', 'removeP');
+        await expect_throw(async () => await matcher.matchP(topic), 'too many words', 'matchP');
         await expect_throw(async () => {
             for await (let v of matcher.match_iterP(topic)) {}
-        }, 'too many words');
-        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words');
+        }, 'too many words', 'match_iterP');
+        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words', 'testP');
     });
 
     it('should be able to change max words', async function () {
         const topic = new Array(101).join('.');
-        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words');
-        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words');
-        await expect_throw(async () => await matcher.matchP(topic), 'too many words');
+        await expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many words', 'addP');
+        await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words', 'removeP');
+        await expect_throw(async () => await matcher.matchP(topic), 'too many words', 'matchP');
         await expect_throw(async () => {
             for await (let v of matcher.match_iterP(topic)) {}
-        }, 'too many words');
-        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words');
+        }, 'too many words', 'match_iterP');
+        await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words', 'testP');
 
         matcher = new Qlobber({ max_words: 101 });
         await matcher.addP(topic, 'foo');
