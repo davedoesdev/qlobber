@@ -11,6 +11,8 @@
 #include "options.h"
 #include "rwlock.h"
 
+#include <iostream>
+
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
 
@@ -581,6 +583,7 @@ private:
         }
         words.push_back(word);
         if (words.size() > options.max_words) {
+            std::cout << "TOO MANY WORDS" << std::endl;
             throw std::length_error("too many words");
         }
     }
