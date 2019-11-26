@@ -3,6 +3,7 @@ language: node_js
 node_js:
   - 12
 before_install:
+  - sudo add-apt-repository ppa:ubuntu-toolchain-r/test
   - sudo apt update
   - sudo apt install libboost-dev libboost-context-dev g++-9
   - g++ --version
