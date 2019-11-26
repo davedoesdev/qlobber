@@ -41,7 +41,6 @@ class QlobberBase {
 public:
     QlobberBase() {}
         // TODO:
-        // test multiple operations at once
         // worker threads
         // centro and mqlobber-access-control should check max_words
         //   and max_wildcard_somes to prevent runtime exceptions

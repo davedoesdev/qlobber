@@ -510,4 +510,18 @@ describe('qlobber-async', function ()
                     new Array(100).fill('xyz'),
                     8, 328551, 4951, 200, 3, 8);
     });
+
+    it('should be able to perform multiple matches concurrently', async function ()
+    {
+        await add_bindings(rabbitmq_test_bindings);
+
+        await Promise.all(rabbitmq_expected_results_before_remove.map(async test => {
+            expect((await matcher.matchP(test[0])).remove_duplicates(), test[0]).to.eql(test[1].sort());
+            for (const v of test[1])
+            {
+                expect(await matcher.testP(test[0], v)).to.equal(true);
+            }
+            expect(await matcher.testP(test[0], 'xyzfoo')).to.equal(false);
+        }));
+    });
 });
