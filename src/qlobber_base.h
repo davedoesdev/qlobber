@@ -603,6 +603,7 @@ private:
             last = next + 1;
         }
         add_word(words, topic.substr(last), adding, wildcard_somes);
+        std::cerr << "NUM WORDS: " << words.size() << std::endl;
         return words;
     }
 };
