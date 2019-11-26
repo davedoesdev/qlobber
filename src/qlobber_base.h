@@ -353,6 +353,7 @@ private:
                          const std::string& topic,
                          Context& ctx) {
         ReadLock lock(rwlock);
+        std::cout << "GENERATE_VALUES: " << topic;
         match_iter(sink, 0, split(topic, false), trie, ctx);
     }
 
@@ -583,7 +584,6 @@ private:
         }
         words.push_back(word);
         if (words.size() > options.max_words) {
-            std::cout << "TOO MANY WORDS" << std::endl;
             throw std::length_error("too many words");
         }
     }
