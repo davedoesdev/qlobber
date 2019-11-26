@@ -520,24 +520,24 @@ describe(`qlobber (${type})`, function ()
 
     it('should throw exception for topics with many words', function () {
         const topic = new Array(1000000).join('.');
-        expect(() => matcher.add(topic, 'foo')).to.throw('too many words');
-        expect(() => matcher.remove(topic, 'foo')).to.throw('too many words');
-        expect(() => matcher.match(topic)).to.throw('too many words');
+        expect(() => matcher.add(topic, 'foo'), 'add').to.throw('too many words');
+        expect(() => matcher.remove(topic, 'foo'), 'remove').to.throw('too many words');
+        expect(() => matcher.match(topic), 'match').to.throw('too many words');
         expect(() => {
             for (let v of matcher.match_iter(topic)) {}
-        }).to.throw('too many words');
-        expect(() => matcher.test(topic, 'foo')).to.throw('too many words');
+        }, 'match_iter').to.throw('too many words');
+        expect(() => matcher.test(topic, 'foo'), 'test').to.throw('too many words');
     });
 
     it('should be able to change max words', function () {
         let topic = new Array(101).join('.');
-        expect(() => matcher.add(topic, 'foo')).to.throw('too many words');
-        expect(() => matcher.remove(topic, 'foo')).to.throw('too many words');
-        expect(() => matcher.match(topic)).to.throw('too many words');
+        expect(() => matcher.add(topic, 'foo'), 'add').to.throw('too many words');
+        expect(() => matcher.remove(topic, 'foo'), 'remove').to.throw('too many words');
+        expect(() => matcher.match(topic), 'match').to.throw('too many words');
         expect(() => {
             for (let v of matcher.match_iter(topic)) {}
-        }).to.throw('too many words');
-        expect(() => matcher.test(topic, 'foo')).to.throw('too many words');
+        }, 'match_iter').to.throw('too many words');
+        expect(() => matcher.test(topic, 'foo'), 'test').to.throw('too many words');
 
         matcher = new Qlobber({ max_words: 101 });
         matcher.add(topic, 'foo');
