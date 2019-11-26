@@ -214,9 +214,13 @@ public:
         if (iterator->it == iterator->it_end) {
             return env.Undefined();
         }
-        const auto r = MatchNext(env, iterator);
-        ++iterator->it;
-        return r;
+        try {
+            const auto r = MatchNext(env, iterator);
+            ++iterator->it;
+            return r;
+        } catch (std::exception& e) {
+            throw Napi::Error::New(env, e.what());
+        }
     }
 
     void MatchNextAsync(const Napi::CallbackInfo& info) {

@@ -11,8 +11,6 @@
 #include "options.h"
 #include "rwlock.h"
 
-#include <iostream>
-
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
 
@@ -353,7 +351,6 @@ private:
                          const std::string& topic,
                          Context& ctx) {
         ReadLock lock(rwlock);
-        std::cout << "GENERATE_VALUES: " << topic;
         match_iter(sink, 0, split(topic, false), trie, ctx);
     }
 
