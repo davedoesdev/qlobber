@@ -353,7 +353,6 @@ private:
                          const std::string& topic,
                          Context& ctx) {
         ReadLock lock(rwlock);
-        std::cerr << "GENERATE_VALUES: " << topic << std::endl;
         match_iter(sink, 0, split(topic, false), trie, ctx);
     }
 
@@ -583,6 +582,7 @@ private:
             throw std::length_error("too many wildcard somes");
         }
         words.push_back(word);
+        if (!adding) std::cerr << "NUM WORDS: " << words.size() << std::endl;
         if (words.size() > options.max_words) {
             std::cerr << "THROWING" << std::endl;
             throw std::length_error("too many words");
@@ -603,7 +603,6 @@ private:
             last = next + 1;
         }
         add_word(words, topic.substr(last), adding, wildcard_somes);
-        if (!adding) std::cerr << "NUM WORDS: " << words.size() << std::endl;
         return words;
     }
 };
