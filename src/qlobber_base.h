@@ -11,8 +11,6 @@
 #include "options.h"
 #include "rwlock.h"
 
-#include <iostream>
-
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
 
@@ -582,9 +580,7 @@ private:
             throw std::length_error("too many wildcard somes");
         }
         words.push_back(word);
-        if (!adding) std::cerr << "NUM WORDS: " << words.size() << std::endl;
         if (words.size() > options.max_words) {
-            std::cerr << "THROWING" << std::endl;
             throw std::length_error("too many words");
         }
     }
