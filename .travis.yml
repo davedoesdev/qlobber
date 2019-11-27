@@ -9,4 +9,4 @@ before_install:
   - sudo apt update
   - sudo apt -y install libboost-dev libboost-context-dev g++-9
 script:
-  - if [ $TRAVIS_NODE_VERSION = 12 ]; then npm run coverage; else npm run test; fi
+  - npm run test
