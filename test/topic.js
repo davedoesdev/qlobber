@@ -518,7 +518,7 @@ describe(`qlobber (${type})`, function ()
         expect(match('foo.#').sort()).to.eql(['it matched too!', 'it matched!']);
     });
 
-    it('should throw exception for topics with many words', function () {
+    it.only('should throw exception for topics with many words', function () {
         const topic = new Array(1000000).join('.');
         expect(() => matcher.add(topic, 'foo'), 'add').to.throw('too many words');
         expect(() => matcher.remove(topic, 'foo'), 'remove').to.throw('too many words');
