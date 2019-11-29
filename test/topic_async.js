@@ -449,6 +449,8 @@ describe('qlobber-async', function ()
     });
 
    it('should recurse expected number of times', async function () {
+        this.timeout(10000);
+
         async function check(pattern, topic,
                              eadd,
                              ematch,
