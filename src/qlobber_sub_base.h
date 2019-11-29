@@ -41,6 +41,10 @@ template<typename Value,
          typename IterValue>
 class QlobberSubBase;
 
+struct SubState {
+    std::size_t subscriptionsCount = 0;
+};
+
 template<typename MatchResult, typename Context>
 class QlobberSubBase<Sub, MatchResult, Context, std::string, SubTest, IterSub> :
     public QlobberBase<Sub,
@@ -49,7 +53,8 @@ class QlobberSubBase<Sub, MatchResult, Context, std::string, SubTest, IterSub> :
                        MatchResult,
                        Context,
                        SubTest,
-                       IterSub> {
+                       IterSub,
+                       SubState> {
 public:
     QlobberSubBase() {}
 
@@ -60,37 +65,48 @@ public:
                     MatchResult,
                     Context,
                     SubTest,
-                    IterSub>(options) {}
+                    IterSub,
+                    SubState>(options) {}
 
-protected:
-    void clear() override {
-        subscriptionsCount = 0;
+    QlobberSubBase(const OptionsOrState<typename QlobberSubBase::State>& options_or_state) :
         QlobberBase<Sub,
                     SubStorage,
                     std::string,
                     MatchResult,
                     Context,
                     SubTest,
-                    IterSub>::clear();
-    }
+                    IterSub,
+                    SubState>(options_or_state) {}
 
-    std::size_t subscriptionsCount = 0;
+protected:
+    void clear() override {
+        WriteLock(this->state->rwlock);
+        this->state->subscriptionsCount = 0;
+        QlobberBase<Sub,
+                    SubStorage,
+                    std::string,
+                    MatchResult,
+                    Context,
+                    SubTest,
+                    IterSub,
+                    SubState>::clear_unlocked();
+    }
 
 private:
     void initial_value_inserted(const Sub& sub) override {
-        ++subscriptionsCount;
+        ++this->state->subscriptionsCount;
     }
 
     void add_value(SubStorage& existing, const Sub& sub) override {
         if (existing.clientMap.insert_or_assign(sub.clientId, sub.qos).second) {
-            ++subscriptionsCount;
+            ++this->state->subscriptionsCount;
         }
     }
 
     bool remove_value(SubStorage& vals,
                       const std::optional<const std::string>& clientId) override {
         if (vals.clientMap.erase(clientId.value()) > 0) {
-            --subscriptionsCount;
+            --this->state->subscriptionsCount;
         }
         return vals.clientMap.empty();
     }

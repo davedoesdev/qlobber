@@ -34,6 +34,12 @@ public:
                              MatchResult,
                              Context>(options) {}
 
+    QlobberVecBase(const OptionsOrState<typename QlobberVecBase::State>& options_or_state) :
+        QlobberContainerBase<Value,
+                             VecStorage,
+                             MatchResult,
+                             Context>(options_or_state) {}
+
 private:
     void add_value(VecStorage<Value>& existing, const Value& val) override {
         existing.push_back(val);

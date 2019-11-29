@@ -41,7 +41,8 @@ class QlobberJSCommon :
     public Base<Value, MatchResult, Context, RemoveValue, TestValue, IterValue> {
 public:
     QlobberJSCommon(const Napi::CallbackInfo& info) :
-        Base<Value, MatchResult, Context, RemoveValue, TestValue, IterValue>(JSOptions(info)) {}
+        Base<Value, MatchResult, Context, RemoveValue, TestValue, IterValue>(
+            JSOptionsOrState<typename QlobberJSCommon::State>(info)) {}
 
     Napi::Value Add(const Napi::CallbackInfo& info) {
         const auto topic = info[0].As<Napi::String>();
@@ -113,24 +114,24 @@ public:
     }
 
     Napi::Value GetOptions(const Napi::CallbackInfo& info) {
-        return JSOptions::get(info.Env(), this->options);
+        return JSOptions::get(info.Env(), this->state->options);
     }
 #ifdef DEBUG
     Napi::Value GetCounters(const Napi::CallbackInfo& info) {
         auto r = Napi::Object::New(info.Env());
-        r.Set("add", this->counters.add);
-        r.Set("remove", this->counters.remove);
-        r.Set("match", this->counters.match);
-        r.Set("match_some", this->counters.match_some);
-        r.Set("match_iter", this->counters.match_iter);
-        r.Set("match_some_iter", this->counters.match_some_iter);
-        r.Set("test", this->counters.test);
-        r.Set("test_some", this->counters.test_some);
+        r.Set("add", this->state->counters.add);
+        r.Set("remove", this->state->counters.remove);
+        r.Set("match", this->state->counters.match);
+        r.Set("match_some", this->state->counters.match_some);
+        r.Set("match_iter", this->state->counters.match_iter);
+        r.Set("match_some_iter", this->state->counters.match_some_iter);
+        r.Set("test", this->state->counters.test);
+        r.Set("test_some", this->state->counters.test_some);
         return r;
     }
 
     void ResetCounters(const Napi::CallbackInfo& info) {
-        this->counters = { 0, 0, 0, 0, 0, 0, 0, 0 };
+        this->state->counters = { 0, 0, 0, 0, 0, 0, 0, 0 };
     }
 #endif
     Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
@@ -234,7 +235,7 @@ public:
         const auto ctx = this->get_context(info);
         Napi::Object r = Map.New({});
 
-        for (const auto& topic_and_values : this->shortcuts) {
+        for (const auto& topic_and_values : this->state->shortcuts) {
             auto entry = this->NewMatchResult(env);
             this->add_values(entry, topic_and_values.second, ctx);
             set.Call(r, {
@@ -243,6 +244,21 @@ public:
             });
         }
 
+        return r;
+    }
+
+    Napi::Value AddRef(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), this->add_ref());
+    }
+
+    Napi::Value RemoveRef(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), this->remove_ref());
+    }
+
+    Napi::Value GetStateAddress(const Napi::CallbackInfo& info) {
+        typedef typename QlobberJSCommon::State *StatePtr;
+        auto r = Napi::ArrayBuffer::New(info.Env(), sizeof(StatePtr));
+        *static_cast<StatePtr*>(r.Data()) = this->state;
         return r;
     }
 
@@ -752,8 +768,11 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("match_iter_async", &T::MatchIterAsync),
         T::InstanceMethod("match_next", &T::MatchNext),
         T::InstanceMethod("match_next_async", &T::MatchNextAsync),
+        T::InstanceMethod("add_ref", &T::AddRef),
+        T::InstanceMethod("remove_ref", &T::RemoveRef),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
         T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr),
+        T::InstanceAccessor("state_address", &T::GetStateAddress, nullptr),
 #ifdef DEBUG
         T::InstanceAccessor("_counters", &T::GetCounters, nullptr),
         T::InstanceMethod("_reset_counters", &T::ResetCounters),

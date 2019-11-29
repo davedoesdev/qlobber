@@ -27,7 +27,7 @@ public:
     virtual ~QlobberSub() {}
 
     Napi::Value GetSubscriptionsCount(const Napi::CallbackInfo& info) {
-        return Napi::Number::New(info.Env(), subscriptionsCount);
+        return Napi::Number::New(info.Env(), state->subscriptionsCount);
     }
 
 private:

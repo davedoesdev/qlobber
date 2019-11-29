@@ -7,6 +7,7 @@
 #include <variant>
 #include <optional>
 #include <functional>
+#include <atomic>
 #include <boost/coroutine2/all.hpp>
 #include "options.h"
 #include "rwlock.h"
@@ -30,67 +31,122 @@ struct Visit {
     std::optional<VisitData<Value>> v;
 };
 
+struct EmptyStateBase {};
+
 template<typename Value,
          typename ValueStorage,
          typename RemoveValue,
          typename MatchResult,
          typename Context,
          typename TestValue,
-         typename IterValue = Value>
+         typename IterValue = Value,
+         typename StateBase = EmptyStateBase>
 class QlobberBase {
 public:
-    QlobberBase() {}
+    struct Trie {
+        typedef std::unordered_map<std::string, Trie> map_type;
+        typedef std::unique_ptr<map_type> map_ptr;
+        Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
+        Trie(const Value& val) : v(std::in_place_index<1>, val) {}
+        Trie(std::shared_ptr<Trie>& t) : v(std::move(t->v)) {}
+        std::variant<map_ptr, ValueStorage> v;
+    };
+
+    struct State : public StateBase {
+        std::atomic<uint32_t> ref_count;
+        RWLock rwlock;
+        Options options;
+        Trie trie;
+        std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
+#ifdef DEBUG
+        struct {
+            uint32_t add, remove,
+                     match, match_some,
+                     match_iter, match_some_iter,
+                     test, test_some;
+        } counters;
+#endif
+    };
+
+    QlobberBase(State* state) : state(state) {
+        add_ref();
+    }
+
+    QlobberBase() : QlobberBase(new State()) {}
         // TODO:
         // worker threads
         // centro and mqlobber-access-control should check max_words
         //   and max_wildcard_somes to prevent runtime exceptions
-        
-    QlobberBase(const Options& options) : options(options) {}
+
+    QlobberBase(const Options& options) : QlobberBase() {
+        state->options = options;
+    }
+
+    QlobberBase(const OptionsOrState<State> options_or_state) {
+        if (options_or_state.is_options) {
+            state = new State();
+            state->options = std::get<0>(options_or_state.data);
+        } else {
+            state = std::get<1>(options_or_state.data);
+        }
+        add_ref();
+    };
+
+    virtual ~QlobberBase() {
+        if (remove_ref() == 0) {
+            delete state;
+        }
+    }
 
 protected:
     void add(const std::string& topic, const Value& val) {
-        WriteLock lock(rwlock);
-        if (options.cache_adds) {
-            const auto it = shortcuts.find(topic);
-            if (it != shortcuts.end()) {
+        WriteLock lock(state->rwlock);
+        if (state->options.cache_adds) {
+            const auto it = state->shortcuts.find(topic);
+            if (it != state->shortcuts.end()) {
                 return add_value(it->second, val);
             }
         }
-        auto& storage = add(val, 0, split(topic, true), trie);
-        if (options.cache_adds) {
-            shortcuts.emplace(topic, storage);
+        auto& storage = add(val, 0, split(topic, true), state->trie);
+        if (state->options.cache_adds) {
+            state->shortcuts.emplace(topic, storage);
         }
     }
 
     void remove(const std::string& topic,
                 const std::optional<const RemoveValue>& val) {
-        WriteLock lock(rwlock);
-        if (remove(val, 0, split(topic, false), trie) && options.cache_adds) {
-            shortcuts.erase(topic);
+        WriteLock lock(state->rwlock);
+        if (remove(val, 0, split(topic, false), state->trie) &&
+            state->options.cache_adds) {
+            state->shortcuts.erase(topic);
         }
     }
 
     void match(MatchResult& r, const std::string& topic, Context& ctx) {
-        ReadLock lock(rwlock);
-        match(r, 0, split(topic, false), trie, ctx);
+        ReadLock lock(state->rwlock);
+        match(r, 0, split(topic, false), state->trie, ctx);
     }
 
     std::vector<std::reference_wrapper<const ValueStorage>> match(const std::string& topic, Context& ctx) {
-        ReadLock lock(rwlock);
+        ReadLock lock(state->rwlock);
         std::vector<std::reference_wrapper<const ValueStorage>> r;
-        match(r, 0, split(topic, false), trie, ctx);
+        match(r, 0, split(topic, false), state->trie, ctx);
         return r;
     }
 
     bool test(const std::string& topic, const TestValue& val) {
-        ReadLock lock(rwlock);
-        return test(val, 0, split(topic, false), trie);
+        ReadLock lock(state->rwlock);
+        return test(val, 0, split(topic, false), state->trie);
+    }
+
+    void clear_unlocked() {
+        state->shortcuts.clear();
+        std::get<0>(state->trie.v)->clear();
     }
 
     virtual void clear() {
-        WriteLock lock(rwlock);
-        shortcuts.clear();
-        std::get<0>(trie.v)->clear();
+        WriteLock lock(state->rwlock);
+        clear_unlocked();
     }
 
     typedef typename boost::coroutines2::coroutine<Visit<Value>> coro_visit_t;
@@ -116,21 +172,19 @@ protected:
             std::bind(&QlobberBase::generate_values, this, std::placeholders::_1, topic, ctx));
     }
 
-    Options options;
-    std::unordered_map<std::string, std::reference_wrapper<ValueStorage>> shortcuts;
-
     virtual void add_values(MatchResult& r,
                             const ValueStorage& vals,
                             Context& ctx) = 0;
 
-#ifdef DEBUG
-    struct {
-        uint32_t add, remove,
-                 match, match_some,
-                 match_iter, match_some_iter,
-                 test, test_some;
-    } counters;
-#endif
+    uint32_t add_ref() {
+        return ++state->ref_count;
+    }
+
+    uint32_t remove_ref() {
+        return --state->ref_count;
+    }
+
+    State* state;
 
 private:
     virtual void initial_value_inserted(const Value& val) {}
@@ -145,26 +199,15 @@ private:
     virtual void visit_values(typename coro_visit_t::push_type& sink,
                               const ValueStorage& storage) = 0;
 
-    struct Trie {
-        typedef std::unordered_map<std::string, Trie> map_type;
-        typedef std::unique_ptr<map_type> map_ptr;
-        Trie() : v(std::in_place_index<0>, std::make_unique<map_type>()) {}
-        Trie(const Value& val) : v(std::in_place_index<1>, val) {}
-        Trie(std::shared_ptr<Trie>& t) : v(std::move(t->v)) {}
-        std::variant<map_ptr, ValueStorage> v;
-    } trie;
-
-    RWLock rwlock;
-
     ValueStorage& add(const Value& val,
                       const std::size_t i,
                       const std::vector<std::string>& words,
                       const Trie& sub_trie) {
 #ifdef DEBUG
-        ++counters.add;
+        ++state->counters.add;
 #endif
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 auto& storage = std::get<1>(it->second.v);
@@ -172,9 +215,9 @@ private:
                 return storage;
             }
 
-            std::get<0>(sub_trie.v)->emplace(options.separator, val);
+            std::get<0>(sub_trie.v)->emplace(state->options.separator, val);
             initial_value_inserted(val);
-            return std::get<1>((*std::get<0>(sub_trie.v))[options.separator].v);
+            return std::get<1>((*std::get<0>(sub_trie.v))[state->options.separator].v);
         }
 
         return add(val, i + 1, words, (*std::get<0>(sub_trie.v))[words[i]]);
@@ -185,10 +228,10 @@ private:
                 const std::vector<std::string>& words,
                 const Trie& sub_trie) {
 #ifdef DEBUG
-        ++counters.remove;
+        ++state->counters.remove;
 #endif
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.separator);
 
             if ((it != std::get<0>(sub_trie.v)->end()) &&
                 remove_value(std::get<1>(it->second.v), val)) {
@@ -222,10 +265,10 @@ private:
                     const Trie& st,
                     Context& ctx) {
 #ifdef DEBUG
-        ++counters.match_some;
+        ++state->counters.match_some;
 #endif
         for (const auto& w : *std::get<0>(st.v)) {
-            if (w.first != options.separator) {
+            if (w.first != state->options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
                     match(r, j, words, st, ctx);
                 }
@@ -241,10 +284,10 @@ private:
                const Trie& sub_trie,
                Context& ctx) {
 #ifdef DEBUG
-        ++counters.match;
+        ++state->counters.match;
 #endif
         {
-            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_some);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 // in the common case there will be no more levels...
@@ -255,7 +298,7 @@ private:
         }
 
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 add_values(r, std::get<1>(it->second.v), ctx);
@@ -263,8 +306,8 @@ private:
         } else {
             const auto& word = words[i];
 
-            if ((word != options.wildcard_one) &&
-                (word != options.wildcard_some)) {
+            if ((word != state->options.wildcard_one) &&
+                (word != state->options.wildcard_some)) {
                 const auto it = std::get<0>(sub_trie.v)->find(word);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
@@ -273,7 +316,7 @@ private:
             }
 
             if (!word.empty()) {
-                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
+                const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
                     match(r, i + 1, words, it->second, ctx);
@@ -288,10 +331,10 @@ private:
                          const Trie& st,
                          Context& ctx) {
 #ifdef DEBUG
-        ++counters.match_some_iter;
+        ++state->counters.match_some_iter;
 #endif
         for (const auto& w : *std::get<0>(st.v)) {
-            if (w.first != options.separator) {
+            if (w.first != state->options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
                     match_iter(sink, j, words, st, ctx);
                 }
@@ -306,10 +349,10 @@ private:
                     const Trie& sub_trie,
                     Context& ctx) {
 #ifdef DEBUG
-        ++counters.match_iter;
+        ++state->counters.match_iter;
 #endif
         {
-            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_some);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 // in the common case there will be no more levels...
@@ -320,7 +363,7 @@ private:
         }
 
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.separator);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                 iter_values(sink, std::get<1>(it->second.v), ctx);
@@ -328,8 +371,8 @@ private:
         } else {
             const auto& word = words[i];
 
-            if ((word != options.wildcard_one) &&
-                (word != options.wildcard_some)) {
+            if ((word != state->options.wildcard_one) &&
+                (word != state->options.wildcard_some)) {
                 const auto it = std::get<0>(sub_trie.v)->find(word);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
@@ -338,7 +381,7 @@ private:
             }
 
             if (!word.empty()) {
-                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
+                const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
                     match_iter(sink, i + 1, words, it->second, ctx);
@@ -350,8 +393,8 @@ private:
     void generate_values(typename coro_iter_t::push_type& sink,
                          const std::string& topic,
                          Context& ctx) {
-        ReadLock lock(rwlock);
-        match_iter(sink, 0, split(topic, false), trie, ctx);
+        ReadLock lock(state->rwlock);
+        match_iter(sink, 0, split(topic, false), state->trie, ctx);
     }
 
     bool test_some(const TestValue& v,
@@ -359,10 +402,10 @@ private:
                    const std::vector<std::string>& words,
                    const Trie& st) {
 #ifdef DEBUG
-        ++counters.test_some;
+        ++state->counters.test_some;
 #endif
         for (const auto& w : *std::get<0>(st.v)) {
-            if (w.first != options.separator) {
+            if (w.first != state->options.separator) {
                 for (std::size_t j = i; j < words.size(); ++j) {
                     if (test(v, j, words, st)) {
                         return true;
@@ -380,10 +423,10 @@ private:
               const std::vector<std::string>& words,
               const Trie& sub_trie) {
 #ifdef DEBUG
-        ++counters.test;
+        ++state->counters.test;
 #endif
         {
-            const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_some);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_some);
 
             if (it != std::get<0>(sub_trie.v)->end()) {
                     // in the common case there will be no more levels...
@@ -396,7 +439,7 @@ private:
         }
 
         if (i == words.size()) {
-            const auto it = std::get<0>(sub_trie.v)->find(options.separator);
+            const auto it = std::get<0>(sub_trie.v)->find(state->options.separator);
 
             if ((it != std::get<0>(sub_trie.v)->end()) &&
                 test_values(std::get<1>(it->second.v), v)) {
@@ -405,8 +448,8 @@ private:
         } else {
             const auto& word = words[i];
 
-            if ((word != options.wildcard_one) &&
-                (word != options.wildcard_some)) {
+            if ((word != state->options.wildcard_one) &&
+                (word != state->options.wildcard_some)) {
                 const auto it = std::get<0>(sub_trie.v)->find(word);
 
                 if ((it != std::get<0>(sub_trie.v)->end()) &&
@@ -416,7 +459,7 @@ private:
             }
 
             if (!word.empty()) {
-                const auto it = std::get<0>(sub_trie.v)->find(options.wildcard_one);
+                const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if ((it != std::get<0>(sub_trie.v)->end()) &&
                     test(v, i + 1, words, it->second)) {
@@ -429,13 +472,13 @@ private:
     }
 
     void generate_visits(typename coro_visit_t::push_type& sink) {
-        ReadLock lock(rwlock);
+        ReadLock lock(state->rwlock);
         struct Saved {
             typename Trie::map_type::const_iterator it, end;
             std::size_t i;
         } cur = {
-            std::get<0>(trie.v)->cbegin(),
-            std::get<0>(trie.v)->cend(),
+            std::get<0>(state->trie.v)->cbegin(),
+            std::get<0>(state->trie.v)->cend(),
             0
         };
         std::vector<Saved> saved;
@@ -467,7 +510,7 @@ private:
 
             ++cur.i;
 
-            if (cur.it->first == options.separator) {
+            if (cur.it->first == state->options.separator) {
                 sink({ Visit<Value>::start_values, std::nullopt });
                 visit_values(sink, std::get<1>(cur.it->second.v));
                 sink({ Visit<Value>::end_values, std::nullopt });
@@ -485,7 +528,7 @@ private:
     }
 
     void inject(typename coro_visit_t::pull_type& source, bool cache_adds) {
-        WriteLock lock(rwlock);
+        WriteLock lock(state->rwlock);
         struct Saved {
             Saved(std::shared_ptr<Trie> entry,
                   const std::string& key,
@@ -495,7 +538,7 @@ private:
             std::string key, path;
         };
         std::vector<Saved> saved;
-        std::shared_ptr<Trie> entry(&trie, [](Trie*) {});
+        std::shared_ptr<Trie> entry(&state->trie, [](Trie*) {});
         std::string path;
 
         for (const auto& v : source) {
@@ -514,7 +557,7 @@ private:
                     }
                     if (cache_adds) {
                         if (!path.empty()) {
-                            path += options.separator;
+                            path += state->options.separator;
                         }
                         path += key;
                     }
@@ -546,10 +589,10 @@ private:
                         const auto it = std::get<0>(saved.back().entry->v)->emplace(
                             saved.back().key, entry);
                         if (cache_adds &&
-                            options.cache_adds &&
+                            state->options.cache_adds &&
                             (v.type == Visit<Value>::end_values)) {
-                            shortcuts.emplace(saved.back().path,
-                                              std::get<1>(it.first->second.v));
+                            state->shortcuts.emplace(saved.back().path,
+                                                     std::get<1>(it.first->second.v));
                         }
                     }
                     entry = saved.back().entry;
@@ -575,12 +618,12 @@ private:
                   const bool adding,
                   std::size_t& wildcard_somes) {
         if (adding &&
-            (word == options.wildcard_some) &&
-            (++wildcard_somes > options.max_wildcard_somes)) {
+            (word == state->options.wildcard_some) &&
+            (++wildcard_somes > state->options.max_wildcard_somes)) {
             throw std::length_error("too many wildcard somes");
         }
         words.push_back(word);
-        if (words.size() > options.max_words) {
+        if (words.size() > state->options.max_words) {
             throw std::length_error("too many words");
         }
     }
@@ -591,7 +634,7 @@ private:
         std::size_t last = 0;
         std::size_t wildcard_somes = 0;
         while (true) {
-            std::size_t next = topic.find(options.separator, last);
+            std::size_t next = topic.find(state->options.separator, last);
             if (next == std::string::npos) {
                 break;
             }

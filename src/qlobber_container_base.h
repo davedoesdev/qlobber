@@ -24,6 +24,14 @@ public:
                     Context,
                     Value>(options) {}
 
+    QlobberContainerBase(const OptionsOrState<typename QlobberContainerBase::State>& options_or_state) :
+        QlobberBase<Value,
+                    Storage<Value>,
+                    Value,
+                    MatchResult,
+                    Context,
+                    Value>(options_or_state) {}
+
 private:
     bool remove_value(Storage<Value>& existing,
                       const std::optional<const Value>& topic) override {

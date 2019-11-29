@@ -39,3 +39,18 @@ struct JSOptions : Options {
         return r;
     }
 };
+
+template<typename State>
+struct JSOptionsOrState : OptionsOrState<State> {
+    JSOptionsOrState(const Napi::CallbackInfo& info) {
+        if ((info.Length() > 0) && info[0].IsArrayBuffer()) {
+            this->is_options = false;
+            this->data = std::variant<Options, State*>(
+                std::in_place_index<1>,
+                static_cast<State*>(info[0].As<Napi::ArrayBuffer>().Data()));
+        }
+        this->is_options = true;
+        this->data = std::variant<Options, State*>(
+            std::in_place_index<0>, JSOptions(info));
+    }
+};

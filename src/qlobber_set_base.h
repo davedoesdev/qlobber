@@ -34,6 +34,12 @@ public:
                              MatchResult,
                              Context>(options) {}
 
+    QlobberSetBase(const OptionsOrState<typename QlobberSetBase::State>& options_or_state) :
+        QlobberContainerBase<Value,
+                             SetStorage,
+                             MatchResult,
+                             Context>(options_or_state) {}
+
 private:
     void add_value(SetStorage<Value>& existing, const Value& val) override {
         existing.insert(val);

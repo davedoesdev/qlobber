@@ -33,6 +33,14 @@ public:
                     const std::nullptr_t,
                     std::nullptr_t>(options) {}
 
+    QlobberTrueBase(const OptionsOrState<typename QlobberTrueBase::State>& options_or_state) :
+        QlobberBase<TrueValue,
+                    TrueStorage,
+                    std::nullptr_t,
+                    bool,
+                    const std::nullptr_t,
+                    std::nullptr_t>(options_or_state) {}
+
 protected:
     void add_values(bool& r, const TrueStorage&, const std::nullptr_t&) override {
         r = true;
