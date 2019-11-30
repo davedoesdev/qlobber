@@ -47,10 +47,11 @@ struct JSOptionsOrState : OptionsOrState<State> {
             this->is_options = false;
             this->data = std::variant<Options, State*>(
                 std::in_place_index<1>,
-                static_cast<State*>(info[0].As<Napi::ArrayBuffer>().Data()));
+                *static_cast<State**>(info[0].As<Napi::ArrayBuffer>().Data()));
+        } else {
+            this->is_options = true;
+            this->data = std::variant<Options, State*>(
+                std::in_place_index<0>, JSOptions(info));
         }
-        this->is_options = true;
-        this->data = std::variant<Options, State*>(
-            std::in_place_index<0>, JSOptions(info));
     }
 };

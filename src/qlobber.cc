@@ -14,4 +14,6 @@ Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
     return exports;
 }
 
-NODE_API_MODULE(qlobber, Initialize);
+NAPI_MODULE_INIT() {
+  return Napi::RegisterModule(env, exports, Initialize);
+}
