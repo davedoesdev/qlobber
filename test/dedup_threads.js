@@ -89,54 +89,46 @@ describe('qlobber-threads', function ()
             }));
     });
 
-    it('should share state between threads', async function ()
+    it('should share state between threads', function (cb)
     {
         add_bindings(rabbitmq_test_bindings);
 
-        await wait_for_worker(new Worker(
+        const worker = new Worker(
             path.join(__dirname, 'fixtures', 'thread_match.js'), {
                 workerData: {
                     state_address: matcher.state_address,
                     operation: 'remove'
                 }
-            }));
+            });
 
-        expect(common.get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
+        worker.once('message', () => {
+            expect(common.get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
-        rabbitmq_expected_results_after_remove.forEach(function (test)
-        {
-            expect(Array.from(matcher.match(test[0])).sort(), test[0]).to.eql(
-                   test[1].sort());
-            for (var v of test[1])
+            rabbitmq_expected_results_after_remove.forEach(function (test)
             {
-                expect(matcher.test(test[0], v)).to.equal(true);
-            }
-            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
-        });
-        
-        /*jslint unparam: true */
-        var remaining = rabbitmq_test_bindings.filter(function (topic_val, i)
-        {
-            return rabbitmq_bindings_to_remove.indexOf(i + 1) < 0;
-        });
-        /*jslint unparam: false */
-
-        remaining.forEach(function (topic_val)
-        {
-            matcher.remove(topic_val[0], topic_val[1]);
-        });
+                expect(Array.from(matcher.match(test[0])).sort(), test[0]).to.eql(
+                       test[1].sort());
+                for (var v of test[1])
+                {
+                    expect(matcher.test(test[0], v)).to.equal(true);
+                }
+                expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+            });
             
-        expect(matcher.get_trie().size).to.equal(0);
-
-        rabbitmq_expected_results_after_clear.forEach(function (test)
-        {
-            expect(Array.from(matcher.match(test[0])).sort(), test[0]).to.eql(
-                   test[1].sort());
-            for (var v of test[1])
+            /*jslint unparam: true */
+            var remaining = rabbitmq_test_bindings.filter(function (topic_val, i)
             {
-                expect(matcher.test(test[0], v)).to.equal(true);
-            }
-            expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
+                return rabbitmq_bindings_to_remove.indexOf(i + 1) < 0;
+            });
+            /*jslint unparam: false */
+
+            remaining.forEach(function (topic_val)
+            {
+                matcher.remove(topic_val[0], topic_val[1]);
+            });
+
+            worker.postMessage(null);
+            worker.once('message', cb);
         });
     });
 
