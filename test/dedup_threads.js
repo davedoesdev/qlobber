@@ -14,7 +14,18 @@ var path = require('path'),
     expect = require('chai').expect,
     QlobberDedup = require('..').QlobberDedup.nativeString,
     common = require('./common'),
-    { Worker } = require('worker_threads');
+    { Worker } = require('worker_threads'),
+    { promisify } = require('util');
+
+async function wait_for_worker(worker) {
+    await promisify(cb => {
+        worker.on('error', cb);
+
+        worker.on('exit', code => {
+            cb(code === 0 ? null : new Error(`worker exited with code ${code}`));
+        });
+    })();
+}
 
 describe('qlobber-threads', function ()
 {
@@ -43,7 +54,7 @@ describe('qlobber-threads', function ()
 
         const matcher2 = new QlobberDedup(matcher.state_address);
         expect(Buffer.from(matcher2.state_address).equals(
-               Buffer.from(matcher.state_address))).to.be.true;
+               Buffer.from(matcher.state_address))).to.equal(true);
         expect(common.get_trie(matcher2)).to.eql(common.expected_trie);
     });
 
@@ -65,32 +76,30 @@ describe('qlobber-threads', function ()
         });
     });
     
-    it('should add on one thread and match on another', function (cb)
+    it('should add on one thread and match on another', async function ()
     {
         add_bindings(rabbitmq_test_bindings);
 
-        const worker = new Worker(
-            path.join(__dirname, 'fixtures', 'thread_match.js'),
-            { workerData: matcher.state_address });
-
-        worker.on('error', cb);
-
-        worker.on('exit', code => {
-            cb(code === 0 ? null : new Error(`worker exited with code ${code}`));
-        });
+        await wait_for_worker(new Worker(
+            path.join(__dirname, 'fixtures', 'thread_match.js'), {
+                workerData: {
+                    state_address: matcher.state_address,
+                    operation: 'match'
+                }
+            }));
     });
 
-    return;
-
-    it('should support removing bindings', function ()
+    it('should share state between threads', async function ()
     {
         add_bindings(rabbitmq_test_bindings);
 
-        rabbitmq_bindings_to_remove.forEach(function (i)
-        {
-            matcher.remove(rabbitmq_test_bindings[i-1][0],
-                           rabbitmq_test_bindings[i-1][1]);
-        });
+        await wait_for_worker(new Worker(
+            path.join(__dirname, 'fixtures', 'thread_match.js'), {
+                workerData: {
+                    state_address: matcher.state_address,
+                    operation: 'remove'
+                }
+            }));
 
         expect(common.get_trie(matcher)).to.eql({"a":{"b":{"c":{".":["t20"]},"b":{"c":{".":["t4"]},".":["t14"]},".":["t15"]},"*":{"c":{".":["t2"]},".":["t9"]},"#":{"b":{".":["t3"]},"#":{".":["t12"]}}},"#":{"#":{".":["t6"],"#":{".":["t24"]}},"b":{".":["t7"],"#":{".":["t26"]}},"*":{"#":{".":["t22"]}}},"*":{"*":{".":["t8"],"*":{".":["t18"]}},"b":{"c":{".":["t10"]}},"#":{"#":{".":["t23"]}},".":["t25"]},"b":{"b":{"c":{".":["t13"]}},"c":{".":["t16"]}},"":{".":["t17"]}});
 
@@ -130,6 +139,8 @@ describe('qlobber-threads', function ()
             expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
     });
+
+    return;
 
     it('should support clearing the bindings', function ()
     {
