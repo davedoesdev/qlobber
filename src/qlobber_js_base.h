@@ -133,6 +133,10 @@ public:
     void ResetCounters(const Napi::CallbackInfo& info) {
         this->state->counters = { 0, 0, 0, 0, 0, 0, 0, 0 };
     }
+
+    Napi::Value GetRefCount(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), this->state->ref_count);
+    }
 #endif
     Napi::Value GetVisitor(const Napi::CallbackInfo& info) {
         return Napi::External<Visitor>::New(
@@ -251,14 +255,30 @@ public:
         return Napi::Number::New(info.Env(), this->add_ref());
     }
 
-    Napi::Value RemoveRef(const Napi::CallbackInfo& info) {
-        return Napi::Number::New(info.Env(), this->remove_ref());
+    Napi::Value Release(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), this->release());
     }
 
     Napi::Value GetStateAddress(const Napi::CallbackInfo& info) {
         typedef typename QlobberJSCommon::State *StatePtr;
         auto r = Napi::ArrayBuffer::New(info.Env(), sizeof(StatePtr));
         *static_cast<StatePtr*>(r.Data()) = this->state;
+        return r;
+    }
+
+    Napi::Value GetUid(const Napi::CallbackInfo& info) {
+        return Napi::Number::New(info.Env(), this->uid);
+    }
+
+    static Napi::Value GetDeletions(const Napi::CallbackInfo& info) {
+        const auto env = info.Env();
+        const auto Set = env.Global().Get("Set").As<Napi::Function>();
+        const auto proto = Set.Get("prototype").As<Napi::Object>();
+        const auto add = proto.Get("add").As<Napi::Function>();
+        const auto r = Set.New({});
+        for (const auto& uid : QlobberJSCommon::deletions) {
+            add.Call(r, { Napi::Number::New(env, uid) });
+        }
         return r;
     }
 
@@ -769,13 +789,16 @@ void Initialize(Napi::Env env, const char* name, Napi::Object exports) {
         T::InstanceMethod("match_next", &T::MatchNext),
         T::InstanceMethod("match_next_async", &T::MatchNextAsync),
         T::InstanceMethod("add_ref", &T::AddRef),
-        T::InstanceMethod("remove_ref", &T::RemoveRef),
+        T::InstanceMethod("release", &T::Release),
         T::InstanceAccessor("options", &T::GetOptions, nullptr),
         T::InstanceAccessor("_shortcuts", &T::GetShortcuts, nullptr),
         T::InstanceAccessor("state_address", &T::GetStateAddress, nullptr),
 #ifdef DEBUG
         T::InstanceAccessor("_counters", &T::GetCounters, nullptr),
         T::InstanceMethod("_reset_counters", &T::ResetCounters),
+        T::InstanceAccessor("_ref_count", &T::GetRefCount, nullptr),
+        T::InstanceAccessor("_uid", &T::GetUid, nullptr),
+        T::StaticAccessor("_deletions", &T::GetDeletions, nullptr),
 #endif
     };
 

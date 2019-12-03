@@ -1,9 +1,20 @@
 const { workerData, parentPort } = require('worker_threads');
 const expect = require('chai').expect;
 const QlobberDedup = require('../..').QlobberDedup.nativeString;
+const sleep = require('util').promisify(setTimeout);
 require('../rabbitmq.js');
 
-const matcher = new QlobberDedup(workerData.state_address);
+let matcher = new QlobberDedup(workerData.state_address);
+expect(matcher._ref_count).to.equal(2);
+
+async function finish() {
+    const uid = matcher._uid;
+    matcher = null;
+    gc();
+    while (!QlobberDedup._deletions.has(uid)) {
+        await(sleep(1000));
+    }
+}
 
 switch (workerData.operation) {
 case 'match':
@@ -17,6 +28,7 @@ case 'match':
         }
         expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
     });
+    finish();
     break;
 
 case 'remove':
@@ -40,7 +52,7 @@ case 'remove':
             expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
         });
 
-        parentPort.postMessage(null);
+        finish();
     });
     break;
 

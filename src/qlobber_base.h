@@ -12,6 +12,10 @@
 #include "options.h"
 #include "rwlock.h"
 
+#ifdef DEBUG
+#include <unordered_set>
+#endif
+
 template <typename Value>
 using VisitData = std::variant<std::string, Value>;
 
@@ -70,6 +74,9 @@ public:
 
     QlobberBase(State* state) : state(state) {
         add_ref();
+#ifdef DEBUG
+        uid = QlobberBase::num_creations++;
+#endif
     }
 
     QlobberBase() : QlobberBase(new State()) {}
@@ -90,12 +97,19 @@ public:
             state = std::get<1>(options_or_state.data);
         }
         add_ref();
+#ifdef DEBUG
+        uid = QlobberBase::num_creations++;
+#endif
     };
 
     virtual ~QlobberBase() {
-        if (remove_ref() == 0) {
+        if (release() == 0) {
             delete state;
         }
+#ifdef DEBUG
+        std::lock_guard<std::mutex> lock(deletions_mutex);
+        deletions.insert(uid);
+#endif
     }
 
 protected:
@@ -180,11 +194,18 @@ protected:
         return ++state->ref_count;
     }
 
-    uint32_t remove_ref() {
+    uint32_t release() {
         return --state->ref_count;
     }
 
     State* state;
+
+#ifdef DEBUG
+    uint32_t uid;
+    static std::atomic<uint32_t> num_creations;
+    static std::unordered_set<uint32_t> deletions;
+    static std::mutex deletions_mutex;
+#endif
 
 private:
     virtual void initial_value_inserted(const Value& val) {}
@@ -524,7 +545,6 @@ private:
             cur.i = 0;
             ++saved.back().it;
         }
-
     }
 
     void inject(typename coro_visit_t::pull_type& source, bool cache_adds) {
@@ -645,3 +665,35 @@ private:
         return words;
     }
 };
+
+#ifdef DEBUG
+template<typename Value,
+         typename ValueStorage,
+         typename RemoveValue,
+         typename MatchResult,
+         typename Context,
+         typename TestValue,
+         typename IterValue,
+         typename StateBase>
+std::atomic<uint32_t> QlobberBase<Value, ValueStorage, RemoveValue, MatchResult, Context, TestValue, IterValue, StateBase>::num_creations;
+
+template<typename Value,
+         typename ValueStorage,
+         typename RemoveValue,
+         typename MatchResult,
+         typename Context,
+         typename TestValue,
+         typename IterValue,
+         typename StateBase>
+std::unordered_set<uint32_t> QlobberBase<Value, ValueStorage, RemoveValue, MatchResult, Context, TestValue, IterValue, StateBase>::deletions;
+
+template<typename Value,
+         typename ValueStorage,
+         typename RemoveValue,
+         typename MatchResult,
+         typename Context,
+         typename TestValue,
+         typename IterValue,
+         typename StateBase>
+std::mutex QlobberBase<Value, ValueStorage, RemoveValue, MatchResult, Context, TestValue, IterValue, StateBase>::deletions_mutex;
+#endif
