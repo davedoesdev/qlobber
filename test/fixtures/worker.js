@@ -4,14 +4,19 @@ const QlobberDedup = require('../..').QlobberDedup.nativeString;
 const sleep = require('util').promisify(setTimeout);
 require('../rabbitmq.js');
 
-let matcher = new QlobberDedup(workerData.state_address);
-expect(matcher._ref_count).to.equal(2);
+let matcher;
+
+if ((workerData.operation !== 'add') &&
+    (workerData.operation !== 'match_one')) {
+    matcher = new QlobberDedup(workerData.state_address);
+    expect(matcher._ref_count).to.equal(2);
+}
 
 async function finish() {
     const uid = matcher._uid;
     matcher = null;
-    gc();
     while (!QlobberDedup._deletions.has(uid)) {
+        gc();
         await(sleep(1000));
     }
 }
@@ -29,6 +34,18 @@ case 'match':
         expect(matcher.test(test[0], 'xyzfoo')).to.equal(false);
     });
     finish();
+    break;
+
+case 'match_one':
+    parentPort.once('message', state_address => {
+        matcher = new QlobberDedup(state_address);
+        parentPort.once('message', test => {
+            parentPort.postMessage(matcher.match(test));
+            finish();
+        })
+        parentPort.postMessage(matcher._ref_count);
+    });
+    parentPort.postMessage(null);
     break;
 
 case 'remove':
@@ -54,6 +71,18 @@ case 'remove':
 
         finish();
     });
+    break;
+
+case 'add':
+    matcher = new QlobberDedup();
+    expect(matcher._ref_count).to.equal(1);
+    rabbitmq_test_bindings.forEach(function (topic_val)
+    {
+        matcher.add(topic_val[0], topic_val[1]);
+    });
+    parentPort.postMessage(matcher.state_address);
+    matcher.add_ref(); // stop state being deleted
+    finish();
     break;
 
 default:

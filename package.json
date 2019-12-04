@@ -19,7 +19,7 @@
   "main": "index.js",
   "scripts": {
     "install": "node-gyp rebuild || true",
-    "test": "node-gyp rebuild --debug && grunt lint test",
+    "test": "node-gyp rebuild --debug && node --expose-gc ./node_modules/.bin/grunt lint test",
     "coverage": "node-gyp rebuild --debug && grunt lint coverage coveralls"
   },
   "directories": {

@@ -59,16 +59,6 @@ describe(`true (${type})`, function ()
         expect(matcher.test('a.b.c.d')).to.equal(false);
     });
 
-    function add_bindings(matcher, bindings, mapper)
-    {
-        mapper = mapper || function (topic) { return topic; };
-
-        bindings.forEach(function (topic_val)
-        {
-            matcher.add(topic_val[0], mapper(topic_val[1]));
-        });
-    }
-
     function get_trie(matcher, t)
     {
         t = t || matcher.get_trie();
@@ -90,7 +80,11 @@ describe(`true (${type})`, function ()
     it('should visit trie', function ()
     {
         let matcher = new QlobberTrue();
-        add_bindings(matcher, rabbitmq_test_bindings);
+
+        rabbitmq_test_bindings.forEach(function (topic_val)
+        {
+            matcher.add(topic_val[0], topic_val[1]);
+        });
 
         let objs = [];
 

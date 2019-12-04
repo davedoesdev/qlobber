@@ -24,13 +24,11 @@ describe('qlobber-async', function ()
         done();
     });
 
-    async function add_bindings(bindings, mapper)
+    async function add_bindings(bindings)
     {
-        mapper = mapper || function (topic) { return topic; };
-
         for (const topic_val of bindings)
         {
-            await matcher.addP(topic_val[0], mapper(topic_val[1]));
+            await matcher.addP(topic_val[0], topic_val[1]);
         }
     }
 
