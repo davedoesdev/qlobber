@@ -2,6 +2,8 @@
 
 Node.js globbing for amqp-like topics.
 
+__Note:__ Version 4.0.0 adds async and worker thread support but requires Node 12+.
+
 Example:
 
 ```javascript
@@ -27,6 +29,8 @@ npm install qlobber
 A more advanced example using topics from the [RabbitMQ topic tutorial](http://www.rabbitmq.com/tutorials/tutorial-five-python.html):
 
 ```javascript
+var assert = require('assert');
+var Qlobber = require('qlobber').Qlobber;
 var matcher = new Qlobber();
 matcher.add('*.orange.*', 'Q1');
 matcher.add('*.*.rabbit', 'Q2');
@@ -54,6 +58,51 @@ assert.deepEqual(['quick.orange.rabbit',
                   ['Q2']]);
 ```
 
+## Async Example
+
+Same as the first example but using `await`:
+
+```javascript
+var assert = require('assert');
+var Qlobber = require('qlobber').Qlobber.nativeString;
+var matcher = new Qlobber();
+
+(async () => {
+    await matcher.addP('foo.*', 'it matched!');
+    assert.deepEqual(await matcher.matchP('foo.bar'), ['it matched!']);
+    assert(await matcher.testP('foo.bar', 'it matched!'));
+})();
+```
+
+## Worker Thread Example
+
+Same again but the matching is done on a separate thread:
+
+```
+const Qlobber = require('qlobber').Qlobber.nativeString;
+const {
+    Worker, isMainThread, parentPort, workerData
+} = require('worker_threads');
+
+if (isMainThread) {
+    const matcher = new Qlobber();
+    matcher.add('foo.*', 'it matched!');
+    const worker = new Worker(__filename, {
+        workerData: matcher.state_address
+    });
+    worker.on('message', msg => {
+        const assert = require('assert');
+        assert.deepEqual(msg, [['it matched!'], true]);
+    });
+} else {
+    const matcher = new Qlobber(workerData);
+    parentPort.postMessage([
+        matcher.match('foo.bar'),
+        matcher.test('foo.bar', 'it matched!')
+    ]);
+}
+```
+
 ## Licence
 
 [MIT](LICENCE)
@@ -65,19 +114,19 @@ qlobber passes the [RabbitMQ topic tests](https://github.com/rabbitmq/rabbitmq-s
 To run the tests:
 
 ```shell
-grunt test
+npm test
 ```
 
 ## Lint
 
 ```shell
-grunt lint
+npm run lint
 ```
 
 ## Code Coverage
 
 ```shell
-grunt coverage
+npm run coverage
 ```
 
 [Instanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://rawgit.davedoesdev.com/davedoesdev/qlobber/master/coverage/lcov-report/index.html).
@@ -92,6 +141,53 @@ grunt bench
 
 qlobber is also benchmarked in [ascoltatori](https://github.com/mcollina/ascoltatori).
 
+## Native Qlobbers
+
+The Javascript Qlobbers can't support asynchronous calls and worker threads
+because Javascript values can't be shared between threads.
+
+In order to support asynchronous calls and worker threads, a native C++
+implementation is included.  If you have the following then it will the native
+version will be compiled when you install the module:
+
+Gnu C++ version 9 or above
+Boost 1.70 or above
+
+If compilation succeeds then the following classes will be available alongside
+the Javascript classes:
+
+`Qlobber.nativeString`
+`Qlobber.nativeNumber`
+`QlobberDedup.nativeString`
+`QlobberDedup.nativeNumber`
+`QlobberTrue.native`
+
+They can only hold values of a single type (strings or numbers).
+
+You can also build the native implemention using one of these commands:
+
+```shell
+grunt build [--debug]
+grunt rebuild [--debug]
+```
+
+### Asynchronous calls
+
+The native classes support the same API as the Javascript classes but have the
+following additional methods:
+
+`addP`
+`removeP`
+`matchP`
+`match_iterP`
+`testP`
+`clearP`
+`visitP`
+`get_restorerP`
+
+They correspond to their corresponding namesakes but return Promises. Note that
+`match_iterP` and `visitP` return async iterators.
+
 # API
 
 _Source: [lib/qlobber.js](lib/qlobber.js)_
@@ -102,6 +198,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobberprototypeaddtopic-val"></a><a name="toc_qlobberprototype"></a>[Qlobber.prototype.add](#qlobberprototypeaddtopic-val)
 - <a name="toc_qlobberprototyperemovetopic-val"></a>[Qlobber.prototype.remove](#qlobberprototyperemovetopic-val)
 - <a name="toc_qlobberprototypematchtopic"></a>[Qlobber.prototype.match](#qlobberprototypematchtopic)
+- <a name="toc_qlobberprototypematch_iter"></a>[Qlobber.prototype.match_iter](#qlobberprototypematch_iter)
 - <a name="toc_qlobberprototypetesttopic-val"></a>[Qlobber.prototype.test](#qlobberprototypetesttopic-val)
 - <a name="toc_qlobberprototypetest_valuesvals-val"></a>[Qlobber.prototype.test_values](#qlobberprototypetest_valuesvals-val)
 - <a name="toc_qlobberprototypeclear"></a>[Qlobber.prototype.clear](#qlobberprototypeclear)
@@ -125,11 +222,15 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - `{Object} [options]` Configures the qlobber. Use the following properties:
   - `{String} separator` The character to use for separating words in topics. Defaults to '.'. MQTT uses '/' as the separator, for example.
 
-  - `{String} wildcard_one` The character to use for matching exactly one word in a topic. Defaults to '*'. MQTT uses '+', for example.
+  - `{String} wildcard_one` The character to use for matching exactly one _non-empty_ word in a topic. Defaults to '*'. MQTT uses '+', for example.
 
   - `{String} wildcard_some` The character to use for matching zero or more words in a topic. Defaults to '#'. MQTT uses '#' too.
 
   - `{Boolean|Map} cache_adds` Whether to cache topics when adding topic matchers. This will make adding multiple matchers for the same topic faster at the cost of extra memory usage. Defaults to `false`. If you supply a `Map` then it will be used to cache the topics (use this to enumerate all the topics in the qlobber).
+
+  - `{Integer} max_words` Maximum number of words to allow in a topic. Defaults to 100.
+
+  - `{Integer} max_wildcard_somes` Maximum number of `wildcard_some` words in a topic. Defaults to 3.
 
 <sub>Go: [TOC](#tableofcontents)</sub>
 
@@ -178,6 +279,16 @@ Note you can match more than one value against a topic by calling `add` multiple
 **Return:**
 
 `{Array}` List of values that matched the topic. This may contain duplicates. Use a [`QlobberDedup`](#qlobberdedupoptions) if you don't want duplicates.
+
+<sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
+
+## Qlobber.prototype.match_iter()
+
+> Match a topic, returning the matches one at a time.
+
+**Return:**
+
+`{Iterator}` An iterator on the values that match the topic. There may be duplicate values, even if you use a [`QlobberDedup`](#qlobberdedupoptions).
 
 <sub>Go: [TOC](#tableofcontents) | [Qlobber.prototype](#toc_qlobberprototype)</sub>
 

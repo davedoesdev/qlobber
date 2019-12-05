@@ -80,10 +80,6 @@ public:
     }
 
     QlobberBase() : QlobberBase(new State()) {}
-        // TODO:
-        // worker threads
-        // centro and mqlobber-access-control should check max_words
-        //   and max_wildcard_somes to prevent runtime exceptions
 
     QlobberBase(const Options& options) : QlobberBase() {
         state->options = options;
