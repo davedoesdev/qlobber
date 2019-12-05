@@ -11,4 +11,4 @@ before_install:
   - sudo apt update
   - sudo apt -y install libboost1.70-dev g++-9
 script:
-  - if [ $TRAVIS_NODE_VERSION = 13 ]; then npm run coverage; else npm run test; fi
+  - if [ $TRAVIS_NODE_VERSION = 13 ]; then npm run coverage && npm run coveralls; else npm run test; fi
