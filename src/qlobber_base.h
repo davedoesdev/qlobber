@@ -332,7 +332,7 @@ private:
                 }
             }
 
-            if (!word.empty()) {
+            if (!word.empty() || state->options.match_empty_levels) {
                 const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
@@ -397,7 +397,7 @@ private:
                 }
             }
 
-            if (!word.empty()) {
+            if (!word.empty() || state->options.match_empty_levels) {
                 const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if (it != std::get<0>(sub_trie.v)->end()) {
@@ -475,7 +475,7 @@ private:
                 }
             }
 
-            if (!word.empty()) {
+            if (!word.empty() || state->options.match_empty_levels) {
                 const auto it = std::get<0>(sub_trie.v)->find(state->options.wildcard_one);
 
                 if ((it != std::get<0>(sub_trie.v)->end()) &&

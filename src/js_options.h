@@ -16,6 +16,9 @@ struct JSOptions : Options {
             if (options.Has("wildcard_some")) {
                 wildcard_some = options.Get("wildcard_some").As<Napi::String>();
             }
+            if (options.Has("match_empty_levels")) {
+                match_empty_levels = options.Get("match_empty_levels").As<Napi::Boolean>();
+            }
             if (options.Has("cache_adds")) {
                 cache_adds = options.Get("cache_adds").As<Napi::Boolean>();
             }
@@ -33,6 +36,7 @@ struct JSOptions : Options {
         r.Set("separator", options.separator);
         r.Set("wildcard_one", options.wildcard_one);
         r.Set("wildcard_some", options.wildcard_some);
+        r.Set("match_empty_levels", options.match_empty_levels);
         r.Set("cache_adds", options.cache_adds);
         r.Set("max_words", options.max_words);
         r.Set("max_wildcard_somes", options.max_wildcard_somes);

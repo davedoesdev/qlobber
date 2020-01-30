@@ -21,6 +21,18 @@ describe(`qlobber (${type})`, function ()
 {
     var matcher;
 
+    function match(topic)
+    {
+        let r = [];
+
+        for (let v of matcher.match_iter(topic))
+        {
+            r.push(v);
+        }
+
+        return r;
+    }
+
     beforeEach(function (done)
     {
         matcher = new Qlobber();
@@ -494,18 +506,6 @@ describe(`qlobber (${type})`, function ()
     {
         add_bindings(rabbitmq_test_bindings);
 
-        function match(topic)
-        {
-            let r = [];
-
-            for (let v of matcher.match_iter(topic))
-            {
-                r.push(v);
-            }
-
-            return r;
-        }
-
         rabbitmq_expected_results_before_remove.forEach(function (test)
         {
             expect(match(test[0]).remove_duplicates(), test[0]).to.eql(test[1].sort());
@@ -560,6 +560,48 @@ describe(`qlobber (${type})`, function ()
         matcher = new Qlobber({ max_wildcard_somes: 4 });
         const topic = new Array(4).fill('#').join('.');
         matcher.add(topic, 'foo');
+    });
+
+    it('should not match empty levels by default', function () {
+        matcher.add('a.*.c', 'foo');
+        matcher.add('a.*', 'bar');
+
+        expect(matcher.match('a.b.c')).to.eql(['foo']);
+        expect(matcher.match('a..c')).to.eql([]);
+        expect(matcher.match('a.b')).to.eql(['bar']);
+        expect(matcher.match('a.')).to.eql([]);
+
+        expect(match('a.b.c')).to.eql(['foo']);
+        expect(match('a..c')).to.eql([]);
+        expect(match('a.b')).to.eql(['bar']);
+        expect(match('a.')).to.eql([]);
+
+        expect(matcher.test('a.b.c', 'foo')).to.equal(true);
+        expect(matcher.test('a..c', 'foo')).to.equal(false);
+        expect(matcher.test('a.b', 'bar')).to.equal(true);
+        expect(matcher.test('a.', 'bar')).to.equal(false);
+    });
+
+    it('should be able to match empty levels', function () {
+        matcher = new Qlobber({ match_empty_levels: true });
+
+        matcher.add('a.*.c', 'foo');
+        matcher.add('a.*', 'bar');
+
+        expect(matcher.match('a.b.c')).to.eql(['foo']);
+        expect(matcher.match('a..c')).to.eql(['foo']);
+        expect(matcher.match('a.b')).to.eql(['bar']);
+        expect(matcher.match('a.')).to.eql(['bar']);
+
+        expect(match('a.b.c')).to.eql(['foo']);
+        expect(match('a..c')).to.eql(['foo']);
+        expect(match('a.b')).to.eql(['bar']);
+        expect(match('a.')).to.eql(['bar']);
+
+        expect(matcher.test('a.b.c', 'foo')).to.equal(true);
+        expect(matcher.test('a..c', 'foo')).to.equal(true);
+        expect(matcher.test('a.b', 'bar')).to.equal(true);
+        expect(matcher.test('a.', 'bar')).to.equal(true);
     });
 
     it('should recurse expected number of times', function () {

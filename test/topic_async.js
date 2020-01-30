@@ -18,6 +18,18 @@ describe('qlobber-async', function ()
 {
     var matcher;
 
+    async function match(topic)
+    {
+        let r = [];
+
+        for await (let v of matcher.match_iterP(topic))
+        {
+            r.push(v);
+        }
+
+        return r;
+    }
+
     beforeEach(function (done)
     {
         matcher = new Qlobber();
@@ -365,18 +377,6 @@ describe('qlobber-async', function ()
     {
         await add_bindings(rabbitmq_test_bindings);
 
-        async function match(topic)
-        {
-            let r = [];
-
-            for await (let v of matcher.match_iterP(topic))
-            {
-                r.push(v);
-            }
-
-            return r;
-        }
-
         for (const test of rabbitmq_expected_results_before_remove)
         {
             expect((await match(test[0])).remove_duplicates(), test[0]).to.eql(test[1].sort());
@@ -446,7 +446,49 @@ describe('qlobber-async', function ()
         await matcher.addP(topic, 'foo');
     });
 
-   it('should recurse expected number of times', async function () {
+    it('should not match empty levels by default', async function () {
+        await matcher.addP('a.*.c', 'foo');
+        await matcher.addP('a.*', 'bar');
+
+        expect(await matcher.matchP('a.b.c')).to.eql(['foo']);
+        expect(await matcher.matchP('a..c')).to.eql([]);
+        expect(await matcher.matchP('a.b')).to.eql(['bar']);
+        expect(await matcher.matchP('a.')).to.eql([]);
+
+        expect(await match('a.b.c')).to.eql(['foo']);
+        expect(await match('a..c')).to.eql([]);
+        expect(await match('a.b')).to.eql(['bar']);
+        expect(await match('a.')).to.eql([]);
+
+        expect(await matcher.testP('a.b.c', 'foo')).to.equal(true);
+        expect(await matcher.testP('a..c', 'foo')).to.equal(false);
+        expect(await matcher.testP('a.b', 'bar')).to.equal(true);
+        expect(await matcher.testP('a.', 'bar')).to.equal(false);
+    });
+
+    it('should be able to match empty levels', async function () {
+        matcher = new Qlobber({ match_empty_levels: true });
+
+        await matcher.addP('a.*.c', 'foo');
+        await matcher.addP('a.*', 'bar');
+
+        expect(await matcher.matchP('a.b.c')).to.eql(['foo']);
+        expect(await matcher.matchP('a..c')).to.eql(['foo']);
+        expect(await matcher.matchP('a.b')).to.eql(['bar']);
+        expect(await matcher.matchP('a.')).to.eql(['bar']);
+
+        expect(await match('a.b.c')).to.eql(['foo']);
+        expect(await match('a..c')).to.eql(['foo']);
+        expect(await match('a.b')).to.eql(['bar']);
+        expect(await match('a.')).to.eql(['bar']);
+
+        expect(await matcher.testP('a.b.c', 'foo')).to.equal(true);
+        expect(await matcher.testP('a..c', 'foo')).to.equal(true);
+        expect(await matcher.testP('a.b', 'bar')).to.equal(true);
+        expect(await matcher.testP('a.', 'bar')).to.equal(true);
+    });
+
+    it('should recurse expected number of times', async function () {
         this.timeout(10000);
 
         async function check(pattern, topic,
