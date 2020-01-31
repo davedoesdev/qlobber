@@ -17,7 +17,7 @@ var expect = require('chai').expect,
 function test(type, QlobberDedup)
 {
 
-describe(`qlobber-dedup (${type})`, function ()
+(QlobberDedup ? describe : describe.skip)(`qlobber-dedup (${type})`, function ()
 {
     var matcher;
 
@@ -149,7 +149,7 @@ describe(`qlobber-dedup (${type})`, function ()
         });
     });
 
-    if (!QlobberDedup.is_native)
+    if (QlobberDedup && !QlobberDedup.is_native)
     {
         it('should support functions as values', function ()
         {

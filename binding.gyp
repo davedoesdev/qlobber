@@ -8,7 +8,7 @@
 
       'cflags+': [ '-std=gnu++17' ],
       'cflags!': [ '-fno-exceptions' ],
-      'cflags_cc!': [ '-fno-exceptions', '-std=gnu++1y' ],
+      'cflags_cc!': [ '-fno-exceptions', '-std=gnu++1y', '-std=gnu++0x' ],
       'libraries': [ '-lboost_context' ],
       'xcode_settings': {
         'GCC_ENABLE_CPP_EXCEPTIONS': 'YES',

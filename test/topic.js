@@ -17,7 +17,7 @@ var expect = require('chai').expect,
 function test(type, Qlobber)
 {
 
-describe(`qlobber (${type})`, function ()
+(Qlobber ? describe : describe.skip)(`qlobber (${type})`, function ()
 {
     var matcher;
 
@@ -176,7 +176,7 @@ describe(`qlobber (${type})`, function ()
         });
     });
 
-    if (!Qlobber.is_native)
+    if (Qlobber && !Qlobber.is_native)
     {
         it('should support functions as values', function ()
         {
@@ -489,7 +489,7 @@ describe(`qlobber (${type})`, function ()
         expect(get_shortcuts(matcher2)).to.eql(shortcuts);
     });
 
-    if (!Qlobber.is_native)
+    if (Qlobber && !Qlobber.is_native)
     {
         it('should add shortcuts to passed in Map', function ()
         {

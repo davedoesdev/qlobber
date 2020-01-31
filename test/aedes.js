@@ -8,7 +8,7 @@ var expect = require('chai').expect,
 function test(type, QlobberSub)
 {
 
-describe(`qlobber-sub (${type})`, function ()
+(QlobberSub ? describe : describe.skip)(`qlobber-sub (${type})`, function ()
 {
     it('should add and match a single value', function ()
     {

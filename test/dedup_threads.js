@@ -14,7 +14,6 @@ var path = require('path'),
     expect = require('chai').expect,
     QlobberDedup = require('..').QlobberDedup.nativeString,
     common = require('./common'),
-    { Worker } = require('worker_threads'),
     { promisify } = require('util');
 
 async function wait_for_worker(worker) {
@@ -29,7 +28,17 @@ async function wait_for_worker(worker) {
     }
 }
 
-describe('qlobber-threads', function ()
+var Worker;
+
+try
+{
+    ({ Worker } = require('worker_threads'));
+}
+catch (ex)
+{
+}
+
+(Worker ? describe : describe.skip)('qlobber-threads', function ()
 {
     var matcher;
 

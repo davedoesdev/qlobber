@@ -14,20 +14,28 @@ var expect = require('chai').expect,
     Qlobber = require('..').Qlobber.nativeString,
     common = require('./common');
 
-describe('qlobber-async', function ()
+var async_helpers;
+
+try
+{
+    async_helpers = require('./fixtures/async_helpers.js');
+}
+catch (ex)
+{
+}
+
+(async_helpers ? describe : describe.skip)('qlobber-async', function ()
 {
     var matcher;
 
     async function match(topic)
     {
-        let r = [];
+        return await async_helpers.match(matcher, topic);
+    }
 
-        for await (let v of matcher.match_iterP(topic))
-        {
-            r.push(v);
-        }
-
-        return r;
+    async function visit()
+    {
+        return await async_helpers.visit(matcher);
     }
 
     beforeEach(function (done)
@@ -283,12 +291,7 @@ describe('qlobber-async', function ()
     {
         await add_bindings(rabbitmq_test_bindings);
 
-        let objs = [];
-
-        for await (let v of matcher.visitP())
-        {
-            objs.push(v);
-        }
+        const objs = await visit();
         
         expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
     });
@@ -349,11 +352,7 @@ describe('qlobber-async', function ()
             '#.b.#': [ 't26' ]
         });
 
-        let objs = [];
-        for await (let v of matcher.visitP())
-        {
-            objs.push(v);
-        }
+        const objs = await visit();
         expect(common.ordered_sort(objs)).to.eql(common.ordered_sort(common.expected_visits));
 
         let matcher2 = new Qlobber({ cache_adds: true }),
@@ -408,7 +407,7 @@ describe('qlobber-async', function ()
         await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words', 'removeP');
         await expect_throw(async () => await matcher.matchP(topic), 'too many words', 'matchP');
         await expect_throw(async () => {
-            for await (let v of matcher.match_iterP(topic)) {}
+            await match(topic);
         }, 'too many words', 'match_iterP');
         await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words', 'testP');
     });
@@ -419,7 +418,7 @@ describe('qlobber-async', function ()
         await expect_throw(async () => await matcher.removeP(topic, 'foo'), 'too many words', 'removeP');
         await expect_throw(async () => await matcher.matchP(topic), 'too many words', 'matchP');
         await expect_throw(async () => {
-            for await (let v of matcher.match_iterP(topic)) {}
+            await match(topic);
         }, 'too many words', 'match_iterP');
         await expect_throw(async () => await matcher.testP(topic, 'foo'), 'too many words', 'testP');
 
@@ -427,7 +426,7 @@ describe('qlobber-async', function ()
         await matcher.addP(topic, 'foo');
         await matcher.removeP(topic, 'foo');
         await matcher.matchP(topic);
-        for await (let v of matcher.match_iterP(topic)) {}
+        await match(topic);
         await matcher.testP(topic, 'foo');
     });
 
@@ -436,7 +435,7 @@ describe('qlobber-async', function ()
         expect_throw(async () => await matcher.addP(topic, 'foo'), 'too many wildcard somes');
         await matcher.removeP(topic, 'foo');
         await matcher.matchP(topic);
-        for await (let v of matcher.match_iterP(topic)) {}
+        await match(topic);
         await matcher.testP(topic, 'foo');
     });
 
@@ -515,7 +514,7 @@ describe('qlobber-async', function ()
             expect(matcher._counters.match).to.equal(ematch);
             expect(matcher._counters.match_some).to.equal(ematch_some);
 
-            for await (let v of matcher.match_iterP(topic)) {}
+            await match(topic);
             expect(matcher._counters.match_iter).to.equal(ematch);
             expect(matcher._counters.match_some_iter).to.equal(ematch_some);
 

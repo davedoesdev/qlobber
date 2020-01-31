@@ -14,6 +14,10 @@ Napi::Object Initialize(Napi::Env env, Napi::Object exports) {
     return exports;
 }
 
+#ifdef NAPI_MODULE_INIT
 NAPI_MODULE_INIT() {
   return Napi::RegisterModule(env, exports, Initialize);
 }
+#else
+NODE_API_MODULE(qlobber, Initialize)
+#endif

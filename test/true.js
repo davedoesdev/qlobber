@@ -10,7 +10,7 @@ var expect = require('chai').expect,
 function test(type, QlobberTrue)
 {
 
-describe(`true (${type})`, function ()
+(QlobberTrue ? describe : describe.skip)(`true (${type})`, function ()
 {
     it('should add and test', function ()
     {

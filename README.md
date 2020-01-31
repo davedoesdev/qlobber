@@ -2,7 +2,7 @@
 
 Node.js globbing for amqp-like topics.
 
-__Note:__ Version 4.0.0 adds async and worker thread support but requires Node 12+.
+__Note:__ Version 4.2.0 adds async and worker thread support when used on Node 12+.
 
 Example:
 
