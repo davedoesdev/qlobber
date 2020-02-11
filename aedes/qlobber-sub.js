@@ -129,11 +129,12 @@ QlobberSub.set_native = function (qlobber_native)
     {
         const wrap_native = require('../lib/wrap_native.js');
         QlobberSub.native = wrap_native(qlobber_native.QlobberSub, QlobberSub);
-        return module.exports;
     }
     catch (ex)
     {
     }
+
+    return module.exports;
 };
 
 module.exports = QlobberSub;
