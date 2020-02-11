@@ -18,8 +18,8 @@
   "license": "MIT",
   "main": "index.js",
   "scripts": {
-    "test": "(cd native && node-gyp rebuild --debug) && node --expose-gc ./node_modules/.bin/grunt lint test",
-    "coverage": "(cd native && node-gyp rebuild --debug) && grunt lint coverage",
+    "test": "(cd native && npm install && node-gyp rebuild --debug) && node --expose-gc ./node_modules/.bin/grunt lint test",
+    "coverage": "(cd native && npm install && node-gyp rebuild --debug) && grunt lint coverage",
     "coveralls": "grunt coveralls",
     "lint": "grunt lint"
   },
