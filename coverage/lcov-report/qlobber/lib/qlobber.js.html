@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>307/307</span>
+                <span class='fraction'>306/306</span>
             </div>
         
             
@@ -39,14 +39,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>47/47</span>
+                <span class='fraction'>48/48</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>306/306</span>
+                <span class='fraction'>305/305</span>
             </div>
         
             
@@ -1128,7 +1128,33 @@
 <a name='L1069'></a><a href='#L1069'>1069</a>
 <a name='L1070'></a><a href='#L1070'>1070</a>
 <a name='L1071'></a><a href='#L1071'>1071</a>
-<a name='L1072'></a><a href='#L1072'>1072</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1072'></a><a href='#L1072'>1072</a>
+<a name='L1073'></a><a href='#L1073'>1073</a>
+<a name='L1074'></a><a href='#L1074'>1074</a>
+<a name='L1075'></a><a href='#L1075'>1075</a>
+<a name='L1076'></a><a href='#L1076'>1076</a>
+<a name='L1077'></a><a href='#L1077'>1077</a>
+<a name='L1078'></a><a href='#L1078'>1078</a>
+<a name='L1079'></a><a href='#L1079'>1079</a>
+<a name='L1080'></a><a href='#L1080'>1080</a>
+<a name='L1081'></a><a href='#L1081'>1081</a>
+<a name='L1082'></a><a href='#L1082'>1082</a>
+<a name='L1083'></a><a href='#L1083'>1083</a>
+<a name='L1084'></a><a href='#L1084'>1084</a>
+<a name='L1085'></a><a href='#L1085'>1085</a>
+<a name='L1086'></a><a href='#L1086'>1086</a>
+<a name='L1087'></a><a href='#L1087'>1087</a>
+<a name='L1088'></a><a href='#L1088'>1088</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2179,18 +2205,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
-<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">15x</span>
@@ -2204,11 +2236,12 @@
 &nbsp;
 Node.js globbing for amqp-like topics.
 &nbsp;
-__Note:__ Version 4.2.0 adds async and worker thread support when used on Node 12+.
+__Note:__ Version 5.0.0 adds async and worker thread support when used on Node 12+.
 &nbsp;
 Example:
 &nbsp;
 ```javascript
+var assert = require('assert');
 var Qlobber = require('qlobber').Qlobber;
 var matcher = new Qlobber();
 matcher.add('foo.*', 'it matched!');
@@ -2265,9 +2298,9 @@ assert.deepEqual(['quick.orange.rabbit',
 Same as the first example but using `await`:
 &nbsp;
 ```javascript
-var assert = require('assert');
-var Qlobber = require('qlobber').Qlobber.nativeString;
-var matcher = new Qlobber();
+const assert = require('assert');
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
+const matcher = new Qlobber.nativeString();
 &nbsp;
 (async () =&gt; {
     await matcher.addP('foo.*', 'it matched!');
@@ -2281,13 +2314,13 @@ var matcher = new Qlobber();
 Same again but the matching is done on a separate thread:
 &nbsp;
 ```
-const Qlobber = require('qlobber').Qlobber.nativeString;
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
 const {
     Worker, isMainThread, parentPort, workerData
 } = require('worker_threads');
 &nbsp;
 if (isMainThread) {
-    const matcher = new Qlobber();
+    const matcher = new Qlobber.nativeString();
     matcher.add('foo.*', 'it matched!');
     const worker = new Worker(__filename, {
         workerData: matcher.state_address
@@ -2297,7 +2330,7 @@ if (isMainThread) {
         assert.deepEqual(msg, [['it matched!'], true]);
     });
 } else {
-    const matcher = new Qlobber(workerData);
+    const matcher = new Qlobber.nativeString(workerData);
     parentPort.postMessage([
         matcher.match('foo.bar'),
         matcher.test('foo.bar', 'it matched!')
@@ -2349,11 +2382,27 @@ The Javascript Qlobbers don't support asynchronous calls and worker threads
 because Javascript values can't be shared between threads.
 &nbsp;
 In order to support asynchronous calls and worker threads, a native C++
-implementation is included. If you have Gnu C++ version 9+ and Boost 1.70+
-then the native version will be compiled when you install the module.
+implementation is available in the
+[qlobber-native](https://www.npmjs.com/package/qlobber-native) module.
 &nbsp;
-If compilation succeeds then the following classes will be available alongside
-the Javascript classes:
+Add qlobber-native as a dependency to your project and then add it to qlobber
+like this:
+&nbsp;
+```javascript
+require('qlobber').set_native(require('qlobber-native'));
+```
+&nbsp;
+Note that [`set_native`](#set_nativeqlobber_native) returns qlobber's exports so you can do something like
+this:
+&nbsp;
+```javascript
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
+```
+&nbsp;
+Note that qlobber-native requires Gnu C++ version 9+ and Boost 1.70+.
+&nbsp;
+Once's you've added it to qlobber, the following classes will be available
+alongside the Javascript classes:
 &nbsp;
 - `Qlobber.nativeString`
 - `Qlobber.nativeNumber`
@@ -2362,13 +2411,6 @@ the Javascript classes:
 - `QlobberTrue.native`
 &nbsp;
 They can only hold values of a single type (currently strings or numbers).
-&nbsp;
-You can also build the native implemention using one of these commands:
-&nbsp;
-```shell
-grunt build [--debug]
-grunt rebuild [--debug]
-```
 &nbsp;
 ### Asynchronous calls
 &nbsp;
@@ -3248,20 +3290,26 @@ RestorerStream.prototype._write = function (value, _, cb)
     cb();
 };
 &nbsp;
-var wrap_native;
+/**
+Add [qlobber-native](https://www.npmjs.com/package/qlobber-native) to qlobber.
 &nbsp;
-try
+@param {Object} qlobber_native The qlobber-native module, obtained using `require('qlobber-native')`.
+@return {Object} The qlobber exports with the following native classes added:
+- `Qlobber.nativeString`
+- `Qlobber.nativeNumber`
+- `QlobberDedup.nativeString`
+- `QlobberDedup.nativeNumber`
+- `QlobberTrue.native`
+*/
+function set_native(qlobber_native)
 {
-    wrap_native = require('./wrap_native.js');
-    const binding = require('bindings')('qlobber.node');
-    Qlobber.nativeString = wrap_native(binding.QlobberString, Qlobber);
-    Qlobber.nativeNumber = wrap_native(binding.QlobberNumber, Qlobber);
-    QlobberDedup.nativeString = wrap_native(binding.QlobberDedupString, QlobberDedup);
-    QlobberDedup.nativeNumber = wrap_native(binding.QlobberDedupNumber, QlobberDedup);
-    QlobberTrue.native = wrap_native(binding.QlobberTrue, QlobberTrue);
-}
-catch (ex)
-{
+    const wrap_native = require('./wrap_native.js');
+    Qlobber.nativeString = wrap_native(qlobber_native.QlobberString, Qlobber);
+    Qlobber.nativeNumber = wrap_native(qlobber_native.QlobberNumber, Qlobber);
+    QlobberDedup.nativeString = wrap_native(qlobber_native.QlobberDedupString, QlobberDedup);
+    QlobberDedup.nativeNumber = wrap_native(qlobber_native.QlobberDedupNumber, QlobberDedup);
+    QlobberTrue.native = wrap_native(qlobber_native.QlobberTrue, QlobberTrue);
+    return exports;
 }
 &nbsp;
 exports.Qlobber = Qlobber;
@@ -3269,7 +3317,7 @@ exports.QlobberDedup = QlobberDedup;
 exports.QlobberTrue = QlobberTrue;
 exports.VisitorStream = VisitorStream;
 exports.RestorerStream = RestorerStream;
-exports.wrap_native = wrap_native;
+exports.set_native = set_native;
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -3277,7 +3325,7 @@ exports.wrap_native = wrap_native;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Fri Jan 31 2020 20:49:30 GMT+0000 (Greenwich Mean Time)
+                at Tue Feb 11 2020 08:12:26 GMT+0000 (Greenwich Mean Time)
             </div>
         </div>
         <script src="../../prettify.js"></script>
