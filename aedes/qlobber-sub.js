@@ -124,9 +124,16 @@ QlobberSub.prototype.clear = function ()
 
 QlobberSub.set_native = function (qlobber_native)
 {
-    const wrap_native = require('../lib/wrap_native.js');
-    QlobberSub.native = wrap_native(qlobber_native.QlobberSub, QlobberSub);
-    return module.exports;
+    // wrap_native.js uses 'async *' which isn't available on Node 8
+    try
+    {
+        const wrap_native = require('../lib/wrap_native.js');
+        QlobberSub.native = wrap_native(qlobber_native.QlobberSub, QlobberSub);
+        return module.exports;
+    }
+    catch (ex)
+    {
+    }
 };
 
 module.exports = QlobberSub;
