@@ -1,0 +1,8 @@
+/.nyc_output
+/native
+/coverage
+/test
+/bench
+/aedes/bench
+/.travis.yml
+/examples
