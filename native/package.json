@@ -1,0 +1,27 @@
+{
+  "name": "qlobber-native",
+  "description": "Native engine for qlobber",
+  "version": "1.0.1",
+  "homepage": "https://github.com/davedoesdev/qlobber",
+  "author": {
+    "name": "David Halls",
+    "email": "dave@davedoesdev.com",
+    "url": "http://www.davedoesdev.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/davedoesdev/qlobber.git"
+  },
+  "bugs": {
+    "url": "https://github.com/davedoesdev/qlobber/issues"
+  },
+  "license": "MIT",
+  "main": "index.js",
+  "engines": {
+    "node": ">= 8"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "node-addon-api": "^2.0.0"
+  }
+}

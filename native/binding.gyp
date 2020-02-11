@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "qlobber",
+      "target_name": "qlobber_native",
       "sources": [ "src/qlobber.cc", "src/rwlock.cc" ],
       "include_dirs": ["<!@(node -p \"require('node-addon-api').include\")"],
       "dependencies": ["<!(node -p \"require('node-addon-api').gyp\")"],

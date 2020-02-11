@@ -12,7 +12,7 @@
 
 var path = require('path'),
     expect = require('chai').expect,
-    QlobberDedup = require('..').QlobberDedup.nativeString,
+    QlobberDedup = require('..').set_native(require('../native')).QlobberDedup.nativeString,
     common = require('./common'),
     { promisify } = require('util');
 

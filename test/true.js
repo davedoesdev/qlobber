@@ -4,7 +4,7 @@
 "use strict";
 
 var expect = require('chai').expect,
-    QlobberTrue = require('..').QlobberTrue,
+    { QlobberTrue } = require('..').set_native(require('../native')),
     common = require('./common');
 
 function test(type, QlobberTrue)

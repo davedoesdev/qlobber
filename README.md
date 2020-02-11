@@ -2,11 +2,12 @@
 
 Node.js globbing for amqp-like topics.
 
-__Note:__ Version 4.2.0 adds async and worker thread support when used on Node 12+.
+__Note:__ Version 5.0.0 adds async and worker thread support when used on Node 12+.
 
 Example:
 
 ```javascript
+var assert = require('assert');
 var Qlobber = require('qlobber').Qlobber;
 var matcher = new Qlobber();
 matcher.add('foo.*', 'it matched!');
@@ -63,9 +64,9 @@ assert.deepEqual(['quick.orange.rabbit',
 Same as the first example but using `await`:
 
 ```javascript
-var assert = require('assert');
-var Qlobber = require('qlobber').Qlobber.nativeString;
-var matcher = new Qlobber();
+const assert = require('assert');
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
+const matcher = new Qlobber.nativeString();
 
 (async () => {
     await matcher.addP('foo.*', 'it matched!');
@@ -79,13 +80,13 @@ var matcher = new Qlobber();
 Same again but the matching is done on a separate thread:
 
 ```
-const Qlobber = require('qlobber').Qlobber.nativeString;
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
 const {
     Worker, isMainThread, parentPort, workerData
 } = require('worker_threads');
 
 if (isMainThread) {
-    const matcher = new Qlobber();
+    const matcher = new Qlobber.nativeString();
     matcher.add('foo.*', 'it matched!');
     const worker = new Worker(__filename, {
         workerData: matcher.state_address
@@ -95,7 +96,7 @@ if (isMainThread) {
         assert.deepEqual(msg, [['it matched!'], true]);
     });
 } else {
-    const matcher = new Qlobber(workerData);
+    const matcher = new Qlobber.nativeString(workerData);
     parentPort.postMessage([
         matcher.match('foo.bar'),
         matcher.test('foo.bar', 'it matched!')
@@ -147,11 +148,27 @@ The Javascript Qlobbers don't support asynchronous calls and worker threads
 because Javascript values can't be shared between threads.
 
 In order to support asynchronous calls and worker threads, a native C++
-implementation is included. If you have Gnu C++ version 9+ and Boost 1.70+
-then the native version will be compiled when you install the module.
+implementation is available in the
+[qlobber-native](https://www.npmjs.com/package/qlobber-native) module.
 
-If compilation succeeds then the following classes will be available alongside
-the Javascript classes:
+Add qlobber-native as a dependency to your project and then add it to qlobber
+like this:
+
+```javascript
+require('qlobber').set_native(require('qlobber-native'));
+```
+
+Note that [`set_native`](#set_nativeqlobber_native) returns qlobber's exports so you can do something like
+this:
+
+```javascript
+const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
+```
+
+Note that qlobber-native requires Gnu C++ version 9+ and Boost 1.70+.
+
+Once's you've added it to qlobber, the following classes will be available
+alongside the Javascript classes:
 
 - `Qlobber.nativeString`
 - `Qlobber.nativeNumber`
@@ -160,13 +177,6 @@ the Javascript classes:
 - `QlobberTrue.native`
 
 They can only hold values of a single type (currently strings or numbers).
-
-You can also build the native implemention using one of these commands:
-
-```shell
-grunt build [--debug]
-grunt rebuild [--debug]
-```
 
 ### Asynchronous calls
 
@@ -209,6 +219,7 @@ _Source: [lib/qlobber.js](lib/qlobber.js)_
 - <a name="toc_qlobbertrueprototypematchtopic"></a>[QlobberTrue.prototype.match](#qlobbertrueprototypematchtopic)
 - <a name="toc_visitorstreamqlobber"></a>[VisitorStream](#visitorstreamqlobber)
 - <a name="toc_restorerstreamqlobber"></a>[RestorerStream](#restorerstreamqlobber)
+- <a name="toc_set_nativeqlobber_native"></a>[set_native](#set_nativeqlobber_native)
 
 ## Qlobber([options])
 
@@ -477,6 +488,26 @@ Inherits from [`Writable`](https://nodejs.org/dist/latest-v8.x/docs/api/stream.h
 **Parameters:**
 
 - `{Qlobber} qlobber` The qlobber to call [`get_restorer`](#qlobberprototypeget_restoreroptions) on.
+
+<sub>Go: [TOC](#tableofcontents)</sub>
+
+## set_native(qlobber_native)
+
+> Add [qlobber-native](https://www.npmjs.com/package/qlobber-native) to qlobber.
+
+**Parameters:**
+
+- `{Object} qlobber_native` The qlobber-native module, obtained using `require('qlobber-native')`.
+
+**Return:**
+
+`{Object}` The qlobber exports with the following native classes added:
+
+  - `Qlobber.nativeString`
+  - `Qlobber.nativeNumber`
+  - `QlobberDedup.nativeString`
+  - `QlobberDedup.nativeNumber`
+  - `QlobberTrue.native`
 
 <sub>Go: [TOC](#tableofcontents)</sub>
 

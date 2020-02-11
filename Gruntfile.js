@@ -25,18 +25,6 @@ module.exports = function (grunt)
         },
 
         exec: {
-            build: {
-                cmd: function () {
-                    return `node-gyp build ${grunt.option('debug') ? '--debug' : ''}`;
-                }
-            },
-
-            rebuild: {
-                cmd: function () {
-                    return `node-gyp rebuild ${grunt.option('debug') ? '--debug' : ''}`;
-                }
-            },
-
             cover: {
                 cmd: "./node_modules/.bin/nyc -x Gruntfile.js -x 'test/**' node --expose-gc ./node_modules/.bin/grunt test"
             },
@@ -73,8 +61,6 @@ module.exports = function (grunt)
     grunt.loadNpmTasks('grunt-exec');
 
     grunt.registerTask('lint', 'jshint');
-    grunt.registerTask('build', 'exec:build');
-    grunt.registerTask('rebuild', 'exec:rebuild');
     grunt.registerTask('test', 'mochaTest');
     grunt.registerTask('docs', 'apidox');
     grunt.registerTask('coverage', ['exec:cover',

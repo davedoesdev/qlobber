@@ -11,7 +11,7 @@
 "use strict";
 
 var expect = require('chai').expect,
-    Qlobber = require('..').Qlobber.nativeString,
+    Qlobber = require('..').set_native(require('../native')).Qlobber.nativeString,
     common = require('./common');
 
 var async_helpers;

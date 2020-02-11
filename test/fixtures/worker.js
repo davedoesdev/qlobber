@@ -1,6 +1,11 @@
 const { workerData, parentPort } = require('worker_threads');
 const expect = require('chai').expect;
-const QlobberDedup = require('../..').QlobberDedup.nativeString;
+const qlobber = require('../..');
+
+qlobber.set_native(require('../../native'));
+
+const QlobberDedup = qlobber.QlobberDedup.nativeString;
+
 const sleep = require('util').promisify(setTimeout);
 require('../rabbitmq.js');
 

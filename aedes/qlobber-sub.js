@@ -122,13 +122,11 @@ QlobberSub.prototype.clear = function ()
     return Qlobber.prototype.clear.call(this);
 };
 
-try
+QlobberSub.set_native = function (qlobber_native)
 {
-    const binding = require('bindings')('qlobber.node');
-    QlobberSub.native = qlobber.wrap_native(binding.QlobberSub, QlobberSub);
-}
-catch (ex)
-{
+    const wrap_native = require('../lib/wrap_native.js');
+    QlobberSub.native = wrap_native(qlobber_native.QlobberSub, QlobberSub);
+    return module.exports;
 }
 
 module.exports = QlobberSub;

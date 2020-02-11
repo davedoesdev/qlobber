@@ -11,7 +11,7 @@
 "use strict";
 
 var expect = require('chai').expect,
-    QlobberDedup = require('..').QlobberDedup,
+    { QlobberDedup } = require('..').set_native(require('../native')),
     common = require('./common');
 
 function test(type, QlobberDedup)

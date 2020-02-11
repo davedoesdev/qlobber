@@ -2,7 +2,7 @@
 "use strict";
 
 var expect = require('chai').expect,
-    QlobberSub = require('../aedes/qlobber-sub'),
+    QlobberSub = require('../aedes/qlobber-sub').set_native(require('../native')),
     common = require('./common');
 
 function test(type, QlobberSub)
