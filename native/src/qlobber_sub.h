@@ -93,7 +93,7 @@ private:
 template<>
 std::vector<Napi::ClassPropertyDescriptor<QlobberSub>> Properties() {
     return {
-        QlobberSub::InstanceAccessor("subscriptionsCount", &QlobberSub::GetSubscriptionsCount, nullptr)
+        QlobberSub::InstanceAccessor<&QlobberSub::GetSubscriptionsCount>("subscriptionsCount")
     };
 }
 
