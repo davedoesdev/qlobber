@@ -2,7 +2,7 @@
 /*jslint node: true */
 "use strict";
 
-var qlobber = require('..'),
+var qlobber = require('..').set_native(require('../native')),
     util = require("util");
 
 module.exports = function ()

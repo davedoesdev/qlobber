@@ -3,7 +3,7 @@
 "use strict";
 
 var assert = require('assert'),
-    qlobber = require('..'),
+    qlobber = require('..').set_native(require('../native')),
     MapValQlobber = require('./options/_mapval').MapValQlobber;
 
 var matcher_options = {

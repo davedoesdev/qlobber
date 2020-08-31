@@ -7,7 +7,7 @@
 "use strict";
 
 var assert = require('assert');
-var qlobber = require('../..');
+var qlobber = require('../..').set_native(require('../../native'));
 var MapValQlobber = require('../options/_mapval').MapValQlobber;
 var expect = require('chai').expect;
 require('../../test/rabbitmq.js');

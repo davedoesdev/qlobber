@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>307/307</span>
+                <span class='fraction'>310/310</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>175/175</span>
+                <span class='fraction'>177/177</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>306/306</span>
+                <span class='fraction'>309/309</span>
             </div>
         
             
@@ -1152,7 +1152,13 @@
 <a name='L1093'></a><a href='#L1093'>1093</a>
 <a name='L1094'></a><a href='#L1094'>1094</a>
 <a name='L1095'></a><a href='#L1095'>1095</a>
-<a name='L1096'></a><a href='#L1096'>1096</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1096'></a><a href='#L1096'>1096</a>
+<a name='L1097'></a><a href='#L1097'>1097</a>
+<a name='L1098'></a><a href='#L1098'>1098</a>
+<a name='L1099'></a><a href='#L1099'>1099</a>
+<a name='L1100'></a><a href='#L1100'>1100</a>
+<a name='L1101'></a><a href='#L1101'>1101</a>
+<a name='L1102'></a><a href='#L1102'>1102</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2211,6 +2217,7 @@
 <span class="cline-any cline-yes">196x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2227,12 +2234,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">19x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
-<span class="cline-any cline-yes">19x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3306,6 +3318,8 @@ RestorerStream.prototype._write = function (value, _, cb)
     cb();
 };
 &nbsp;
+let native_module = null;
+&nbsp;
 /**
 Add [qlobber-native](https://www.npmjs.com/package/qlobber-native) to qlobber.
 &nbsp;
@@ -3319,18 +3333,22 @@ Add [qlobber-native](https://www.npmjs.com/package/qlobber-native) to qlobber.
 */
 function set_native(qlobber_native)
 {
-    // wrap_native.js uses 'async *' which isn't available on Node 8
-    try
+    if (qlobber_native !== native_module)
     {
-        const wrap_native = require('./wrap_native.js');
-        Qlobber.nativeString = wrap_native(qlobber_native.QlobberString, Qlobber);
-        Qlobber.nativeNumber = wrap_native(qlobber_native.QlobberNumber, Qlobber);
-        QlobberDedup.nativeString = wrap_native(qlobber_native.QlobberDedupString, QlobberDedup);
-        QlobberDedup.nativeNumber = wrap_native(qlobber_native.QlobberDedupNumber, QlobberDedup);
-        QlobberTrue.native = wrap_native(qlobber_native.QlobberTrue, QlobberTrue);
-    }
-    catch (ex)
-    {
+        // wrap_native.js uses 'async *' which isn't available on Node 8
+        try
+        {
+            const wrap_native = require('./wrap_native.js');
+            Qlobber.nativeString = wrap_native(qlobber_native.QlobberString, Qlobber);
+            Qlobber.nativeNumber = wrap_native(qlobber_native.QlobberNumber, Qlobber);
+            QlobberDedup.nativeString = wrap_native(qlobber_native.QlobberDedupString, QlobberDedup);
+            QlobberDedup.nativeNumber = wrap_native(qlobber_native.QlobberDedupNumber, QlobberDedup);
+            QlobberTrue.native = wrap_native(qlobber_native.QlobberTrue, QlobberTrue);
+            native_module = qlobber_native;
+        }
+        catch (ex)
+        {
+        }
     }
 &nbsp;
     return exports;
@@ -3349,7 +3367,7 @@ exports.set_native = set_native;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Mon Aug 10 2020 22:04:21 GMT+0100 (British Summer Time)
+                at Mon Aug 31 2020 08:25:27 GMT+0100 (British Summer Time)
             </div>
         </div>
         <script src="../../prettify.js"></script>

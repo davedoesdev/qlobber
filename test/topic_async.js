@@ -265,7 +265,7 @@ catch (ex)
         matcher = new Qlobber.nonNative.nativeNumber();
 
         // under coverage this takes longer
-        this.timeout(60000);
+        this.timeout(120000);
 
         var i, j, vals;
 

@@ -605,6 +605,8 @@ function test(type, Qlobber)
     });
 
     it('should recurse expected number of times', function () {
+        this.timeout(10000);
+
         if (!Qlobber.is_native) {
             matcher = new class extends Qlobber {
                 _reset_counters() {
