@@ -42,7 +42,7 @@ module.exports = function (grunt)
             },
 
             bench: {
-                cmd: './node_modules/.bin/bench -c 20000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js,bench/options/default-native.js,bench/options/dedup-native.js -k options bench/add bench/add_match_remove bench/match bench/match_search bench/test'
+                cmd: './node_modules/.bin/bench -c 80000 -i bench/options/default.js,bench/options/dedup.js,bench/options/mapval.js,bench/options/default-native.js,bench/options/dedup-native.js -k options bench/match'
             },
 
             'bench-check': {

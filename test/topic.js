@@ -75,7 +75,7 @@ function test(type, Qlobber)
         expect(common.get_trie(matcher)).to.eql(common.expected_trie);
     });
 
-    it('should pass rabbitmq test', function ()
+    it.only('should pass rabbitmq test', function ()
     {
         add_bindings(rabbitmq_test_bindings);
 
