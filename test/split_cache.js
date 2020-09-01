@@ -62,8 +62,14 @@ describe('topic split cache', function () {
         expect(matcher._split_cache.get('a.b.c.g')).to.eql([
             'a', 'b', 'c', 'g'
         ]);
-
     });
 
-
+    it('should clear cache when matcher is cleared', function () {
+        const matcher = new QlobberDedup({ cache_splits: 3 });
+        expect(matcher._split_cache.size).to.equal(0);
+        matcher.add('a.b.c.d', 90);
+        expect(matcher._split_cache.size).to.equal(1);
+        matcher.clear();
+        expect(matcher._split_cache.size).to.equal(0);
+    });
 });
