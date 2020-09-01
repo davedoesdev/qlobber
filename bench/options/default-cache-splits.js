@@ -6,7 +6,7 @@ class Qlobber extends qlobber.Qlobber
 {
     constructor()
     {
-        super({ cache_topics: 1000 });
+        super({ cache_splits: 1000 });
     }
 }
 
