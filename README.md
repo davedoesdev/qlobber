@@ -121,7 +121,7 @@ npm test
 ## Lint
 
 ```shell
-npm run lint
+grunt lint
 ```
 
 ## Code Coverage
@@ -130,7 +130,7 @@ npm run lint
 npm run coverage
 ```
 
-[Istanbul](http://gotwarlost.github.io/istanbul/) results are available [here](http://rawgit.davedoesdev.com/davedoesdev/qlobber/master/coverage/lcov-report/index.html).
+[c8](https://github.com/bcoe/c8) results are available [here](http://rawgit.davedoesdev.com/davedoesdev/qlobber/master/coverage/lcov-report/index.html).
 
 Coveralls page is [here](https://coveralls.io/r/davedoesdev/qlobber).
 
@@ -165,7 +165,8 @@ this:
 const { Qlobber } = require('qlobber').set_native(require('qlobber-native'));
 ```
 
-Note that qlobber-native requires Gnu C++ version 9+ and Boost 1.70+.
+Note that qlobber-native requires Gnu C++ version 9+ and Boost 1.70+,
+including the `boost_context` runtime library.
 
 Once's you've added it to qlobber, the following classes will be available
 alongside the Javascript classes:
