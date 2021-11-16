@@ -18,7 +18,7 @@ jobs:
         run: sudo apt update
 
       - name: Install OS dependencies
-        run: sudo apt install libboost-dev
+        run: sudo apt install libboost-dev libboost-context-dev
 
       - name: Use Node ${{ matrix.node-version }}
         uses: actions/setup-node@v2
