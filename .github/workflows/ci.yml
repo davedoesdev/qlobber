@@ -31,10 +31,16 @@ jobs:
       - name: Lint
         run: npx grunt lint
 
+      - name: Test
+        if: matrix.node-version != '16'
+        run: npm test
+
       - name: Coverage
+        if: matrix.node-version == '16'
         run: npm run coverage
 
       - name: Coveralls
+        if: matrix.node-version == '16'
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
