@@ -19,23 +19,23 @@ QlobberSub.prototype._initial_value = function (val)
 
     let r = {
         topic: val.topic,
-        clientMap: new Map().set(val.clientId, val.qos),
+        clientMap: new Map().set(val.clientId, { qos: val.qos, rh: val.rh, rap: val.rap, nl: val.nl }),
     };
 
     r[Symbol.iterator] = function* (topic)
     {
         if (topic === undefined)
         {
-            for (let [clientId, qos] of r.clientMap)
+            for (let [clientId, sub] of r.clientMap)
             {
-                yield { topic: r.topic, clientId, qos };
+                yield { topic: r.topic, clientId, ...sub };
             }
         }
         else if (r.topic === topic)
         {
-            for (let [clientId, qos] of r.clientMap)
+            for (let [clientId, sub] of r.clientMap)
             {
-                yield { clientId, qos };
+                yield { clientId, ...sub };
             }
         }
     };
@@ -48,7 +48,7 @@ QlobberSub.prototype._add_value = function (existing, val)
     var clientMap = existing.clientMap,
         size = clientMap.size;
 
-    clientMap.set(val.clientId, val.qos);
+    clientMap.set(val.clientId, { qos: val.qos, rh: val.rh, rap: val.rap, nl: val.nl });
 
     if (clientMap.size > size)
     {
@@ -58,28 +58,18 @@ QlobberSub.prototype._add_value = function (existing, val)
 
 QlobberSub.prototype._add_values = function (dest, existing, topic)
 {
-    var clientIdAndQos;
     if (topic === undefined)
     {
-        for (clientIdAndQos of existing.clientMap)
+        for (let [clientId, sub] of existing.clientMap)
         {
-            dest.push(
-            {
-                clientId: clientIdAndQos[0],
-                topic: existing.topic,
-                qos: clientIdAndQos[1]
-            });
+            dest.push({ clientId, topic: existing.topic, ...sub });
         }
     }
     else if (existing.topic === topic)
     {
-        for (clientIdAndQos of existing.clientMap)
+        for (let [clientId, sub] of existing.clientMap)
         {
-            dest.push(
-            {
-                clientId: clientIdAndQos[0],
-                qos: clientIdAndQos[1]
-            });
+            dest.push({ clientId,...sub });
         }
     }
 };

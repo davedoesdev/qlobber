@@ -7,25 +7,49 @@ enum QoS {
     exactly_once = 2
 };
 
+enum RetainHandling {
+    send = 0,
+    send_if_not_exist = 1,
+    do_not_send = 2
+};
+
 struct Sub {
     std::string clientId;
     std::string topic;
     QoS qos;
+    RetainHandling rh;
+    bool rap;
+    bool nl;
 };
 
 struct IterSub {
     std::string clientId;
     std::optional<std::string> topic;
     QoS qos;
+    RetainHandling rh;
+    bool rap;
+    bool nl;
+};
+
+struct SubStorageNode {
+    QoS qos;
+    RetainHandling rh;
+    bool rap;
+    bool nl;
 };
 
 struct SubStorage {
     SubStorage(const Sub& sub) :
         topic(sub.topic) {
-        clientMap.insert_or_assign(sub.clientId, sub.qos);
+        clientMap.insert_or_assign(sub.clientId, SubStorageNode {
+            sub.qos,
+            sub.rh,
+            sub.rap,
+            sub.nl
+        });
     }
     std::string topic;
-    std::unordered_map<std::string, QoS> clientMap;
+    std::unordered_map<std::string, SubStorageNode> clientMap;
 };
 
 struct SubTest {
@@ -98,7 +122,12 @@ private:
     }
 
     void add_value(SubStorage& existing, const Sub& sub) override {
-        if (existing.clientMap.insert_or_assign(sub.clientId, sub.qos).second) {
+        if (existing.clientMap.insert_or_assign(sub.clientId, SubStorageNode {
+            sub.qos,
+            sub.rh,
+            sub.rap,
+            sub.nl
+        }).second) {
             ++this->state->subscriptionsCount;
         }
     }
@@ -123,19 +152,25 @@ private:
                      const SubStorage& storage,
                      const std::optional<const std::string>& topic) override {
         if (!topic) {
-            for (const auto& clientIdAndQos : storage.clientMap) {
+            for (const auto& clientIdAndNode : storage.clientMap) {
                 sink(IterSub {
-                    clientIdAndQos.first,
+                    clientIdAndNode.first,
                     std::optional<std::string>(storage.topic),
-                    clientIdAndQos.second
+                    clientIdAndNode.second.qos,
+                    clientIdAndNode.second.rh,
+                    clientIdAndNode.second.rap,
+                    clientIdAndNode.second.nl
                 });
             }
         } else if (storage.topic == topic.value()) {
-            for (const auto& clientIdAndQos : storage.clientMap) {
+            for (const auto& clientIdAndNode : storage.clientMap) {
                 sink(IterSub {
-                    clientIdAndQos.first,
+                    clientIdAndNode.first,
                     std::nullopt,
-                    clientIdAndQos.second
+                    clientIdAndNode.second.qos,
+                    clientIdAndNode.second.rh,
+                    clientIdAndNode.second.rap,
+                    clientIdAndNode.second.nl
                 });
             }
         }
@@ -152,7 +187,10 @@ private:
                         Sub {
                             entry.first,
                             storage.topic,
-                            entry.second
+                            entry.second.qos,
+                            entry.second.rh,
+                            entry.second.rap,
+                            entry.second.nl
                         })
                 }
             });
