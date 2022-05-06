@@ -18,14 +18,20 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -47,21 +53,30 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -83,26 +98,38 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         expect(common.ordered_sort(matcher.match('foo.bar'))).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         },
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -124,26 +151,38 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.*',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         },
         {
             clientId: 'test1',
             topic: 'foo.*',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -175,14 +214,20 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         matcher.remove('foo.bar',
@@ -195,7 +240,10 @@ function test(type, QlobberSub)
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -217,52 +265,79 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.*',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(3);
         expect(common.ordered_sort(matcher.match('foo.bar'))).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.*',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         },
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         },
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(common.ordered_sort(matcher.match('foo.bar', 'foo.bar'))).to.eql([
         {
             clientId: 'test1',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         },
         {
             clientId: 'test2',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.match('foo.bar', 'foo.*')).to.eql([
         {
             clientId: 'test1',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
     });
 
@@ -274,14 +349,20 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         matcher.remove('foo.bar',
@@ -300,7 +381,10 @@ function test(type, QlobberSub)
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -334,14 +418,20 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         expect(matcher.match('foo.bar')).to.eql([
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         }]);
         expect(matcher.test('foo.bar',
         {
@@ -376,21 +466,30 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.*',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         matcher.add('foo.*',
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(3);
         matcher.remove('foo.*',
@@ -411,11 +510,11 @@ function test(type, QlobberSub)
         { type: 'start_values' },
         {
           type: 'value',
-          value: { topic: 'foo.bar', clientId: 'test1', qos: 1 }
+          value: { topic: 'foo.bar', clientId: 'test1', qos: 1, rh: 0, rap: true, nl: false }
         },
         {
           type: 'value',
-          value: { topic: 'foo.bar', clientId: 'test2', qos: 2 }
+          value: { topic: 'foo.bar', clientId: 'test2', qos: 2, rh: 0, rap: true, nl: false }
         },
         { type: 'end_values' },
         { type: 'end_entries' },
@@ -425,11 +524,11 @@ function test(type, QlobberSub)
         { type: 'start_values' },
         {
           type: 'value',
-          value: { topic: 'foo.bar2', clientId: 'test1', qos: 1 }
+          value: { topic: 'foo.bar2', clientId: 'test1', qos: 1, rh: 0, rap: true, nl: false }
         },
         {
           type: 'value',
-          value: { topic: 'foo.bar2', clientId: 'test2', qos: 2 }
+          value: { topic: 'foo.bar2', clientId: 'test2', qos: 2, rh: 0, rap: true, nl: false }
         },
         { type: 'end_values' },
         { type: 'end_entries' },
@@ -445,28 +544,40 @@ function test(type, QlobberSub)
         {
             clientId: 'test1',
             topic: 'foo.bar',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(1);
         matcher.add('foo.bar',
         {
             clientId: 'test2',
             topic: 'foo.bar',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(2);
         matcher.add('foo.bar2',
         {
             clientId: 'test1',
             topic: 'foo.bar2',
-            qos: 1
+            qos: 1,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(3);
         matcher.add('foo.bar2',
         {
             clientId: 'test2',
             topic: 'foo.bar2',
-            qos: 2
+            qos: 2,
+            rh: 0,
+            rap: true,
+            nl: false
         });
         expect(matcher.subscriptionsCount).to.equal(4);
 
@@ -497,18 +608,18 @@ function test(type, QlobberSub)
             restorer(v);
         }
 
-        expect(common.get_trie(matcher)).to.eql({"foo":{"bar2":{".":[{"topic":"foo.bar2","clientId":"test1","qos":1},{"topic":"foo.bar2","clientId":"test2","qos":2}]},"bar":{".":[{"topic":"foo.bar","clientId":"test1","qos":1},{"topic":"foo.bar","clientId":"test2","qos":2}]}}});
+        expect(common.get_trie(matcher)).to.eql({"foo":{"bar2":{".":[{"topic":"foo.bar2","clientId":"test1","qos":1, rh: 0, rap: true, nl: false},{"topic":"foo.bar2","clientId":"test2","qos":2, rh: 0, rap: true, nl: false}]},"bar":{".":[{"topic":"foo.bar","clientId":"test1","qos":1, rh: 0, rap: true, nl: false},{"topic":"foo.bar","clientId":"test2","qos":2, rh: 0, rap: true, nl: false}]}}});
     });
 
     it('should support match iterator', function ()
     {
         var matcher = new QlobberSub();
-        matcher.add('foo.bar', { clientId: 'test1', topic: 'foo.bar', qos: 1 });
-        matcher.add('foo.*', { clientId: 'test1', topic: 'foo.*', qos: 2 });
+        matcher.add('foo.bar', { clientId: 'test1', topic: 'foo.bar', qos: 1, rh: 0, rap: true, nl: false });
+        matcher.add('foo.*', { clientId: 'test1', topic: 'foo.*', qos: 2, rh: 0, rap: true, nl: false });
 
         let expected_matches = [
-            { topic: 'foo.bar', clientId: 'test1', qos: 1 },
-            { topic: 'foo.*', clientId: 'test1', qos: 2 }
+            { topic: 'foo.bar', clientId: 'test1', qos: 1, rh: 0, rap: true, nl: false },
+            { topic: 'foo.*', clientId: 'test1', qos: 2, rh: 0, rap: true, nl: false }
         ];
 
         let objs = [];
@@ -530,7 +641,7 @@ function test(type, QlobberSub)
         {
             objs.push(v);
         }
-        expect(objs).to.eql([ { clientId: 'test1', qos: 1 } ]);
+        expect(objs).to.eql([ { clientId: 'test1', qos: 1, rh: 0, rap: true, nl: false } ]);
     });
 });
 
