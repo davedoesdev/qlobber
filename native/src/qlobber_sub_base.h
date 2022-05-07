@@ -13,24 +13,6 @@ enum RetainHandling {
     do_not_send = 2
 };
 
-struct Sub {
-    std::string clientId;
-    std::string topic;
-    QoS qos;
-    RetainHandling rh;
-    bool rap;
-    bool nl;
-};
-
-struct IterSub {
-    std::string clientId;
-    std::optional<std::string> topic;
-    QoS qos;
-    RetainHandling rh;
-    bool rap;
-    bool nl;
-};
-
 struct SubStorageNode {
     QoS qos;
     RetainHandling rh;
@@ -38,15 +20,22 @@ struct SubStorageNode {
     bool nl;
 };
 
+struct Sub {
+    std::string clientId;
+    std::string topic;
+    SubStorageNode node;
+};
+
+struct IterSub {
+    std::string clientId;
+    std::optional<std::string> topic;
+    SubStorageNode node;
+};
+
 struct SubStorage {
     SubStorage(const Sub& sub) :
         topic(sub.topic) {
-        clientMap.insert_or_assign(sub.clientId, SubStorageNode {
-            sub.qos,
-            sub.rh,
-            sub.rap,
-            sub.nl
-        });
+        clientMap.insert_or_assign(sub.clientId, sub.node);
     }
     std::string topic;
     std::unordered_map<std::string, SubStorageNode> clientMap;
@@ -122,12 +111,7 @@ private:
     }
 
     void add_value(SubStorage& existing, const Sub& sub) override {
-        if (existing.clientMap.insert_or_assign(sub.clientId, SubStorageNode {
-            sub.qos,
-            sub.rh,
-            sub.rap,
-            sub.nl
-        }).second) {
+        if (existing.clientMap.insert_or_assign(sub.clientId, sub.node).second) {
             ++this->state->subscriptionsCount;
         }
     }
@@ -156,10 +140,7 @@ private:
                 sink(IterSub {
                     clientIdAndNode.first,
                     std::optional<std::string>(storage.topic),
-                    clientIdAndNode.second.qos,
-                    clientIdAndNode.second.rh,
-                    clientIdAndNode.second.rap,
-                    clientIdAndNode.second.nl
+                    clientIdAndNode.second
                 });
             }
         } else if (storage.topic == topic.value()) {
@@ -167,10 +148,7 @@ private:
                 sink(IterSub {
                     clientIdAndNode.first,
                     std::nullopt,
-                    clientIdAndNode.second.qos,
-                    clientIdAndNode.second.rh,
-                    clientIdAndNode.second.rap,
-                    clientIdAndNode.second.nl
+                    clientIdAndNode.second
                 });
             }
         }
@@ -187,10 +165,7 @@ private:
                         Sub {
                             entry.first,
                             storage.topic,
-                            entry.second.qos,
-                            entry.second.rh,
-                            entry.second.rap,
-                            entry.second.nl
+                            entry.second
                         })
                 }
             });

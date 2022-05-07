@@ -2,6 +2,25 @@
 #include "qlobber_sub_base.h"
 #include "qlobber_js_base.h"
 
+template<>
+Sub ToValue<Sub, Napi::Object>(const Napi::Object& v) {
+    return {
+        v.Get("clientId").As<Napi::String>(),
+        v.Get("topic").As<Napi::String>(),
+        static_cast<QoS>(v.Get("qos").As<Napi::Number>().Uint32Value()),
+        static_cast<RetainHandling>(v.Get("rh").As<Napi::Number>().Uint32Value()),
+        v.Get("rap").As<Napi::Boolean>(),
+        v.Get("nl").As<Napi::Boolean>()
+    };
+}
+
+void SetSubscriptionProperties(Napi::Object& obj, const SubStorageNode& node) {
+    obj.Set("qos", static_cast<uint32_t>(node.qos));
+    obj.Set("rh", static_cast<uint32_t>(node.rh));
+    obj.Set("rap", node.rap);
+    obj.Set("nl", node.nl);
+}
+
 class QlobberSub :
     public QlobberJSCommon<Sub,
                            Napi::Object, 
@@ -43,15 +62,7 @@ private:
     }
 
     Sub get_add_value(const Napi::CallbackInfo& info) override {
-        const auto val = info[1].As<Napi::Object>();
-        return {
-            val.Get("clientId").As<Napi::String>(),
-            val.Get("topic").As<Napi::String>(),
-            static_cast<QoS>(val.Get("qos").As<Napi::Number>().Uint32Value()),
-            static_cast<RetainHandling>(val.Get("rh").As<Napi::Number>().Uint32Value()),
-            val.Get("rap").As<Napi::Boolean>(),
-            val.Get("nl").As<Napi::Boolean>()
-        };
+        return ToValue<Sub, Napi::Object>(info[1].As<Napi::Object>());
     }
 
     std::optional<const std::string> get_remove_value(const Napi::Value& v) override {
@@ -74,20 +85,14 @@ private:
                 Napi::Object obj = Napi::Object::New(dest.Env());
                 obj.Set("clientId", clientIdAndNode.first);
                 obj.Set("topic", existing.topic);
-                obj.Set("qos", static_cast<uint32_t>(clientIdAndNode.second.qos));
-                obj.Set("rh", static_cast<uint32_t>(clientIdAndNode.second.rh));
-                obj.Set("rap", clientIdAndNode.second.rap);
-                obj.Set("nl", clientIdAndNode.second.nl);
+                SetSubscriptionProperties(obj, clientIdAndNode.second);
                 dest.Set(dest.Length(), obj);
             }
         } else if (existing.topic == topic.value()) {
             for (const auto& clientIdAndNode : existing.clientMap) {
                 Napi::Object obj = Napi::Object::New(dest.Env());
                 obj.Set("clientId", clientIdAndNode.first);
-                obj.Set("qos", static_cast<uint32_t>(clientIdAndNode.second.qos));
-                obj.Set("rh", static_cast<uint32_t>(clientIdAndNode.second.rh));
-                obj.Set("rap", clientIdAndNode.second.rap);
-                obj.Set("nl", clientIdAndNode.second.nl);
+                SetSubscriptionProperties(obj, clientIdAndNode.second);
                 dest.Set(dest.Length(), obj);
             }
         }
@@ -111,10 +116,7 @@ Napi::Object FromValue<Sub, Napi::Object>(const Napi::Env& env, const Sub& sub) 
     Napi::Object obj = Napi::Object::New(env);
     obj.Set("clientId", sub.clientId);
     obj.Set("topic", sub.topic);
-    obj.Set("qos", static_cast<uint32_t>(sub.qos));
-    obj.Set("rh", static_cast<uint32_t>(sub.rh));
-    obj.Set("rap", sub.rap);
-    obj.Set("nl", sub.nl);
+    SetSubscriptionProperties(obj, sub.node);
     return obj;
 }
 
@@ -125,21 +127,6 @@ Napi::Object FromValue<IterSub, Napi::Object>(const Napi::Env& env, const IterSu
     if (sub.topic) {
         obj.Set("topic", sub.topic.value());
     }
-    obj.Set("qos", static_cast<uint32_t>(sub.qos));
-    obj.Set("rh", static_cast<uint32_t>(sub.rh));
-    obj.Set("rap", sub.rap);
-    obj.Set("nl", sub.nl);
+    SetSubscriptionProperties(obj, sub.node);
     return obj;
-}
-
-template<>
-Sub ToValue<Sub, Napi::Object>(const Napi::Object& v) {
-    return Sub {
-        v.Get("clientId").As<Napi::String>(),
-        v.Get("topic").As<Napi::String>(),
-        static_cast<QoS>(v.Get("qos").As<Napi::Number>().Uint32Value()),
-        static_cast<RetainHandling>(v.Get("rh").As<Napi::Number>().Uint32Value()),
-        v.Get("rap").As<Napi::Boolean>(),
-        v.Get("nl").As<Napi::Boolean>()
-    };
 }
