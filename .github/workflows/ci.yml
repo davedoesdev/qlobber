@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [12, 14, 16]
+        node-version: [14, 16, 18]
 
     steps:
       - name: Checkout
@@ -32,15 +32,15 @@ jobs:
         run: npx grunt lint
 
       - name: Test
-        if: matrix.node-version != '16'
+        if: matrix.node-version != '18'
         run: npm test
 
       - name: Coverage
-        if: matrix.node-version == '16'
+        if: matrix.node-version == '18'
         run: npm run coverage
 
       - name: Coveralls
-        if: matrix.node-version == '16'
+        if: matrix.node-version == '18'
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
