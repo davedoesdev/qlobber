@@ -1,9 +1,13 @@
 /*jshint node: true, mocha: true */
 "use strict";
 
-var expect = require('chai').expect,
+var expect,
     qlobber = require('..'),
     QlobberDedup = qlobber.QlobberDedup;
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 describe('shortcut', function ()
 {

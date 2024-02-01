@@ -1,5 +1,7 @@
+(async () => {
+
 const { workerData, parentPort } = require('worker_threads');
-const expect = require('chai').expect;
+const { expect } = await import('chai');
 const qlobber = require('../..');
 
 qlobber.set_native(require('../../native'));
@@ -93,3 +95,5 @@ case 'add':
 default:
     throw new Error(`unknown operation: ${workerData.operation}`);
 }
+
+})();

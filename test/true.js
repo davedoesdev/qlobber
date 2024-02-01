@@ -3,9 +3,13 @@
 /*jshint node: true, mocha: true */
 "use strict";
 
-var expect = require('chai').expect,
+var expect,
     { QlobberTrue } = require('..').set_native(require('../native')),
     common = require('./common');
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 function test(type, QlobberTrue)
 {

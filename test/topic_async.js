@@ -7,12 +7,16 @@
           describe: false,
           beforeEach: false,
           it: false */
-/*jslint node: true */
+/*jslint node: true, mocha: true */
 "use strict";
 
-var expect = require('chai').expect,
+var expect,
     Qlobber = require('..').set_native(require('../native')).Qlobber.nativeString,
     common = require('./common');
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 var async_helpers;
 

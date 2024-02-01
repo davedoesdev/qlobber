@@ -7,14 +7,18 @@
           describe: false,
           beforeEach: false,
           it: false */
-/*jslint node: true */
+/*jslint node: true, mocha: true */
 "use strict";
 
 var path = require('path'),
-    expect = require('chai').expect,
+    expect,
     QlobberDedup = require('..').set_native(require('../native')).QlobberDedup.nativeString,
     common = require('./common'),
     { promisify } = require('util');
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 async function wait_for_worker(worker) {
     if (!worker.exited) {

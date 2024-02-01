@@ -3,9 +3,13 @@
 /*jslint mocha: true */
 "use strict";
 
-var expect = require('chai').expect,
+var expect,
     util = require('util'),
     Qlobber = require('..').Qlobber;
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 function QlobberTopicCount (options)
 {

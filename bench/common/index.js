@@ -9,8 +9,11 @@
 var assert = require('assert');
 var qlobber = require('../..').set_native(require('../../native'));
 var MapValQlobber = require('../options/_mapval').MapValQlobber;
-var expect = require('chai').expect;
 require('../../test/rabbitmq.js');
+
+function arrays_equal(x, y) {
+    return (x.length === y.length) && x.every((el, i) => el === y[i]);
+}
 
 function remove_duplicates_filter(item, index, arr)
 {
@@ -66,7 +69,7 @@ exports.remove_bindings = function(matcher)
                 vals = remove_duplicates(vals);
             }
 
-            expect(vals).to.eql(test[1].sort());
+            assert(arrays_equal(vals, test[1].sort()));
         }
     }
 };
@@ -98,7 +101,7 @@ exports.match = function(matcher)
                 vals = Array.from(vals.keys()).sort();
             }
 
-            expect(vals).to.eql(test[1].sort());
+            assert(arrays_equal(vals, test[1].sort()));
         }
     }
 };

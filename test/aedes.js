@@ -1,9 +1,13 @@
 /*jshint node: true, mocha: true */
 "use strict";
 
-var expect = require('chai').expect,
+var expect,
     QlobberSub = require('../aedes/qlobber-sub').set_native(require('../native')),
     common = require('./common');
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 function test(type, QlobberSub)
 {

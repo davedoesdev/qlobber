@@ -1,8 +1,12 @@
 /*jshint node: true, mocha: true */
 "use strict";
 
-const { expect } = require('chai');
+let expect;
 const { QlobberDedup } = require('..');
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 describe('topic split cache', function () {
     it('should add to cache when adding', function () {

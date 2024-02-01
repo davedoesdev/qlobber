@@ -1,13 +1,17 @@
 /*jshint node: true, mocha: true */
 "use strict";
 
-let expect = require('chai').expect,
+let expect,
     qlobber = require('..'),
     JSONStream = require('JSONStream'),
     streamBuffers = require('stream-buffers'),
     common = require('./common'),
     rabbitmq = require('./rabbitmq'),
     expected_json = JSON.stringify(common.expected_visits);
+
+before(async () => {
+    ({ expect } = await import('chai'));
+});
 
 describe('json', function ()
 {
